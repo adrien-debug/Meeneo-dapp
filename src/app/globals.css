@@ -1,0 +1,177 @@
+@import "tailwindcss";
+
+@theme {
+  /* Custom Breakpoints */
+  --breakpoint-xs: 480px;
+
+  /* Hearst Green Colors */
+  --color-hearst-green: oklch(88% 0.2 142);
+  --color-hearst-green-dark: oklch(80% 0.2 142);
+  --color-hearst-green-light: oklch(92% 0.15 142);
+
+  /* Mining Colors */
+  --color-mining-orange: oklch(75% 0.18 60);
+  --color-mining-blue: oklch(60% 0.2 255);
+  --color-mining-purple: oklch(55% 0.25 290);
+  --color-mining-red: oklch(60% 0.25 25);
+}
+
+:root {
+  --hearst-green: #96EA7A;
+  --hearst-green-dark: #7ED066;
+  --hearst-green-light: #E6F1E7;
+  --background: #F2F2F2;
+  --foreground: #0E0F0F;
+  --card: #FFFFFF;
+  --card-border: rgba(158, 179, 168, 0.2);
+  --card-hover: #E6F1E7;
+}
+
+html,
+body {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F2F2F2;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #9EB3A8;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #96EA7A;
+}
+
+/* Mining animations */
+@keyframes hash {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-hash {
+  animation: hash 1s ease-in-out infinite;
+}
+
+/* Grid background */
+.bg-grid {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' width='32' height='32' fill='none' stroke='rgb(148 163 184 / 0.1)'%3e%3cpath d='M0 .5H31.5V32'/%3e%3c/svg%3e");
+}
+
+/* Card hover effect */
+.card-hover {
+  transition: all 0.3s ease;
+}
+
+.card-hover:hover {
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  transform: translateY(-4px);
+}
+
+/* Glassmorphism */
+.glass {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Custom Hearst Green utilities using CSS variables */
+.bg-hearst-green {
+  background-color: #96EA7A !important;
+}
+
+.bg-hearst-green-dark {
+  background-color: #7ED066 !important;
+}
+
+.hover\:bg-hearst-green-dark:hover {
+  background-color: #7ED066 !important;
+}
+
+.text-hearst-green {
+  color: #96EA7A !important;
+}
+
+.border-hearst-green {
+  border-color: #96EA7A !important;
+}
+
+.focus\:ring-hearst-green:focus {
+  --tw-ring-color: #96EA7A;
+}
+
+/* Mining Colors utilities */
+.text-mining-orange {
+  color: #F59E0B !important;
+}
+
+.text-mining-blue {
+  color: #3B82F6 !important;
+}
+
+.text-mining-purple {
+  color: #8B5CF6 !important;
+}
+
+.text-mining-red {
+  color: #EF4444 !important;
+}
+
+.bg-mining-orange\/20 {
+  background-color: rgba(245, 158, 11, 0.2) !important;
+}
+
+.bg-mining-blue\/20 {
+  background-color: rgba(59, 130, 246, 0.2) !important;
+}
+
+.bg-mining-purple\/20 {
+  background-color: rgba(139, 92, 246, 0.2) !important;
+}
+
+.bg-hearst-green\/10 {
+  background-color: rgba(150, 234, 122, 0.1) !important;
+}
+
+.bg-hearst-green\/20 {
+  background-color: rgba(150, 234, 122, 0.2) !important;
+}
+
+.bg-hearst-green\/30 {
+  background-color: rgba(150, 234, 122, 0.3) !important;
+}
+
+.border-hearst-green\/30 {
+  border-color: rgba(150, 234, 122, 0.3) !important;
+}
