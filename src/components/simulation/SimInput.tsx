@@ -12,14 +12,26 @@ interface SimInputProps {
   disabled?: boolean
 }
 
-export default function SimInput({ label, value, onChange, type = 'text', min, max, step, hint, disabled }: SimInputProps) {
+export default function SimInput({
+  label,
+  value,
+  onChange,
+  type = 'text',
+  min,
+  max,
+  step,
+  hint,
+  disabled,
+}: SimInputProps) {
   return (
     <div className="space-y-1">
-      <label className="text-[11px] font-semibold text-[#9EB3A8] uppercase tracking-wider">{label}</label>
+      <label className="text-[11px] font-semibold text-[#9EB3A8] uppercase tracking-wider">
+        {label}
+      </label>
       <input
         type={type}
         value={value}
-        onChange={e => onChange(e.target.value)}
+        onChange={(e) => onChange(e.target.value)}
         min={min}
         max={max}
         step={step}

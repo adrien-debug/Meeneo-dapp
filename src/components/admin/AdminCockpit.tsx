@@ -9,16 +9,17 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
-  Cell, Legend,
+  Cell,
+  Legend,
   Line,
   LineChart,
   Pie,
   PieChart,
   ResponsiveContainer,
   Tooltip,
-  XAxis, YAxis
+  XAxis,
+  YAxis,
 } from 'recharts'
-
 
 // Sample data for charts
 const tvlData = [
@@ -61,7 +62,19 @@ const distributionData = [
   { name: 'Alephium', value: 15, color: '#E6F1E7' },
 ]
 
-function VaultRow({ vault }: { vault: { address: `0x${string}`; name: string; slug: string; token: string; icon: string; color: string; apr: number } }) {
+function VaultRow({
+  vault,
+}: {
+  vault: {
+    address: `0x${string}`
+    name: string
+    slug: string
+    token: string
+    icon: string
+    color: string
+    apr: number
+  }
+}) {
   const info = useVaultInfoByAddress(vault.address)
 
   return (
@@ -71,20 +84,31 @@ function VaultRow({ vault }: { vault: { address: `0x${string}`; name: string; sl
           <span className="text-lg">{vault.icon}</span>
           <div>
             <p className="font-medium text-[#0E0F0F]">{vault.name}</p>
-            <p className="text-xs text-[#9EB3A8]">{vault.address.slice(0, 8)}...{vault.address.slice(-6)}</p>
+            <p className="text-xs text-[#9EB3A8]">
+              {vault.address.slice(0, 8)}...{vault.address.slice(-6)}
+            </p>
           </div>
         </div>
       </td>
       <td className="py-3 px-4 text-[#9EB3A8]">{vault.token}</td>
-      <td className="py-3 px-4 text-right font-semibold text-[#0E0F0F]">${parseFloat(info.totalDeposits).toLocaleString()}</td>
-      <td className="py-3 px-4 text-right font-semibold text-[#0E0F0F]">{info.annualAPR || vault.apr}%</td>
+      <td className="py-3 px-4 text-right font-semibold text-[#0E0F0F]">
+        ${parseFloat(info.totalDeposits).toLocaleString()}
+      </td>
+      <td className="py-3 px-4 text-right font-semibold text-[#0E0F0F]">
+        {info.annualAPR || vault.apr}%
+      </td>
       <td className="py-3 px-4 text-right text-[#9EB3A8]">#{info.currentEpoch}</td>
       <td className="py-3 px-4 text-right">
-        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${info.shouldAdvanceEpoch
-          ? 'bg-[#E6F1E7] text-[#9EB3A8]'
-          : 'bg-[#96EA7A]/20 text-[#0E0F0F]'
-          }`}>
-          <span className={`w-1.5 h-1.5 rounded-full ${info.shouldAdvanceEpoch ? 'bg-[#9EB3A8]' : 'bg-[#96EA7A]'}`}></span>
+        <span
+          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
+            info.shouldAdvanceEpoch
+              ? 'bg-[#E6F1E7] text-[#9EB3A8]'
+              : 'bg-[#96EA7A]/20 text-[#0E0F0F]'
+          }`}
+        >
+          <span
+            className={`w-1.5 h-1.5 rounded-full ${info.shouldAdvanceEpoch ? 'bg-[#9EB3A8]' : 'bg-[#96EA7A]'}`}
+          ></span>
           {info.shouldAdvanceEpoch ? 'Pending' : 'Active'}
         </span>
       </td>
@@ -98,14 +122,23 @@ const formatCurrency = (value: number) => {
   return `$${value}`
 }
 
-const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: Array<{ value: number; name: string; color: string }>; label?: string }) => {
+const CustomTooltip = ({
+  active,
+  payload,
+  label,
+}: {
+  active?: boolean
+  payload?: Array<{ value: number; name: string; color: string }>
+  label?: string
+}) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-white border border-[#9EB3A8]/20 rounded-xl p-3 shadow-lg">
         <p className="text-xs text-[#9EB3A8] mb-1">{label}</p>
         {payload.map((entry, index) => (
           <p key={index} className="text-sm font-semibold" style={{ color: entry.color }}>
-            {entry.name}: {typeof entry.value === 'number' && entry.value > 1000
+            {entry.name}:{' '}
+            {typeof entry.value === 'number' && entry.value > 1000
               ? formatCurrency(entry.value)
               : entry.value}
           </p>
@@ -119,7 +152,7 @@ const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?:
 export function AdminCockpit() {
   const { vaults } = useVaultsList()
   const [currentTime, setCurrentTime] = useState(new Date())
-  const [btcPrice] = useState(98542.30)
+  const [btcPrice] = useState(98542.3)
   const [ethPrice] = useState(3421.85)
 
   useEffect(() => {
@@ -128,7 +161,8 @@ export function AdminCockpit() {
   }, [])
 
   const formatTime = (date: Date) => date.toLocaleTimeString('en-US', { hour12: false })
-  const formatDate = (date: Date) => date.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })
+  const formatDate = (date: Date) =>
+    date.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })
 
   return (
     <div className="space-y-6">
@@ -139,7 +173,9 @@ export function AdminCockpit() {
             <p className="text-xs text-[#9EB3A8] mb-1">BTC/USD</p>
             <div className="flex items-center gap-2">
               <span className="text-lg font-bold text-[#0E0F0F]">${btcPrice.toLocaleString()}</span>
-              <span className="text-xs font-medium text-[#0E0F0F] bg-[#96EA7A]/20 px-2 py-0.5 rounded">+2.34%</span>
+              <span className="text-xs font-medium text-[#0E0F0F] bg-[#96EA7A]/20 px-2 py-0.5 rounded">
+                +2.34%
+              </span>
             </div>
           </div>
           <div className="w-px h-10 bg-[#9EB3A8]/20"></div>
@@ -147,7 +183,9 @@ export function AdminCockpit() {
             <p className="text-xs text-[#9EB3A8] mb-1">ETH/USD</p>
             <div className="flex items-center gap-2">
               <span className="text-lg font-bold text-[#0E0F0F]">${ethPrice.toLocaleString()}</span>
-              <span className="text-xs font-medium text-[#0E0F0F] bg-[#96EA7A]/20 px-2 py-0.5 rounded">+1.82%</span>
+              <span className="text-xs font-medium text-[#0E0F0F] bg-[#96EA7A]/20 px-2 py-0.5 rounded">
+                +1.82%
+              </span>
             </div>
           </div>
           <div className="w-px h-10 bg-[#9EB3A8]/20"></div>
@@ -180,7 +218,9 @@ export function AdminCockpit() {
         <div className="bg-white border border-[#9EB3A8]/20 rounded-2xl p-5">
           <p className="text-xs text-[#9EB3A8] mb-2">Vaults Actifs</p>
           <p className="text-2xl font-bold text-[#0E0F0F]">{vaults.length}</p>
-          <p className="text-xs text-[#9EB3A8] mt-1">{PRODUCTS.filter(p => p.status === 'coming_soon').length} à venir</p>
+          <p className="text-xs text-[#9EB3A8] mt-1">
+            {PRODUCTS.filter((p) => p.status === 'coming_soon').length} à venir
+          </p>
         </div>
         <div className="bg-white border border-[#9EB3A8]/20 rounded-2xl p-5">
           <p className="text-xs text-[#9EB3A8] mb-2">APR Moyen</p>
@@ -211,13 +251,23 @@ export function AdminCockpit() {
           <div className="flex items-center justify-between px-6 py-4 border-b border-[#9EB3A8]/10">
             <div className="flex items-center gap-3">
               <h3 className="font-bold text-[#0E0F0F]">TVL Performance</h3>
-              <span className="text-xs font-medium text-[#0E0F0F] bg-[#96EA7A]/20 px-2 py-1 rounded">+12.4%</span>
+              <span className="text-xs font-medium text-[#0E0F0F] bg-[#96EA7A]/20 px-2 py-1 rounded">
+                +12.4%
+              </span>
             </div>
             <div className="flex gap-1">
-              <button className="px-3 py-1.5 text-xs font-medium bg-[#96EA7A] text-[#0E0F0F] rounded-lg">1D</button>
-              <button className="px-3 py-1.5 text-xs font-medium text-[#9EB3A8] hover:bg-[#E6F1E7] rounded-lg">1W</button>
-              <button className="px-3 py-1.5 text-xs font-medium text-[#9EB3A8] hover:bg-[#E6F1E7] rounded-lg">1M</button>
-              <button className="px-3 py-1.5 text-xs font-medium text-[#9EB3A8] hover:bg-[#E6F1E7] rounded-lg">1Y</button>
+              <button className="px-3 py-1.5 text-xs font-medium bg-[#96EA7A] text-[#0E0F0F] rounded-lg">
+                1D
+              </button>
+              <button className="px-3 py-1.5 text-xs font-medium text-[#9EB3A8] hover:bg-[#E6F1E7] rounded-lg">
+                1W
+              </button>
+              <button className="px-3 py-1.5 text-xs font-medium text-[#9EB3A8] hover:bg-[#E6F1E7] rounded-lg">
+                1M
+              </button>
+              <button className="px-3 py-1.5 text-xs font-medium text-[#9EB3A8] hover:bg-[#E6F1E7] rounded-lg">
+                1Y
+              </button>
             </div>
           </div>
           <div className="p-6">
@@ -230,8 +280,18 @@ export function AdminCockpit() {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#F2F2F2" />
-                <XAxis dataKey="time" tick={{ fontSize: 12, fill: '#9EB3A8' }} axisLine={false} tickLine={false} />
-                <YAxis tickFormatter={formatCurrency} tick={{ fontSize: 12, fill: '#9EB3A8' }} axisLine={false} tickLine={false} />
+                <XAxis
+                  dataKey="time"
+                  tick={{ fontSize: 12, fill: '#9EB3A8' }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis
+                  tickFormatter={formatCurrency}
+                  tick={{ fontSize: 12, fill: '#9EB3A8' }}
+                  axisLine={false}
+                  tickLine={false}
+                />
                 <Tooltip content={<CustomTooltip />} />
                 <Area
                   type="monotone"
@@ -260,11 +320,18 @@ export function AdminCockpit() {
               </span>
             </div>
             <div className="w-full bg-[#F2F2F2] rounded-full h-3 mb-3">
-              <div className="bg-gradient-to-r from-[#96EA7A] to-[#7ED066] h-3 rounded-full transition-all" style={{ width: '67%' }}></div>
+              <div
+                className="bg-gradient-to-r from-[#96EA7A] to-[#7ED066] h-3 rounded-full transition-all"
+                style={{ width: '67%' }}
+              ></div>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-[#9EB3A8]">Progress: <span className="text-[#0E0F0F] font-medium">67%</span></span>
-              <span className="text-[#9EB3A8]">Reste: <span className="text-[#9EB3A8] font-medium">8h 24m</span></span>
+              <span className="text-[#9EB3A8]">
+                Progress: <span className="text-[#0E0F0F] font-medium">67%</span>
+              </span>
+              <span className="text-[#9EB3A8]">
+                Reste: <span className="text-[#9EB3A8] font-medium">8h 24m</span>
+              </span>
             </div>
           </div>
 
@@ -318,11 +385,26 @@ export function AdminCockpit() {
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={flowData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#F2F2F2" />
-                <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#9EB3A8' }} axisLine={false} tickLine={false} />
-                <YAxis tickFormatter={formatCurrency} tick={{ fontSize: 12, fill: '#9EB3A8' }} axisLine={false} tickLine={false} />
+                <XAxis
+                  dataKey="month"
+                  tick={{ fontSize: 12, fill: '#9EB3A8' }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis
+                  tickFormatter={formatCurrency}
+                  tick={{ fontSize: 12, fill: '#9EB3A8' }}
+                  axisLine={false}
+                  tickLine={false}
+                />
                 <Tooltip content={<CustomTooltip />} />
                 <Bar dataKey="deposits" name="Deposits" fill="#96EA7A" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="withdrawals" name="Withdrawals" fill="#9EB3A8" radius={[4, 4, 0, 0]} />
+                <Bar
+                  dataKey="withdrawals"
+                  name="Withdrawals"
+                  fill="#9EB3A8"
+                  radius={[4, 4, 0, 0]}
+                />
               </BarChart>
             </ResponsiveContainer>
 
@@ -347,13 +429,20 @@ export function AdminCockpit() {
         <div className="bg-white border border-[#9EB3A8]/20 rounded-2xl overflow-hidden">
           <div className="flex items-center justify-between px-6 py-4 border-b border-[#9EB3A8]/10">
             <h3 className="font-bold text-[#0E0F0F]">APR Evolution</h3>
-            <span className="text-xs font-medium text-[#0E0F0F] bg-[#96EA7A]/20 px-2 py-1 rounded">Stable</span>
+            <span className="text-xs font-medium text-[#0E0F0F] bg-[#96EA7A]/20 px-2 py-1 rounded">
+              Stable
+            </span>
           </div>
           <div className="p-6">
             <ResponsiveContainer width="100%" height={220}>
               <LineChart data={aprData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#F2F2F2" />
-                <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#9EB3A8' }} axisLine={false} tickLine={false} />
+                <XAxis
+                  dataKey="month"
+                  tick={{ fontSize: 12, fill: '#9EB3A8' }}
+                  axisLine={false}
+                  tickLine={false}
+                />
                 <YAxis
                   domain={[10, 14]}
                   tickFormatter={(value) => `${value}%`}
@@ -402,8 +491,18 @@ export function AdminCockpit() {
         <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           <button className="flex items-center gap-3 p-4 bg-[#F2F2F2] hover:bg-[#96EA7A]/10 rounded-xl transition-colors text-left group">
             <div className="w-12 h-12 bg-[#96EA7A]/20 rounded-xl flex items-center justify-center group-hover:bg-[#96EA7A]/30 transition-colors">
-              <svg className="w-6 h-6 text-[#0E0F0F]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <svg
+                className="w-6 h-6 text-[#0E0F0F]"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
               </svg>
             </div>
             <div>
@@ -413,8 +512,18 @@ export function AdminCockpit() {
           </button>
           <button className="flex items-center gap-3 p-4 bg-[#F2F2F2] hover:bg-[#E6F1E7] rounded-xl transition-colors text-left group">
             <div className="w-12 h-12 bg-[#E6F1E7] rounded-xl flex items-center justify-center group-hover:bg-[#E6F1E7] transition-colors">
-              <svg className="w-6 h-6 text-[#9EB3A8]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+              <svg
+                className="w-6 h-6 text-[#9EB3A8]"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
+                />
               </svg>
             </div>
             <div>
@@ -424,8 +533,18 @@ export function AdminCockpit() {
           </button>
           <button className="flex items-center gap-3 p-4 bg-[#F2F2F2] hover:bg-[#E6F1E7] rounded-xl transition-colors text-left group">
             <div className="w-12 h-12 bg-[#E6F1E7] rounded-xl flex items-center justify-center group-hover:bg-[#E6F1E7] transition-colors">
-              <svg className="w-6 h-6 text-[#9EB3A8]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+              <svg
+                className="w-6 h-6 text-[#9EB3A8]"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+                />
               </svg>
             </div>
             <div>
@@ -435,8 +554,18 @@ export function AdminCockpit() {
           </button>
           <button className="flex items-center gap-3 p-4 bg-[#F2F2F2] hover:bg-[#E6F1E7] rounded-xl transition-colors text-left group">
             <div className="w-12 h-12 bg-[#E6F1E7] rounded-xl flex items-center justify-center group-hover:bg-[#E6F1E7] transition-colors">
-              <svg className="w-6 h-6 text-[#9EB3A8]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              <svg
+                className="w-6 h-6 text-[#9EB3A8]"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                />
               </svg>
             </div>
             <div>
@@ -457,12 +586,24 @@ export function AdminCockpit() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-[#9EB3A8]/10 bg-[#F2F2F2]">
-                <th className="py-3 px-4 text-left text-xs font-semibold text-[#9EB3A8] uppercase">Vault</th>
-                <th className="py-3 px-4 text-left text-xs font-semibold text-[#9EB3A8] uppercase">Token</th>
-                <th className="py-3 px-4 text-right text-xs font-semibold text-[#9EB3A8] uppercase">TVL</th>
-                <th className="py-3 px-4 text-right text-xs font-semibold text-[#9EB3A8] uppercase">APR</th>
-                <th className="py-3 px-4 text-right text-xs font-semibold text-[#9EB3A8] uppercase">Epoch</th>
-                <th className="py-3 px-4 text-right text-xs font-semibold text-[#9EB3A8] uppercase">Status</th>
+                <th className="py-3 px-4 text-left text-xs font-semibold text-[#9EB3A8] uppercase">
+                  Vault
+                </th>
+                <th className="py-3 px-4 text-left text-xs font-semibold text-[#9EB3A8] uppercase">
+                  Token
+                </th>
+                <th className="py-3 px-4 text-right text-xs font-semibold text-[#9EB3A8] uppercase">
+                  TVL
+                </th>
+                <th className="py-3 px-4 text-right text-xs font-semibold text-[#9EB3A8] uppercase">
+                  APR
+                </th>
+                <th className="py-3 px-4 text-right text-xs font-semibold text-[#9EB3A8] uppercase">
+                  Epoch
+                </th>
+                <th className="py-3 px-4 text-right text-xs font-semibold text-[#9EB3A8] uppercase">
+                  Status
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -472,9 +613,7 @@ export function AdminCockpit() {
             </tbody>
           </table>
         ) : (
-          <div className="py-12 text-center text-[#9EB3A8]">
-            Aucun vault actif
-          </div>
+          <div className="py-12 text-center text-[#9EB3A8]">Aucun vault actif</div>
         )}
       </div>
     </div>

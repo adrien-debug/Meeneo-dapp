@@ -315,7 +315,6 @@ export default function StepProductConfig({
     [],
   )
 
-   
   useEffect(() => {
     fetchLiveBtcPrice(true)
     loadDependencies()

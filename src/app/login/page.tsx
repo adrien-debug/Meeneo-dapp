@@ -47,8 +47,10 @@ export default function Login() {
               <span className="text-xs text-white/60 font-medium">Live on Base</span>
             </div>
             <h2 className="text-[2.5rem] xl:text-[3rem] font-black text-white leading-[1.1] tracking-tight mb-4">
-              Institutional<br />
-              <span className="text-[#96EA7A]">yield</span>, accessible<br />
+              Institutional
+              <br />
+              <span className="text-[#96EA7A]">yield</span>, accessible
+              <br />
               to everyone.
             </h2>
             <p className="text-base text-white/40 max-w-sm leading-relaxed">
@@ -75,7 +77,7 @@ export default function Login() {
               { label: 'TVL', value: '$26.3M+' },
               { label: 'Avg APY', value: '8–15%' },
               { label: 'Strategies', value: '3' },
-            ].map(stat => (
+            ].map((stat) => (
               <div key={stat.label}>
                 <p className="text-lg font-black text-white">{stat.value}</p>
                 <p className="text-xs text-white/30 font-medium">{stat.label}</p>
@@ -90,7 +92,14 @@ export default function Login() {
         <div className="w-full max-w-[400px]">
           <div className="text-center mb-10">
             <div className="flex items-center justify-center mb-6">
-              <Image src="/Logo1.png" alt="Hearst" width={240} height={72} className="object-contain" style={{ mixBlendMode: 'multiply', backgroundColor: 'transparent' }} />
+              <Image
+                src="/Logo1.png"
+                alt="Hearst"
+                width={240}
+                height={72}
+                className="object-contain"
+                style={{ mixBlendMode: 'multiply', backgroundColor: 'transparent' }}
+              />
             </div>
             <p className="text-[#0E0F0F] text-body font-semibold leading-relaxed">
               Real World Assets powered by Bitcoin Mining
@@ -102,7 +111,12 @@ export default function Login() {
             className="w-full h-14 bg-[#96EA7A] text-[#0E0F0F] font-bold text-base rounded-2xl hover:bg-[#7ED066] shadow-lg shadow-[#96EA7A]/20 hover:shadow-xl hover:shadow-[#96EA7A]/30 transition-all flex items-center justify-center gap-2.5 active:scale-[0.98]"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+              />
             </svg>
             Connect Wallet
           </button>
@@ -121,9 +135,17 @@ export default function Login() {
                   className="flex flex-col items-center gap-2 group"
                 >
                   <div className="w-14 h-14 bg-white rounded-2xl border border-[#9EB3A8]/15 flex items-center justify-center group-hover:border-[#96EA7A]/30 group-hover:shadow-md transition-all">
-                    <Image src={wallet.icon} alt={wallet.name} width={28} height={28} className="rounded-sm" />
+                    <Image
+                      src={wallet.icon}
+                      alt={wallet.name}
+                      width={28}
+                      height={28}
+                      className="rounded-sm"
+                    />
                   </div>
-                  <span className="text-xs text-[#0E0F0F]/50 font-medium group-hover:text-[#0E0F0F] transition-colors">{wallet.name}</span>
+                  <span className="text-xs text-[#0E0F0F]/50 font-medium group-hover:text-[#0E0F0F] transition-colors">
+                    {wallet.name}
+                  </span>
                 </button>
               ))}
             </div>
@@ -136,7 +158,7 @@ export default function Login() {
                 { label: 'TVL', value: '$26.3M+' },
                 { label: 'Avg APY', value: '8–15%' },
                 { label: 'Strategies', value: '3' },
-              ].map(stat => (
+              ].map((stat) => (
                 <div key={stat.label}>
                   <p className="text-base font-black text-[#0E0F0F]">{stat.value}</p>
                   <p className="text-xs text-[#9EB3A8]">{stat.label}</p>
@@ -146,9 +168,13 @@ export default function Login() {
           </div>
 
           <div className="flex items-center justify-center gap-4 text-xs text-[#0E0F0F]/40 font-medium mt-10">
-            <a href="/privacy" className="hover:text-[#0E0F0F] transition-colors">Privacy</a>
+            <a href="/privacy" className="hover:text-[#0E0F0F] transition-colors">
+              Privacy
+            </a>
             <span className="text-[#9EB3A8]/30">·</span>
-            <a href="/terms" className="hover:text-[#0E0F0F] transition-colors">Terms</a>
+            <a href="/terms" className="hover:text-[#0E0F0F] transition-colors">
+              Terms
+            </a>
           </div>
         </div>
       </div>

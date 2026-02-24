@@ -64,7 +64,6 @@ export default function StepMinersHosting({ onComplete }: StepMinersHostingProps
   const [siteFormLockup, setSiteFormLockup] = useState(12)
   const [siteFormNotice, setSiteFormNotice] = useState(30)
 
-   
   useEffect(() => {
     loadAll()
   }, [])

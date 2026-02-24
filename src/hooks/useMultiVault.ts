@@ -8,21 +8,24 @@ const abi = TestEpochVault24hABI.abi
 
 // Get all active vaults from products
 export function useVaultsList() {
-  const vaults = useMemo(() => 
-    PRODUCTS.filter(p => 
-      p.status === 'active' && 
-      p.contractAddress && 
-      p.contractAddress !== '0x0000000000000000000000000000000000000000'
-    ).map(p => ({
-      address: p.contractAddress as `0x${string}`,
-      name: p.name,
-      slug: p.slug,
-      token: p.token,
-      icon: p.icon,
-      color: p.color,
-      apr: p.apr,
-    }))
-  , [])
+  const vaults = useMemo(
+    () =>
+      PRODUCTS.filter(
+        (p) =>
+          p.status === 'active' &&
+          p.contractAddress &&
+          p.contractAddress !== '0x0000000000000000000000000000000000000000',
+      ).map((p) => ({
+        address: p.contractAddress as `0x${string}`,
+        name: p.name,
+        slug: p.slug,
+        token: p.token,
+        icon: p.icon,
+        color: p.color,
+        apr: p.apr,
+      })),
+    [],
+  )
 
   return { vaults }
 }
@@ -178,7 +181,7 @@ export function useVaultActions(vaultAddress: `0x${string}` | undefined) {
 // Aggregate stats across all vaults
 export function useAggregateStats() {
   const { vaults } = useVaultsList()
-  
+
   // For now, we'll compute this on demand
   // In production, you'd want to batch these calls
   return {

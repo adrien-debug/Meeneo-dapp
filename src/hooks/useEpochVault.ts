@@ -1,7 +1,13 @@
 import { CONTRACT_ADDRESSES } from '@/config/contracts'
 import EpochVaultABI from '@/contracts/EpochVault.json'
 import { formatUnits, parseUnits } from 'viem'
-import { useAccount, useContractRead, useDeployContract, useWaitForTransactionReceipt, useWriteContract } from 'wagmi'
+import {
+  useAccount,
+  useContractRead,
+  useDeployContract,
+  useWaitForTransactionReceipt,
+  useWriteContract,
+} from 'wagmi'
 
 // Contract ABI
 const abi = EpochVaultABI.abi
@@ -71,38 +77,42 @@ export function useUserInfo() {
   // We'll calculate withdrawal lock info client-side based on userInfo
 
   // Calculate withdrawal lock info based on first deposit time
-  const withdrawalLockInfo = userInfo ? (() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const firstDepositTime = Number((userInfo as any)[4])
-    const lockPeriod = 3 * 365 * 24 * 60 * 60 // 3 years in seconds
-    const lockEndTime = firstDepositTime + lockPeriod
-    const currentTime = Math.floor(Date.now() / 1000)
-    const canWithdrawNow = currentTime >= lockEndTime
-    const timeRemaining = Math.max(0, lockEndTime - currentTime)
+  const withdrawalLockInfo = userInfo
+    ? (() => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const firstDepositTime = Number((userInfo as any)[4])
+        const lockPeriod = 3 * 365 * 24 * 60 * 60 // 3 years in seconds
+        const lockEndTime = firstDepositTime + lockPeriod
+        const currentTime = Math.floor(Date.now() / 1000)
+        const canWithdrawNow = currentTime >= lockEndTime
+        const timeRemaining = Math.max(0, lockEndTime - currentTime)
 
-    return {
-      firstDepositTime: firstDepositTime.toString(),
-      lockEndTime: lockEndTime.toString(),
-      canWithdrawNow,
-      timeRemaining: timeRemaining.toString(),
-    }
-  })() : null
+        return {
+          firstDepositTime: firstDepositTime.toString(),
+          lockEndTime: lockEndTime.toString(),
+          canWithdrawNow,
+          timeRemaining: timeRemaining.toString(),
+        }
+      })()
+    : null
 
   const canWithdraw = withdrawalLockInfo?.canWithdrawNow || false
 
   return {
-    userInfo: userInfo ? {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      depositAmount: formatUnits((userInfo as any)[0], 6),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      lastClaimedEpoch: (userInfo as any)[1].toString(),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      pendingRewards: formatUnits((userInfo as any)[2], 6),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      lastDepositEpoch: (userInfo as any)[3].toString(),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      firstDepositTime: (userInfo as any)[4].toString(),
-    } : null,
+    userInfo: userInfo
+      ? {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          depositAmount: formatUnits((userInfo as any)[0], 6),
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          lastClaimedEpoch: (userInfo as any)[1].toString(),
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          pendingRewards: formatUnits((userInfo as any)[2], 6),
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          lastDepositEpoch: (userInfo as any)[3].toString(),
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          firstDepositTime: (userInfo as any)[4].toString(),
+        }
+      : null,
     pendingRewards: pendingRewards ? formatUnits(pendingRewards as bigint, 6) : '0',
     canWithdraw,
     withdrawalLockInfo,
@@ -252,7 +262,10 @@ export function useUSDCAllowance() {
       },
     ],
     functionName: 'allowance',
-    args: address && CONTRACT_ADDRESSES.EPOCH_VAULT ? [address, CONTRACT_ADDRESSES.EPOCH_VAULT as `0x${string}`] : undefined,
+    args:
+      address && CONTRACT_ADDRESSES.EPOCH_VAULT
+        ? [address, CONTRACT_ADDRESSES.EPOCH_VAULT as `0x${string}`]
+        : undefined,
     query: { enabled: !!address && !!CONTRACT_ADDRESSES.EPOCH_VAULT },
   })
 
@@ -550,7 +563,11 @@ export function useDeployVault() {
     }
   }
 
-  const { isLoading: isConfirming, isSuccess: isConfirmed, data: receipt } = useWaitForTransactionReceipt({
+  const {
+    isLoading: isConfirming,
+    isSuccess: isConfirmed,
+    data: receipt,
+  } = useWaitForTransactionReceipt({
     hash,
   })
 

@@ -28,7 +28,13 @@ export function Header() {
       <div className="page-container">
         <div className="flex items-center justify-between h-16">
           <Link href={isConnected ? '/dashboard' : '/login'} className="flex items-center shrink-0">
-            <Image src="/Logo1.png" alt="Hearst" width={120} height={36} className="object-contain" />
+            <Image
+              src="/Logo1.png"
+              alt="Hearst"
+              width={120}
+              height={36}
+              className="object-contain"
+            />
           </Link>
 
           <nav className="hidden md:flex items-center gap-1">
@@ -50,14 +56,18 @@ export function Header() {
           <div className="flex items-center gap-2 sm:gap-3">
             {isConnected && (
               <div className="hidden sm:flex items-center gap-2">
-                <div className={`px-2.5 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5 ${
-                  isOnBase
-                    ? 'bg-[#9EB3A8]/15 text-[#9EB3A8]'
-                    : 'bg-[#0E0F0F]/15 text-[#0E0F0F]'
-                }`}>
+                <div
+                  className={`px-2.5 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5 ${
+                    isOnBase ? 'bg-[#9EB3A8]/15 text-[#9EB3A8]' : 'bg-[#0E0F0F]/15 text-[#0E0F0F]'
+                  }`}
+                >
                   <span className="relative flex h-2 w-2">
-                    <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${isOnBase ? 'bg-[#9EB3A8]' : 'bg-[#0E0F0F]'}`} />
-                    <span className={`relative inline-flex rounded-full h-2 w-2 ${isOnBase ? 'bg-[#9EB3A8]' : 'bg-[#0E0F0F]'}`} />
+                    <span
+                      className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${isOnBase ? 'bg-[#9EB3A8]' : 'bg-[#0E0F0F]'}`}
+                    />
+                    <span
+                      className={`relative inline-flex rounded-full h-2 w-2 ${isOnBase ? 'bg-[#9EB3A8]' : 'bg-[#0E0F0F]'}`}
+                    />
                   </span>
                   {isOnBase ? 'Base' : 'Wrong'}
                 </div>
@@ -68,7 +78,7 @@ export function Header() {
             )}
 
             <button
-              onClick={() => isConnected ? disconnect() : open()}
+              onClick={() => (isConnected ? disconnect() : open())}
               className={`px-4 py-2 rounded-full text-sm font-semibold transition-all whitespace-nowrap ${
                 isConnected
                   ? 'bg-[#F2F2F2] text-[#9EB3A8] hover:bg-[#E6F1E7] hover:text-[#0E0F0F] border border-[#9EB3A8]/30'
@@ -83,11 +93,26 @@ export function Header() {
               className="md:hidden p-2 rounded-lg hover:bg-[#F2F2F2] transition-colors"
               aria-label="Menu"
             >
-              <svg className="w-5 h-5 text-[#9EB3A8]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg
+                className="w-5 h-5 text-[#9EB3A8]"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
                 {isMenuOpen ? (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 ) : (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 6h16M4 12h16M4 18h16"
+                  />
                 )}
               </svg>
             </button>
@@ -115,10 +140,14 @@ export function Header() {
               {isConnected && (
                 <>
                   <div className="border-t border-[#9EB3A8]/20 my-1" />
-                  <div className={`px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 ${
-                    isOnBase ? 'bg-[#9EB3A8]/15 text-[#9EB3A8]' : 'bg-[#0E0F0F]/15 text-[#0E0F0F]'
-                  }`}>
-                    <div className={`w-2 h-2 rounded-full ${isOnBase ? 'bg-[#9EB3A8]' : 'bg-[#0E0F0F]'}`} />
+                  <div
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 ${
+                      isOnBase ? 'bg-[#9EB3A8]/15 text-[#9EB3A8]' : 'bg-[#0E0F0F]/15 text-[#0E0F0F]'
+                    }`}
+                  >
+                    <div
+                      className={`w-2 h-2 rounded-full ${isOnBase ? 'bg-[#9EB3A8]' : 'bg-[#0E0F0F]'}`}
+                    />
                     {isOnBase ? 'Base' : chain?.name || 'Wrong Network'}
                   </div>
                   <div className="px-3 py-1.5 bg-[#F2F2F2] rounded-lg text-xs font-mono text-[#9EB3A8] break-all">

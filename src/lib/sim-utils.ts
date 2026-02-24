@@ -1,6 +1,9 @@
 export function formatUSD(value: number): string {
   return new Intl.NumberFormat('en-US', {
-    style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0,
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
   }).format(value)
 }
 
@@ -16,7 +19,8 @@ export function formatPercent(value: number, decimals = 1): string {
 
 export function formatNumber(value: number, decimals = 2): string {
   return new Intl.NumberFormat('en-US', {
-    minimumFractionDigits: decimals, maximumFractionDigits: decimals,
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
   }).format(value)
 }
 
@@ -35,10 +39,14 @@ export function exportAsCSV(rows: Record<string, unknown>[], filename: string) {
   const headers = Object.keys(rows[0])
   const csv = [
     headers.join(','),
-    ...rows.map(row => headers.map(h => {
-      const val = row[h]
-      return typeof val === 'string' && val.includes(',') ? `"${val}"` : String(val)
-    }).join(',')),
+    ...rows.map((row) =>
+      headers
+        .map((h) => {
+          const val = row[h]
+          return typeof val === 'string' && val.includes(',') ? `"${val}"` : String(val)
+        })
+        .join(','),
+    ),
   ].join('\n')
   const blob = new Blob([csv], { type: 'text/csv' })
   const url = URL.createObjectURL(blob)

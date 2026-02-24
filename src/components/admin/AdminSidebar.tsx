@@ -13,7 +13,7 @@ export function AdminSidebar({
   activeView,
   selectedVaultSlug,
   onSelectCockpit,
-  onSelectVault
+  onSelectVault,
 }: AdminSidebarProps) {
   const { vaults } = useVaultsList()
 
@@ -29,13 +29,19 @@ export function AdminSidebar({
         {/* Cockpit */}
         <button
           onClick={onSelectCockpit}
-          className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-all ${activeView === 'cockpit'
-            ? 'bg-[#96EA7A]/10 border-l-[3px] border-[#96EA7A] text-[#0E0F0F]'
-            : 'hover:bg-[#E6F1E7] text-[#9EB3A8] border-l-[3px] border-transparent'
-            }`}
+          className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-all ${
+            activeView === 'cockpit'
+              ? 'bg-[#96EA7A]/10 border-l-[3px] border-[#96EA7A] text-[#0E0F0F]'
+              : 'hover:bg-[#E6F1E7] text-[#9EB3A8] border-l-[3px] border-transparent'
+          }`}
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={1.5}
+              d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
+            />
           </svg>
           <span className="font-medium">Terminal</span>
         </button>
@@ -51,10 +57,11 @@ export function AdminSidebar({
           <button
             key={vault.slug}
             onClick={() => onSelectVault(vault.slug)}
-            className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-all ${activeView === 'vault' && selectedVaultSlug === vault.slug
-              ? 'bg-[#96EA7A]/10 border-l-[3px] border-[#96EA7A] text-[#0E0F0F]'
-              : 'hover:bg-[#E6F1E7] text-[#9EB3A8] border-l-[3px] border-transparent'
-              }`}
+            className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-all ${
+              activeView === 'vault' && selectedVaultSlug === vault.slug
+                ? 'bg-[#96EA7A]/10 border-l-[3px] border-[#96EA7A] text-[#0E0F0F]'
+                : 'hover:bg-[#E6F1E7] text-[#9EB3A8] border-l-[3px] border-transparent'
+            }`}
           >
             <span className="text-lg">{vault.icon}</span>
             <div className="flex-1 min-w-0">
@@ -73,13 +80,19 @@ export function AdminSidebar({
       <div className="p-4 border-t border-[#9EB3A8]/20">
         <button
           onClick={() => onSelectVault('create')}
-          className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-all ${selectedVaultSlug === 'create'
-            ? 'bg-[#96EA7A] text-[#0E0F0F]'
-            : 'bg-[#F2F2F2] text-[#9EB3A8] hover:bg-[#E6F1E7]'
-            }`}
+          className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-all ${
+            selectedVaultSlug === 'create'
+              ? 'bg-[#96EA7A] text-[#0E0F0F]'
+              : 'bg-[#F2F2F2] text-[#9EB3A8] hover:bg-[#E6F1E7]'
+          }`}
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+            />
           </svg>
           Nouveau Vault
         </button>

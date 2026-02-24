@@ -29,12 +29,12 @@ export const HARDCODED_ADDRESSES = {
 } as const
 
 export const CONTRACT_CONFIG = {
-  LOCK_PERIOD: 3 * 365 * 24 * 60 * 60,      // 3 years
-  YIELD_CLIFF: 1 * 365 * 24 * 60 * 60,       // 1 year
-  EPOCH_DURATION: 30 * 24 * 60 * 60,          // 30 days
+  LOCK_PERIOD: 3 * 365 * 24 * 60 * 60, // 3 years
+  YIELD_CLIFF: 1 * 365 * 24 * 60 * 60, // 1 year
+  EPOCH_DURATION: 30 * 24 * 60 * 60, // 30 days
   BASIS_POINTS: 10000,
-  MANAGEMENT_FEE_BPS: 150,                     // 1.5%
-  PERFORMANCE_FEE_BPS: 1000,                   // 10%
-  EXIT_FEE_BPS: 10,                            // 0.1%
-  EARLY_EXIT_PENALTY_BPS: 500,                 // 5%
+  MANAGEMENT_FEE_BPS: 150, // 1.5%
+  PERFORMANCE_FEE_BPS: 1000, // 10%
+  EXIT_FEE_BPS: 10, // 0.1%
+  EARLY_EXIT_PENALTY_BPS: 500, // 5%
 } as const

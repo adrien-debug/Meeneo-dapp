@@ -32,16 +32,26 @@ export function NetworkValidator() {
     <div className="fixed inset-0 bg-[#0E0F0F]/50 flex items-center justify-center z-50">
       <div className="bg-white rounded-xl p-6 max-w-sm mx-4 text-center">
         <div className="w-12 h-12 bg-[#E6F1E7] rounded-lg flex items-center justify-center mx-auto mb-3">
-          <svg className="w-6 h-6 text-[#9EB3A8]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 16.5c-.77.833.192 2.5 1.732 2.5z" />
+          <svg
+            className="w-6 h-6 text-[#9EB3A8]"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 16.5c-.77.833.192 2.5 1.732 2.5z"
+            />
           </svg>
         </div>
 
         <h3 className="card-title mb-1">Wrong Network</h3>
 
         <p className="text-xs text-[#9EB3A8] mb-4">
-          Connected to <strong className="text-[#0E0F0F]">{chain?.name}</strong>.
-          HearstVault requires <strong className="text-[#0E0F0F]">Base</strong>.
+          Connected to <strong className="text-[#0E0F0F]">{chain?.name}</strong>. HearstVault
+          requires <strong className="text-[#0E0F0F]">Base</strong>.
         </p>
 
         <div className="space-y-2">

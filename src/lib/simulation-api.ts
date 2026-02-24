@@ -3,18 +3,18 @@
  * Requests go through Next.js rewrite proxy: /api/simulation/* -> Railway backend.
  */
 
-const BASE = '/api/simulation';
+const BASE = '/api/simulation'
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
     headers: { 'Content-Type': 'application/json', ...options?.headers },
     ...options,
-  });
+  })
   if (!res.ok) {
-    const err = await res.json().catch(() => ({ detail: res.statusText }));
-    throw new Error(err.detail || `Simulation API error: ${res.status}`);
+    const err = await res.json().catch(() => ({ detail: res.statusText }))
+    throw new Error(err.detail || `Simulation API error: ${res.status}`)
   }
-  return res.json();
+  return res.json()
 }
 
 // ── Seed data IDs (created by backend seed) ──────────────────
@@ -23,68 +23,83 @@ export const SEED_IDS = {
   sites: { texas: 'seed-site-texas', wyoming: 'seed-site-wyoming' },
   btcCurves: { bear: 'seed-btc-bear', base: 'seed-btc-base', bull: 'seed-btc-bull' },
   netCurves: { bear: 'seed-net-bear', base: 'seed-net-base', bull: 'seed-net-bull' },
-} as const;
+} as const
 
 // ── Types ────────────────────────────────────────────────────
 
 export interface SimulationRequest {
-  capital_raised_usd: number;
-  product_tenor_months: number;
-  yield_bucket: { allocated_usd: number; base_apr: number };
+  capital_raised_usd: number
+  product_tenor_months: number
+  yield_bucket: { allocated_usd: number; base_apr: number }
   btc_holding_bucket: {
-    allocated_usd: number;
-    buying_price_usd: number;
-    target_sell_price_usd?: number;
-    capital_recon_pct?: number;
-    extra_yield_strikes?: { strike_price: number; btc_share_pct: number }[];
-  };
+    allocated_usd: number
+    buying_price_usd: number
+    target_sell_price_usd?: number
+    capital_recon_pct?: number
+    extra_yield_strikes?: { strike_price: number; btc_share_pct: number }[]
+  }
   mining_bucket: {
-    allocated_usd: number;
-    miner_id: string;
-    hosting_site_id: string;
-    miner_count: number;
-    base_yield_apr?: number;
-    bonus_yield_apr?: number;
-    take_profit_ladder?: { price_trigger: number; sell_pct: number }[];
-  };
+    allocated_usd: number
+    miner_id: string
+    hosting_site_id: string
+    miner_count: number
+    base_yield_apr?: number
+    bonus_yield_apr?: number
+    take_profit_ladder?: { price_trigger: number; sell_pct: number }[]
+  }
   commercial?: {
-    upfront_commercial_pct?: number;
-    management_fees_pct?: number;
-    performance_fees_pct?: number;
-  };
-  btc_price_curve_ids: Record<string, string>;
-  network_curve_ids: Record<string, string>;
-  user?: { user_id: string; role: string };
+    upfront_commercial_pct?: number
+    management_fees_pct?: number
+    performance_fees_pct?: number
+  }
+  btc_price_curve_ids: Record<string, string>
+  network_curve_ids: Record<string, string>
+  user?: { user_id: string; role: string }
 }
 
 export interface ScenarioMetrics {
-  capital_raised_usd: number;
-  final_portfolio_usd: number;
-  total_return_pct: number;
-  total_yield_paid_usd: number;
-  effective_apr: number;
-  capital_preservation_ratio: number;
-  gross_final_portfolio_usd: number;
-  gross_total_return_pct: number;
+  capital_raised_usd: number
+  final_portfolio_usd: number
+  total_return_pct: number
+  total_yield_paid_usd: number
+  effective_apr: number
+  capital_preservation_ratio: number
+  gross_final_portfolio_usd: number
+  gross_total_return_pct: number
 }
 
 export interface ScenarioResult {
-  yield_bucket: { metrics: { total_yield_usd: number; effective_apr: number; final_value_usd: number } };
-  btc_holding_bucket: { metrics: { target_hit: boolean; sell_month: number | null; final_value_usd: number; total_return_pct: number } };
-  mining_bucket: { metrics: Record<string, number>; monthly_waterfall: Record<string, number>[] };
-  commercial: Record<string, number> | null;
+  yield_bucket: {
+    metrics: { total_yield_usd: number; effective_apr: number; final_value_usd: number }
+  }
+  btc_holding_bucket: {
+    metrics: {
+      target_hit: boolean
+      sell_month: number | null
+      final_value_usd: number
+      total_return_pct: number
+    }
+  }
+  mining_bucket: { metrics: Record<string, number>; monthly_waterfall: Record<string, number>[] }
+  commercial: Record<string, number> | null
   aggregated: {
-    metrics: ScenarioMetrics;
-    decision: string;
-    decision_reasons: string[];
-    monthly_portfolio: { month: number; yield_value_usd: number; holding_value_usd: number; mining_value_usd: number; total_portfolio_usd: number }[];
-  };
+    metrics: ScenarioMetrics
+    decision: string
+    decision_reasons: string[]
+    monthly_portfolio: {
+      month: number
+      yield_value_usd: number
+      holding_value_usd: number
+      mining_value_usd: number
+      total_portfolio_usd: number
+    }[]
+  }
 }
 
 export interface SimulationResponse {
-  id: string;
-  scenario_results: Record<'bear' | 'base' | 'bull', ScenarioResult>;
-  created_at: string;
+  id: string
+  scenario_results: Record<'bear' | 'base' | 'bull', ScenarioResult>
+  created_at: string
 }
 
 // ── API calls ────────────────────────────────────────────────
@@ -98,8 +113,11 @@ export const simulationApi = {
       body: JSON.stringify(data),
     }),
 
-  listRuns: () => request<{ id: string; created_at: string; capital_raised_usd: number }[]>('/product-config/runs'),
-};
+  listRuns: () =>
+    request<{ id: string; created_at: string; capital_raised_usd: number }[]>(
+      '/product-config/runs',
+    ),
+}
 
 /**
  * Build a simulation request with sensible defaults from vault config.
@@ -109,9 +127,9 @@ export function buildSimulationRequest(
   investmentUsd: number,
   btcSpotPrice: number = 97000,
 ): SimulationRequest {
-  const yieldPct = 0.30;
-  const holdingPct = 0.30;
-  const miningPct = 0.40;
+  const yieldPct = 0.3
+  const holdingPct = 0.3
+  const miningPct = 0.4
 
   return {
     capital_raised_usd: investmentUsd,
@@ -139,7 +157,7 @@ export function buildSimulationRequest(
       take_profit_ladder: [
         { price_trigger: btcSpotPrice * 1.3, sell_pct: 0.15 },
         { price_trigger: btcSpotPrice * 1.5, sell_pct: 0.25 },
-        { price_trigger: btcSpotPrice * 1.8, sell_pct: 0.30 },
+        { price_trigger: btcSpotPrice * 1.8, sell_pct: 0.3 },
       ],
     },
     commercial: {
@@ -150,5 +168,5 @@ export function buildSimulationRequest(
     btc_price_curve_ids: SEED_IDS.btcCurves,
     network_curve_ids: SEED_IDS.netCurves,
     user: { user_id: 'dapp-user', role: 'readonly' },
-  };
+  }
 }

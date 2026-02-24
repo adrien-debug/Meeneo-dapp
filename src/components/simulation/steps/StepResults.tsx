@@ -78,7 +78,6 @@ export default function StepResults({ runId, onReset }: StepResultsProps) {
   const [viewTab, setViewTab] = useState<ViewTab>('overview')
   const [waterfallScenario, setWaterfallScenario] = useState<string>('base')
 
-   
   useEffect(() => {
     loadRuns()
   }, [])
