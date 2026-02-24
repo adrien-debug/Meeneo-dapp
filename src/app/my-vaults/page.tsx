@@ -14,9 +14,9 @@ import { LoadingScreen } from '@/components/ui/LoadingScreen'
 import { ProgressRing } from '@/components/ui/ProgressRing'
 
 const STATUS_BG: Record<string, string> = {
-  active: 'bg-[#96EA7A]/15',
-  target_reached: 'bg-[#96EA7A]/15',
-  matured: 'bg-[#0E0F0F]/10',
+  active: 'bg-[#96EA7A]/20 border border-[#96EA7A]/30',
+  target_reached: 'bg-[#96EA7A]/20 border border-[#96EA7A]/30',
+  matured: 'bg-[#0E0F0F]/10 border border-[#0E0F0F]/15',
 }
 
 function VaultPositionCard({
@@ -73,10 +73,18 @@ function VaultPositionCard({
           </div>
           <div className="flex items-center gap-2">
             <span
-              className={`text-caption font-semibold px-2.5 py-1 rounded-full ${STATUS_BG[deposit.lockStatus]} ${getLockStatusColor(deposit.lockStatus)}`}
+              className={`text-caption font-bold px-3 py-1 rounded-full ${STATUS_BG[deposit.lockStatus]} ${getLockStatusColor(deposit.lockStatus)}`}
             >
               {getLockStatusLabel(deposit.lockStatus)}
             </span>
+            <svg
+              className="w-4 h-4 text-[#9EB3A8] group-hover:text-[#96EA7A] group-hover:translate-x-0.5 transition-all"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
           </div>
         </div>
 
@@ -99,14 +107,8 @@ function VaultPositionCard({
           ))}
         </div>
 
-        {/* Ring + metrics */}
+        {/* Metrics left + Ring right (larger) */}
         <div className="flex items-center gap-5 mb-5">
-          <div className="relative">
-            <ProgressRing percent={deposit.progressPercent} color={statusColor} />
-            <span className="absolute inset-0 flex items-center justify-center text-xs font-black text-[#0E0F0F]">
-              {deposit.progressPercent}%
-            </span>
-          </div>
           <div className="flex-1 grid grid-cols-2 gap-x-4 gap-y-3">
             <div>
               <p className="kpi-label mb-0.5">Deposited</p>
@@ -128,6 +130,12 @@ function VaultPositionCard({
                 {deposit.lockStatus === 'matured' ? 'Available' : `${daysRemaining}d`}
               </p>
             </div>
+          </div>
+          <div className="relative shrink-0">
+            <ProgressRing percent={deposit.progressPercent} color={statusColor} size={96} />
+            <span className="absolute inset-0 flex items-center justify-center text-sm font-black text-[#0E0F0F]">
+              {deposit.progressPercent}%
+            </span>
           </div>
         </div>
 
@@ -174,7 +182,7 @@ function VaultPositionCard({
                 e.stopPropagation()
                 onNavigate(vault.slug)
               }}
-              className="px-4 py-2 rounded-xl text-xs font-bold bg-[#96EA7A] text-[#0E0F0F] hover:bg-[#7ED066] transition-colors active:scale-[0.97]"
+              className="px-4 py-2 rounded-full text-xs font-bold bg-[#96EA7A] text-[#0E0F0F] hover:bg-[#7ED066] transition-colors active:scale-[0.97]"
             >
               Claim
             </button>
@@ -219,62 +227,56 @@ export default function MyVaults() {
 
       <main className="pt-20 pb-10">
         <div className="page-container">
-          {/* ─── Hero ─── */}
-          <div className={`${CARD} p-6 sm:p-8 relative overflow-hidden mt-6 mb-6`}>
-            <div className="absolute -top-32 -right-32 w-96 h-96 bg-gradient-to-br from-[#96EA7A]/6 to-transparent rounded-full blur-3xl pointer-events-none" />
-            <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-gradient-to-tr from-[#9EB3A8]/4 to-transparent rounded-full blur-2xl pointer-events-none" />
-
-            <div className="relative">
-              <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
-                <div>
-                  <p className="kpi-label mb-2">My Vaults</p>
-                  <h1 className="text-[2rem] sm:text-[2.5rem] font-black text-[#0E0F0F] tracking-tight leading-none">
-                    {fmtUsd(totalDeposited + totalYield)}
-                  </h1>
-                  <p className="text-sm text-[#9EB3A8] mt-1.5">Track your positions and earnings</p>
-                </div>
-                {totalPending > 0 && (
-                  <div className="flex items-center gap-3 px-5 py-3.5 rounded-2xl bg-[#96EA7A]/5 border border-[#96EA7A]/15 self-start sm:self-auto">
-                    <div className="w-10 h-10 rounded-xl bg-[#96EA7A]/15 flex items-center justify-center">
-                      <svg
-                        className="w-5 h-5 text-[#96EA7A]"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                      </svg>
-                    </div>
-                    <div className="text-left">
-                      <p className="text-xs text-[#9EB3A8] font-medium">Total Pending</p>
-                      <p className="text-lg font-black text-[#96EA7A]">{fmtUsd(totalPending)}</p>
-                    </div>
-                  </div>
-                )}
+          {/* ─── Hero — compact bar layout (different from Dashboard) ─── */}
+          <div className="mt-6 mb-6 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+              <div>
+                <p className="kpi-label mb-2">My Vaults</p>
+                <h1 className="text-[2.75rem] sm:text-[3.25rem] font-black text-[#0E0F0F] tracking-tight leading-none">
+                  {fmtUsd(totalDeposited + totalYield)}
+                </h1>
               </div>
-
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-[#9EB3A8]/10 rounded-xl overflow-hidden">
-                {[
-                  { label: 'Active Positions', value: String(activeDeposits.length) },
-                  { label: 'Total Deposited', value: fmtUsd(totalDeposited) },
-                  { label: 'Total Yield', value: fmtUsd(totalYield), accent: true },
-                  { label: 'Matured', value: String(maturedDeposits.length) },
-                ].map((kpi) => (
-                  <div key={kpi.label} className="bg-white px-5 py-4">
-                    <p className="kpi-label mb-1">{kpi.label}</p>
-                    <p
-                      className={`text-lg font-black ${'accent' in kpi && kpi.accent ? 'text-[#96EA7A]' : 'text-[#0E0F0F]'}`}
+              {totalPending > 0 && (
+                <div className="flex items-center gap-3 px-5 py-3.5 rounded-2xl bg-[#96EA7A]/5 border border-[#96EA7A]/15 self-start sm:self-auto">
+                  <div className="w-10 h-10 rounded-xl bg-[#96EA7A]/15 flex items-center justify-center">
+                    <svg
+                      className="w-5 h-5 text-[#96EA7A]"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
                     >
-                      {kpi.value}
-                    </p>
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
                   </div>
-                ))}
-              </div>
+                  <div className="text-left">
+                    <p className="text-xs text-[#9EB3A8] font-medium">Total Pending</p>
+                    <p className="text-lg font-black text-[#96EA7A]">{fmtUsd(totalPending)}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              {[
+                { label: 'Active', value: String(activeDeposits.length) },
+                { label: 'Deposited', value: fmtUsd(totalDeposited) },
+                { label: 'Yield', value: fmtUsd(totalYield), accent: true },
+                { label: 'Matured', value: String(maturedDeposits.length) },
+              ].map((kpi) => (
+                <div key={kpi.label} className={`${CARD} px-5 py-3 flex items-center gap-3`}>
+                  <span className="kpi-label">{kpi.label}</span>
+                  <span
+                    className={`text-base font-black ${'accent' in kpi && kpi.accent ? 'text-[#96EA7A]' : 'text-[#0E0F0F]'}`}
+                  >
+                    {kpi.value}
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
 
@@ -282,7 +284,7 @@ export default function MyVaults() {
           {activeDeposits.length > 0 && (
             <div className="mb-8">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-bold text-[#0E0F0F]">Active</h2>
+                <h2 className="section-title">Active</h2>
                 <span className="text-xs font-semibold text-[#9EB3A8] bg-[#F2F2F2] px-3 py-1.5 rounded-full">
                   {activeDeposits.length} position{activeDeposits.length > 1 ? 's' : ''}
                 </span>
@@ -303,7 +305,7 @@ export default function MyVaults() {
           {maturedDeposits.length > 0 && (
             <div className="mb-8">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-bold text-[#0E0F0F]">Matured — Ready to Withdraw</h2>
+                <h2 className="section-title">Matured — Ready to Withdraw</h2>
                 <button
                   onClick={() => router.push('/withdraw')}
                   className="text-sm font-semibold text-[#0E0F0F] bg-white border border-[#9EB3A8]/20 hover:border-[#96EA7A] px-4 py-2 rounded-full transition-all flex items-center gap-1.5 hover:shadow-sm"

@@ -9,7 +9,7 @@ export function ProgressRing({
   color: string
   size?: number
 }) {
-  const strokeWidth = 3.5
+  const strokeWidth = Math.max(4, size * 0.08)
   const radius = (size - strokeWidth) / 2
   const circumference = 2 * Math.PI * radius
   const offset = circumference - (percent / 100) * circumference

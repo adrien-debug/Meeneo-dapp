@@ -15,6 +15,7 @@ import {
   getVaultUserStats,
   timeAgo,
 } from '@/config/mock-data'
+import { useAuthGuard } from '@/hooks/useAuthGuard'
 import { useClaimRewards, useWithdraw } from '@/hooks/useEpochVault'
 import type { StrategyType, VaultStrategy } from '@/types/product'
 import Image from 'next/image'
@@ -31,7 +32,6 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import { useAuthGuard } from '@/hooks/useAuthGuard'
 
 import { ChartTooltip } from '@/components/ui/ChartTooltip'
 import { CARD, RISK_BG, STRATEGY_ICONS } from '@/components/ui/constants'
@@ -153,7 +153,7 @@ export default function VaultDetail() {
                     />
                   </div>
                   <div>
-                    <h1 className="text-2xl font-black text-[#0E0F0F] tracking-tight">
+                    <h1 className="text-[2rem] sm:text-[2.5rem] font-black text-[#0E0F0F] tracking-tight leading-none">
                       {vault.name}
                     </h1>
                     <div className="flex items-center gap-2 mt-0.5">
@@ -181,7 +181,7 @@ export default function VaultDetail() {
                   <button
                     onClick={() => claimRewards()}
                     disabled={isClaimPending || isClaimConfirming}
-                    className="flex items-center gap-3 px-5 py-3.5 rounded-2xl bg-[#96EA7A]/5 border border-[#96EA7A]/15 hover:border-[#96EA7A]/40 transition-all self-start sm:self-auto disabled:opacity-50"
+                    className="flex items-center gap-3 px-5 py-3.5 rounded-2xl bg-[#96EA7A]/5 border border-[#96EA7A]/20 hover:border-[#96EA7A]/50 hover:bg-[#96EA7A]/10 transition-all group self-start sm:self-auto disabled:opacity-50"
                   >
                     <div className="w-10 h-10 rounded-xl bg-[#96EA7A]/15 flex items-center justify-center">
                       <svg
@@ -206,11 +206,24 @@ export default function VaultDetail() {
                         {fmtUsd(userPosition.totalPending)}
                       </p>
                     </div>
+                    <svg
+                      className="w-4 h-4 text-[#9EB3A8] group-hover:text-[#96EA7A] group-hover:translate-x-0.5 transition-all ml-1"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
                   </button>
                 )}
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-[#9EB3A8]/10 rounded-xl overflow-hidden">
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-px bg-[#9EB3A8]/10 rounded-xl overflow-hidden">
                 {[
                   {
                     label: 'Your Deposit',
@@ -229,6 +242,14 @@ export default function VaultDetail() {
                         : '—',
                   },
                   { label: 'Lock Period', value: `${vault.lockPeriodMonths / 12} Years` },
+                  {
+                    label: 'ROI',
+                    value:
+                      userPosition.totalAmount > 0
+                        ? `+${fmtPercent(((userPosition.totalClaimed + userPosition.totalPending) / userPosition.totalAmount) * 100)}`
+                        : '—',
+                    accent: userPosition.totalAmount > 0,
+                  },
                 ].map((kpi) => (
                   <div key={kpi.label} className="bg-white px-5 py-4">
                     <p className="kpi-label mb-1">{kpi.label}</p>
@@ -279,7 +300,8 @@ export default function VaultDetail() {
             {/* ─── OVERVIEW TAB ─── */}
             {!strategy && (
               <>
-                {/* Allocation + Strategy cards */}
+                {/* Section: Strategy Allocation */}
+                <h2 className="section-title mt-2">Strategy Allocation</h2>
                 <div className="grid grid-cols-12 gap-4">
                   <div className={`col-span-12 lg:col-span-4 ${CARD} p-6 flex flex-col`}>
                     <h3 className="card-title mb-5">Allocation</h3>
@@ -374,7 +396,7 @@ export default function VaultDetail() {
                           <div className="flex items-center gap-2 mb-1">
                             <span className="text-sm font-bold text-[#0E0F0F]">{s.label}</span>
                             <span
-                              className={`text-caption font-semibold px-2 py-0.5 rounded-full ${RISK_BG[s.riskLevel]}`}
+                              className={`text-caption font-bold px-3 py-1 rounded-full ${RISK_BG[s.riskLevel]}`}
                             >
                               {s.riskLevel}
                             </span>
@@ -396,7 +418,7 @@ export default function VaultDetail() {
                           </div>
                         </div>
                         <svg
-                          className="w-4 h-4 text-[#9EB3A8] group-hover:text-[#96EA7A] group-hover:translate-x-0.5 transition-all shrink-0 mt-3"
+                          className="w-4 h-4 text-[#9EB3A8] group-hover:text-[#96EA7A] group-hover:translate-x-0.5 transition-all shrink-0 self-center"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -413,7 +435,8 @@ export default function VaultDetail() {
                   </div>
                 </div>
 
-                {/* Performance Chart + Activity */}
+                {/* Section: Performance & Activity */}
+                <h2 className="section-title mt-2">Performance & Activity</h2>
                 <div className="grid grid-cols-12 gap-4">
                   <div className={`col-span-12 lg:col-span-8 ${CARD} overflow-hidden`}>
                     <div className="px-6 py-4 border-b border-[#9EB3A8]/10">
@@ -559,7 +582,8 @@ export default function VaultDetail() {
                   </div>
                 </div>
 
-                {/* Your Position */}
+                {/* Section: Your Position */}
+                {deposits.length > 0 && <h2 className="section-title mt-2">Your Position</h2>}
                 {deposits.length > 0 && (
                   <div className={`${CARD} overflow-hidden`}>
                     <div className="px-6 py-4 border-b border-[#9EB3A8]/10 flex items-center justify-between">
@@ -569,7 +593,7 @@ export default function VaultDetail() {
                       </span>
                     </div>
                     <div className="divide-y divide-[#9EB3A8]/5">
-                      {deposits.map((dep) => {
+                      {deposits.map((dep, idx) => {
                         const totalYield = dep.claimedYield + dep.pendingYield
                         const daysRemaining = Math.max(
                           0,
@@ -582,8 +606,9 @@ export default function VaultDetail() {
                           matured: 'bg-[#0E0F0F]/8',
                         }
 
+                        const isEvenRow = idx % 2 === 1
                         return (
-                          <div key={dep.id} className="p-6">
+                          <div key={dep.id} className={`p-6 ${isEvenRow ? 'bg-[#F2F2F2]/50' : ''}`}>
                             <div className="flex items-center justify-between mb-4">
                               <span
                                 className={`text-caption font-semibold px-2.5 py-1 rounded-full ${statusBg[dep.lockStatus] ?? ''} ${getLockStatusColor(dep.lockStatus)}`}
@@ -710,7 +735,7 @@ export default function VaultDetail() {
                                       <button
                                         onClick={() => withdraw(String(dep.amount))}
                                         disabled={isWithdrawPending || isWithdrawConfirming}
-                                        className="w-full h-12 rounded-xl text-sm font-bold bg-[#96EA7A] text-[#0E0F0F] hover:bg-[#7ED066] shadow-lg shadow-[#96EA7A]/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.97]"
+                                        className="w-full h-12 rounded-full text-sm font-bold bg-[#96EA7A] text-[#0E0F0F] hover:bg-[#7ED066] shadow-lg shadow-[#96EA7A]/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.97]"
                                       >
                                         {isWithdrawPending
                                           ? 'Confirm in wallet...'
@@ -755,7 +780,7 @@ export default function VaultDetail() {
                                   <button
                                     onClick={() => claimRewards()}
                                     disabled={isClaimPending || isClaimConfirming}
-                                    className="px-5 py-2.5 rounded-xl text-sm font-bold bg-[#96EA7A] text-[#0E0F0F] hover:bg-[#7ED066] transition-colors disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.97]"
+                                    className="px-5 py-2.5 rounded-full text-sm font-bold bg-[#96EA7A] text-[#0E0F0F] hover:bg-[#7ED066] transition-colors disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.97]"
                                   >
                                     {isClaimPending
                                       ? 'Confirm in wallet...'
@@ -775,11 +800,9 @@ export default function VaultDetail() {
                   </div>
                 )}
 
-                {/* Vault Info */}
+                {/* Section: Vault Info */}
+                <h2 className="section-title mt-2">Vault Info</h2>
                 <div className={`${CARD} overflow-hidden`}>
-                  <div className="px-6 py-4 border-b border-[#9EB3A8]/10">
-                    <h3 className="card-title">Vault Info</h3>
-                  </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 p-6 gap-6">
                     <div className="space-y-0">
                       {[
@@ -796,10 +819,10 @@ export default function VaultDetail() {
                           sub: 'Penalty',
                           warn: true,
                         },
-                      ].map((fee) => (
+                      ].map((fee, idx) => (
                         <div
                           key={fee.label}
-                          className="flex items-center justify-between py-3 border-b border-[#9EB3A8]/8 last:border-0"
+                          className={`flex items-center justify-between py-3 border-b border-[#9EB3A8]/8 last:border-0 px-3 rounded-lg transition-colors ${idx % 2 === 1 ? 'bg-[#F2F2F2]/50 hover:bg-white' : 'hover:bg-[#F2F2F2]/50'}`}
                         >
                           <div className="flex items-center gap-2">
                             <span className="text-sm text-[#0E0F0F]">{fee.label}</span>
@@ -823,10 +846,10 @@ export default function VaultDetail() {
                         { label: 'Network', value: 'Base (8453)' },
                         { label: 'Deposit Token', value: vault.depositToken },
                         { label: 'Total Shares', value: fmt(vault.totalShares), mono: true },
-                      ].map((p) => (
+                      ].map((p, idx) => (
                         <div
                           key={p.label}
-                          className="flex items-center justify-between py-3 border-b border-[#9EB3A8]/8 last:border-0"
+                          className={`flex items-center justify-between py-3 border-b border-[#9EB3A8]/8 last:border-0 px-3 rounded-lg transition-colors ${idx % 2 === 1 ? 'bg-[#F2F2F2]/50 hover:bg-white' : 'hover:bg-[#F2F2F2]/50'}`}
                         >
                           <span className="text-sm text-[#0E0F0F]">{p.label}</span>
                           <span
@@ -861,9 +884,9 @@ export default function VaultDetail() {
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <h2 className="text-lg font-bold text-[#0E0F0F]">{strategy.label}</h2>
+                        <h2 className="section-title">{strategy.label}</h2>
                         <span
-                          className={`text-caption font-semibold px-2 py-0.5 rounded-full ${RISK_BG[strategy.riskLevel]}`}
+                          className={`text-caption font-bold px-3 py-1 rounded-full ${RISK_BG[strategy.riskLevel]}`}
                         >
                           {strategy.riskLevel} risk
                         </span>

@@ -84,7 +84,7 @@ export default function Admin() {
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
                 <div>
                   <div className="flex items-center gap-2 mb-2">
-                    <h1 className="text-2xl font-black text-[#0E0F0F] tracking-tight">
+                    <h1 className="text-[2rem] sm:text-[2.5rem] font-black text-[#0E0F0F] tracking-tight leading-none">
                       Operational Cockpit
                     </h1>
                     <div className="flex items-center gap-1.5 px-2.5 py-1 bg-[#96EA7A]/10 rounded-full">

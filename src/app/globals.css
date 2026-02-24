@@ -323,3 +323,15 @@ body {
   margin-bottom: var(--space-6);
   padding-top: var(--space-4);
 }
+
+/* ── Design System: Clickable arrow (grey → green on hover) ── */
+.clickable-arrow {
+  color: #9eb3a8;
+  transition: all 0.2s ease;
+}
+
+.group:hover .clickable-arrow,
+.clickable-arrow:hover {
+  color: #96ea7a;
+  transform: translateX(2px);
+}

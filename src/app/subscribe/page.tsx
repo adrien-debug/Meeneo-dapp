@@ -1,17 +1,17 @@
 'use client'
 
 import { Header } from '@/components/Header'
-import Link from 'next/link'
 import { HEARST_VAULT, fmtUsd } from '@/config/mock-data'
 import Image from 'next/image'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useMemo, useState } from 'react'
 import { Cell, Pie, PieChart, ResponsiveContainer } from 'recharts'
 
-import { useAuthGuard } from '@/hooks/useAuthGuard'
-import { useDemo } from '@/context/demo-context'
 import { CARD, STRATEGY_ICONS } from '@/components/ui/constants'
 import { LoadingScreen } from '@/components/ui/LoadingScreen'
+import { useDemo } from '@/context/demo-context'
+import { useAuthGuard } from '@/hooks/useAuthGuard'
 
 type Step = 'overview' | 'deposit' | 'success'
 
@@ -127,10 +127,10 @@ export default function ProductPage() {
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <h1 className="text-2xl sm:text-3xl font-black text-[#0E0F0F] tracking-tight">
+                          <h1 className="text-[2.75rem] sm:text-[3.25rem] font-black text-[#0E0F0F] tracking-tight leading-none">
                             {vault.name}
                           </h1>
-                          <span className="text-caption font-semibold px-2.5 py-0.5 rounded-full bg-[#96EA7A]/15 text-[#96EA7A]">
+                          <span className="text-caption font-bold px-3 py-1 rounded-full bg-[#96EA7A]/20 text-[#96EA7A] border border-[#96EA7A]/30">
                             Active
                           </span>
                         </div>
@@ -164,17 +164,20 @@ export default function ProductPage() {
               </div>
 
               {/* Strategies + Allocation */}
+              <h2 className="section-title mb-4">Strategy Breakdown</h2>
               <div className="grid grid-cols-12 gap-4 items-stretch mb-4">
                 <div className="col-span-12 lg:col-span-8">
                   <div className={`${CARD} overflow-hidden h-full`}>
                     <div className="flex items-center justify-between px-6 py-4 border-b border-[#9EB3A8]/10">
-                      <h3 className="card-title">3 Strategy Pockets</h3>
+                      <h3 className="text-heading-sm font-bold text-[#0E0F0F]">
+                        3 Strategy Pockets
+                      </h3>
                     </div>
                     <div className="divide-y divide-[#9EB3A8]/5">
-                      {vault.strategies.map((s) => (
+                      {vault.strategies.map((s, idx) => (
                         <div
                           key={s.type}
-                          className="px-6 py-5 flex items-start gap-4 hover:bg-[#F2F2F2]/40 transition-colors"
+                          className={`px-6 py-5 flex items-start gap-4 transition-colors ${idx % 2 === 1 ? 'bg-[#F2F2F2]/50 hover:bg-white' : 'hover:bg-[#F2F2F2]/40'}`}
                         >
                           <div
                             className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5"
@@ -224,7 +227,7 @@ export default function ProductPage() {
 
                 <div className="col-span-12 lg:col-span-4">
                   <div className={`${CARD} p-6 h-full flex flex-col`}>
-                    <h3 className="kpi-label mb-5">Allocation</h3>
+                    <h3 className="card-title mb-5">Allocation</h3>
                     <div className="flex-1 flex flex-col items-center justify-center">
                       <div className="w-36 h-36 mb-5 relative">
                         <ResponsiveContainer width="100%" height="100%">
@@ -280,11 +283,12 @@ export default function ProductPage() {
               </div>
 
               {/* How it works + Fees + Simulation */}
+              <h2 className="section-title mb-4 mt-2">Details & Subscription</h2>
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-stretch mb-6">
                 {/* How it works & Fees */}
-                <div className={`${CARD} p-6`}>
-                  <h3 className="kpi-label mb-4">How it works</h3>
-                  <div className="space-y-4 mb-6">
+                <div className={`${CARD} p-6 flex flex-col`}>
+                  <h3 className="card-title mb-4">How it works</h3>
+                  <div className="space-y-4 mb-6 flex-1">
                     {[
                       {
                         n: '1',
@@ -317,7 +321,7 @@ export default function ProductPage() {
                   </div>
 
                   <div className="border-t border-[#9EB3A8]/10 pt-5">
-                    <h3 className="kpi-label mb-4">Fees</h3>
+                    <h3 className="card-title mb-4">Fees</h3>
                     <div className="space-y-3">
                       {[
                         {
@@ -345,10 +349,10 @@ export default function ProductPage() {
                           icon: '⚠',
                           warn: true,
                         },
-                      ].map((fee) => (
+                      ].map((fee, idx) => (
                         <div
                           key={fee.label}
-                          className="flex items-center justify-between py-1.5 border-b border-[#9EB3A8]/8 last:border-0"
+                          className={`flex items-center justify-between py-1.5 border-b border-[#9EB3A8]/8 last:border-0 px-2 rounded-lg transition-colors ${idx % 2 === 1 ? 'bg-[#F2F2F2]/50 hover:bg-white' : 'hover:bg-[#F2F2F2]/50'}`}
                         >
                           <div className="flex items-center gap-2">
                             <span className="text-caption text-[#9EB3A8] w-4 text-center">
@@ -386,7 +390,7 @@ export default function ProductPage() {
                         />
                       </svg>
                     </div>
-                    <h3 className="text-sm font-black text-[#0E0F0F]">Simulation</h3>
+                    <h3 className="card-title">Simulation</h3>
                   </div>
 
                   <p className="text-xs text-[#9EB3A8] leading-relaxed mb-4">
@@ -425,7 +429,7 @@ export default function ProductPage() {
                   <div className="mt-auto">
                     <Link
                       href="/simulation"
-                      className="group flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-sm font-bold bg-[#F2F2F2] text-[#0E0F0F] hover:bg-[#E6F1E7] transition-all"
+                      className="group flex items-center justify-center gap-2 w-full h-14 rounded-2xl text-sm font-bold bg-[#F2F2F2] text-[#0E0F0F] hover:bg-[#E6F1E7] transition-all"
                     >
                       Open Simulation
                       <span className="group-hover:translate-x-0.5 transition-transform">→</span>
@@ -446,8 +450,8 @@ export default function ProductPage() {
                       />
                     </div>
                     <div>
-                      <p className="text-base font-black text-[#0E0F0F]">{vault.name}</p>
-                      <p className="text-xs text-[#9EB3A8]">Multi-strategy vault</p>
+                      <p className="card-title">{vault.name}</p>
+                      <p className="text-xs text-[#9EB3A8] mt-0.5">Multi-strategy vault</p>
                     </div>
                   </div>
 
@@ -463,10 +467,10 @@ export default function ProductPage() {
                       { label: 'Yield Distribution', value: 'Monthly' },
                       { label: 'Withdraw Condition', value: '36% target or 3Y' },
                       { label: 'Network', value: 'Base' },
-                    ].map((row) => (
+                    ].map((row, idx) => (
                       <div
                         key={row.label}
-                        className="flex items-center justify-between py-2.5 border-b border-[#9EB3A8]/8 last:border-0"
+                        className={`flex items-center justify-between py-2.5 border-b border-[#9EB3A8]/8 last:border-0 px-2 rounded-lg transition-colors ${idx % 2 === 1 ? 'bg-[#F2F2F2]/50 hover:bg-white' : 'hover:bg-[#F2F2F2]/50'}`}
                       >
                         <span className="text-xs text-[#9EB3A8]">{row.label}</span>
                         <span
@@ -514,7 +518,7 @@ export default function ProductPage() {
                       />
                     </svg>
                   </button>
-                  <h2 className="text-xl font-black text-[#0E0F0F]">Deposit into {vault.name}</h2>
+                  <h2 className="section-title">Deposit into {vault.name}</h2>
                 </div>
 
                 {/* Vault summary */}
@@ -607,10 +611,10 @@ export default function ProductPage() {
                     { label: 'Yield Claim', value: 'Monthly after 12-month cliff', accent: true },
                     { label: 'Management Fee', value: `${vault.fees.management}%` },
                     { label: 'Performance Fee', value: `${vault.fees.performance}%` },
-                  ].map((row) => (
+                  ].map((row, idx) => (
                     <div
                       key={row.label}
-                      className="flex items-center justify-between py-2.5 border-b border-[#9EB3A8]/8 last:border-0"
+                      className={`flex items-center justify-between py-2.5 border-b border-[#9EB3A8]/8 last:border-0 px-2 rounded-lg transition-colors ${idx % 2 === 1 ? 'bg-[#F2F2F2]/50 hover:bg-white' : 'hover:bg-[#F2F2F2]/50'}`}
                     >
                       <span className="text-xs text-[#9EB3A8]">{row.label}</span>
                       <span
@@ -689,7 +693,7 @@ export default function ProductPage() {
                   </svg>
                 </div>
 
-                <h2 className="text-2xl font-black text-[#0E0F0F] mb-2">Deposit Confirmed</h2>
+                <h2 className="section-title mb-2">Deposit Confirmed</h2>
                 <p className="text-sm text-[#9EB3A8] mb-8">
                   Your position in {vault.name} is now active
                 </p>

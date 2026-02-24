@@ -270,10 +270,13 @@ export default function Dashboard() {
                   },
                   { label: 'Avg Monthly', value: fmtPercent(quantMetrics.avgMonthly) },
                 ].map((kpi) => (
-                  <div key={kpi.label} className="bg-white px-5 py-4">
+                  <div
+                    key={kpi.label}
+                    className="bg-white px-5 py-4 hover:bg-[#F2F2F2]/60 transition-colors"
+                  >
                     <p className="kpi-label mb-1">{kpi.label}</p>
                     <p
-                      className={`text-lg font-black ${'accent' in kpi && kpi.accent ? 'text-[#96EA7A]' : 'text-[#0E0F0F]'}`}
+                      className={`text-lg font-black truncate ${'accent' in kpi && kpi.accent ? 'text-[#96EA7A]' : 'text-[#0E0F0F]'}`}
                     >
                       {kpi.value}
                     </p>
@@ -401,15 +404,28 @@ export default function Dashboard() {
                         <div className="flex items-center gap-1.5">
                           {statusLabel && (
                             <span
-                              className={`text-caption font-semibold px-2 py-0.5 rounded-full shrink-0 ${
+                              className={`text-caption font-bold px-3 py-1 rounded-full shrink-0 ${
                                 statusLabel === 'Matured'
                                   ? 'bg-[#0E0F0F]/8 text-[#0E0F0F]'
-                                  : 'bg-[#96EA7A]/10 text-[#96EA7A]'
+                                  : 'bg-[#96EA7A]/20 text-[#96EA7A] border border-[#96EA7A]/30'
                               }`}
                             >
                               {statusLabel}
                             </span>
                           )}
+                          <svg
+                            className="w-4 h-4 text-[#9EB3A8] group-hover:text-[#96EA7A] group-hover:translate-x-0.5 transition-all shrink-0"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M9 5l7 7-7 7"
+                            />
+                          </svg>
                           <span
                             role="button"
                             tabIndex={0}
@@ -541,16 +557,17 @@ export default function Dashboard() {
                   </div>
                 </div>
               </div>
-              <div className="flex-1 space-y-1">
-                {vaultStats.map((vs) => {
+              <div className="flex-1 space-y-0">
+                {vaultStats.map((vs, idx) => {
                   if (vs.stats.deposited === 0) return null
                   const pct =
                     TOTAL_USER_DEPOSITED > 0 ? (vs.stats.deposited / TOTAL_USER_DEPOSITED) * 100 : 0
+                  const isEven = idx % 2 === 1
                   return (
                     <button
                       key={vs.vault.slug}
                       onClick={() => router.push(`/vault/${vs.vault.slug}`)}
-                      className="w-full flex items-center gap-3 hover:bg-[#F2F2F2] rounded-xl px-3 py-3 -mx-1 transition-colors group"
+                      className={`w-full flex items-center gap-3 rounded-xl px-3 py-3 -mx-1 transition-colors group ${isEven ? 'bg-[#F2F2F2]/50 hover:bg-white' : 'hover:bg-[#F2F2F2]'}`}
                     >
                       <div
                         className="w-2.5 h-2.5 rounded-full shrink-0"
@@ -572,6 +589,19 @@ export default function Dashboard() {
                         <span className="text-xs text-[#9EB3A8] w-[90px] text-right hidden sm:block">
                           {fmtUsd(vs.stats.deposited)}
                         </span>
+                        <svg
+                          className="w-3.5 h-3.5 text-[#9EB3A8] group-hover:text-[#96EA7A] group-hover:translate-x-0.5 transition-all"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2.5}
+                            d="M9 5l7 7-7 7"
+                          />
+                        </svg>
                       </div>
                     </button>
                   )
@@ -902,7 +932,7 @@ export default function Dashboard() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#9EB3A8]/5">
-                    {deposits.map((dep) => {
+                    {deposits.map((dep, idx) => {
                       const matchedVault = vaults.find((v) => v.slug === dep.vaultSlug)
                       const yieldEarned = dep.claimedYield + dep.pendingYield
                       const roiPct = dep.amount > 0 ? (yieldEarned / dep.amount) * 100 : 0
@@ -913,10 +943,11 @@ export default function Dashboard() {
                             ? 'Target'
                             : 'Active'
                       const progress = dep.progressPercent
+                      const isEven = idx % 2 === 1
                       return (
                         <tr
                           key={dep.id}
-                          className="hover:bg-[#F2F2F2]/60 transition-colors cursor-pointer group"
+                          className={`transition-colors cursor-pointer group ${isEven ? 'bg-[#F2F2F2]/50 hover:bg-white' : 'hover:bg-[#F2F2F2]/60'}`}
                           onClick={() => router.push(`/vault/${dep.vaultSlug}`)}
                         >
                           <td className="px-6 py-4">
@@ -969,17 +1000,32 @@ export default function Dashboard() {
                             </div>
                           </td>
                           <td className="text-right px-6 py-4">
-                            <span
-                              className={`text-xs font-semibold px-2.5 py-1 rounded-full inline-block ${
-                                statusLabel === 'Matured'
-                                  ? 'bg-[#0E0F0F]/8 text-[#0E0F0F]'
-                                  : statusLabel === 'Target'
-                                    ? 'bg-[#96EA7A]/15 text-[#96EA7A]'
-                                    : 'bg-[#96EA7A]/10 text-[#96EA7A]'
-                              }`}
-                            >
-                              {statusLabel}
-                            </span>
+                            <div className="flex items-center justify-end gap-2">
+                              <span
+                                className={`text-xs font-semibold px-2.5 py-1 rounded-full inline-block ${
+                                  statusLabel === 'Matured'
+                                    ? 'bg-[#0E0F0F]/8 text-[#0E0F0F]'
+                                    : statusLabel === 'Target'
+                                      ? 'bg-[#96EA7A]/15 text-[#96EA7A]'
+                                      : 'bg-[#96EA7A]/10 text-[#96EA7A]'
+                                }`}
+                              >
+                                {statusLabel}
+                              </span>
+                              <svg
+                                className="w-4 h-4 text-[#9EB3A8] group-hover:text-[#96EA7A] group-hover:translate-x-0.5 transition-all"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M9 5l7 7-7 7"
+                                />
+                              </svg>
+                            </div>
                           </td>
                         </tr>
                       )
