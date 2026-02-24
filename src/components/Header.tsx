@@ -2,6 +2,7 @@
 
 import { base } from '@reown/appkit/networks'
 import { useAppKit } from '@reown/appkit/react'
+import { useDemo } from '@/context/demo-context'
 import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -19,15 +20,17 @@ export function Header() {
   const { address, isConnected, chain } = useAccount()
   const { disconnect } = useDisconnect()
   const { open } = useAppKit()
+  const { isDemoMode } = useDemo()
   const pathname = usePathname()
 
+  const authed = isConnected || isDemoMode
   const isOnBase = chain?.id === base.id
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-[#9EB3A8]/20">
       <div className="page-container">
         <div className="flex items-center justify-between h-16">
-          <Link href={isConnected ? '/dashboard' : '/login'} className="flex items-center shrink-0">
+          <Link href={authed ? '/dashboard' : '/login'} className="flex items-center shrink-0">
             <Image
               src="/Logo1.png"
               alt="Hearst"
@@ -41,7 +44,7 @@ export function Header() {
             {NAV_ITEMS.map((item) => (
               <Link
                 key={item.href}
-                href={isConnected ? item.href : '/login'}
+                href={authed ? item.href : '/login'}
                 className={`px-5 py-2 rounded-full text-sm font-medium tracking-wide transition-all ${
                   pathname === item.href
                     ? 'bg-[#96EA7A] text-[#0E0F0F]'
@@ -80,7 +83,7 @@ export function Header() {
             <button
               onClick={() => (isConnected ? disconnect() : open())}
               className={`px-4 py-2 rounded-full text-sm font-semibold transition-all whitespace-nowrap ${
-                isConnected
+                authed
                   ? 'bg-[#F2F2F2] text-[#9EB3A8] hover:bg-[#E6F1E7] hover:text-[#0E0F0F] border border-[#9EB3A8]/30'
                   : 'bg-gradient-to-r from-[#96EA7A] to-[#7ED066] text-[#0E0F0F] hover:from-[#7ED066] hover:to-[#7ED066] shadow-sm shadow-[#96EA7A]/20'
               }`}
@@ -125,7 +128,7 @@ export function Header() {
               {NAV_ITEMS.map((item) => (
                 <Link
                   key={item.href}
-                  href={isConnected ? item.href : '/login'}
+                  href={authed ? item.href : '/login'}
                   onClick={() => setIsMenuOpen(false)}
                   className={`px-4 py-2.5 rounded-2xl text-sm font-medium transition-colors ${
                     pathname === item.href

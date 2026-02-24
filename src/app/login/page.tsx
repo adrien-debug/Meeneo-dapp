@@ -1,6 +1,7 @@
 'use client'
 
 import { useAppKit } from '@reown/appkit/react'
+import { useDemo } from '@/context/demo-context'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
@@ -22,13 +23,19 @@ const FEATURES = [
 export default function Login() {
   const { isConnected } = useAccount()
   const { open } = useAppKit()
+  const { isDemoMode, enterDemoMode } = useDemo()
   const router = useRouter()
 
   useEffect(() => {
-    if (isConnected) {
+    if (isConnected || isDemoMode) {
       router.push('/dashboard')
     }
-  }, [isConnected, router])
+  }, [isConnected, isDemoMode, router])
+
+  const handleDemoLogin = () => {
+    enterDemoMode()
+    router.push('/dashboard')
+  }
 
   return (
     <div className="min-h-screen bg-[#F2F2F2] flex flex-col lg:flex-row">
@@ -119,6 +126,14 @@ export default function Login() {
               />
             </svg>
             Connect Wallet
+          </button>
+
+          <button
+            onClick={handleDemoLogin}
+            className="w-full h-12 mt-3 bg-[#0E0F0F] text-white font-semibold text-sm rounded-2xl hover:bg-[#1a1f1a] transition-all flex items-center justify-center gap-2 border border-[#9EB3A8]/20"
+          >
+            <span className="w-2 h-2 rounded-full bg-[#96EA7A] animate-pulse" />
+            Enter Demo Mode
           </button>
 
           <p className="text-center text-xs text-[#9EB3A8] mt-3">

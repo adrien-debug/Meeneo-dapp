@@ -168,7 +168,7 @@ export const AGGRESSIVE_VAULT: VaultConfig = {
   compositeApy: [12, 20],
 }
 
-export const ALL_VAULTS: VaultConfig[] = [HEARST_VAULT, CONSERVATIVE_VAULT, AGGRESSIVE_VAULT]
+export const ALL_VAULTS: VaultConfig[] = [HEARST_VAULT]
 
 // ─── Time Constants ──────────────────────────────────────────────
 

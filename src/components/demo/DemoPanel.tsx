@@ -8,7 +8,7 @@ const MONTH = 30 * DAY
 const YEAR = 365 * DAY
 
 export function DemoPanel() {
-  const { state, vaults, deposits, skipTime, reset } = useDemo()
+  const { state, vaults, deposits, skipTime, reset, isDemoMode, exitDemoMode } = useDemo()
   const [open, setOpen] = useState(false)
 
   const offsetDays = Math.round(state.timeOffsetSeconds / DAY)
@@ -107,6 +107,19 @@ export function DemoPanel() {
               </button>
             </div>
           </div>
+
+          {isDemoMode && (
+            <div className="flex items-center gap-2 mb-3 px-2 py-1.5 bg-[#96EA7A]/10 rounded-lg">
+              <span className="w-2 h-2 rounded-full bg-[#96EA7A] animate-pulse" />
+              <span className="text-xs text-[#96EA7A] font-medium flex-1">Demo Mode Active</span>
+              <button
+                onClick={exitDemoMode}
+                className="text-[10px] text-[#888] hover:text-white underline"
+              >
+                Exit
+              </button>
+            </div>
+          )}
 
           {/* Reset */}
           <button

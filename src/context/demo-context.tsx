@@ -13,6 +13,8 @@ import {
   claimYield,
   advanceTime,
   demoNow,
+  isDemoModeActive,
+  setDemoModeActive,
 } from '@/lib/demo-store'
 import type { VaultConfig, UserDeposit } from '@/types/product'
 
@@ -21,6 +23,9 @@ interface DemoContextValue {
   vaults: VaultConfig[]
   deposits: UserDeposit[]
   now: number
+  isDemoMode: boolean
+  enterDemoMode: () => void
+  exitDemoMode: () => void
   createVault: (params: Parameters<typeof addVault>[1]) => void
   deleteVault: (slug: string) => void
   deposit: (vaultSlug: string, amount: number) => void
@@ -36,9 +41,21 @@ const DemoContext = createContext<DemoContextValue | null>(null)
 
 export function DemoProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<DemoState | null>(null)
+  const [demoMode, setDemoMode] = useState(false)
 
   useEffect(() => {
     setState(loadDemo())
+    setDemoMode(isDemoModeActive())
+  }, [])
+
+  const enterDemoMode = useCallback(() => {
+    setDemoModeActive(true)
+    setDemoMode(true)
+  }, [])
+
+  const exitDemoMode = useCallback(() => {
+    setDemoModeActive(false)
+    setDemoMode(false)
   }, [])
 
   const persist = useCallback((next: DemoState) => {
@@ -95,6 +112,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
   )
 
   const resetFn = useCallback(() => {
+    setDemoMode(false)
     persist(resetDemo())
   }, [persist])
 
@@ -115,6 +133,9 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     vaults: state.vaults,
     deposits: state.deposits,
     now: demoNow(state),
+    isDemoMode: demoMode,
+    enterDemoMode,
+    exitDemoMode,
     createVault: createVaultFn,
     deleteVault: deleteVaultFn,
     deposit: depositFn,

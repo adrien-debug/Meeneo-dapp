@@ -19,7 +19,7 @@ import { useClaimRewards, useWithdraw } from '@/hooks/useEpochVault'
 import type { StrategyType, VaultStrategy } from '@/types/product'
 import Image from 'next/image'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import {
   Area,
   AreaChart,
@@ -31,7 +31,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import { useAccount } from 'wagmi'
+import { useAuthGuard } from '@/hooks/useAuthGuard'
 
 import { ChartTooltip } from '@/components/ui/ChartTooltip'
 import { CARD, RISK_BG, STRATEGY_ICONS } from '@/components/ui/constants'
@@ -39,7 +39,7 @@ import { LoadingScreen } from '@/components/ui/LoadingScreen'
 import { ProgressRing } from '@/components/ui/ProgressRing'
 
 export default function VaultDetail() {
-  const { isConnected } = useAccount()
+  const authed = useAuthGuard()
   const router = useRouter()
   const params = useParams()
   const searchParams = useSearchParams()
@@ -55,10 +55,6 @@ export default function VaultDetail() {
     isConfirming: isWithdrawConfirming,
     isConfirmed: isWithdrawConfirmed,
   } = useWithdraw()
-
-  useEffect(() => {
-    if (!isConnected) router.replace('/login')
-  }, [isConnected, router])
 
   const slug = params.slug as string
   const vault = ALL_VAULTS.find((v) => v.slug === slug) ?? ALL_VAULTS[0]
@@ -113,7 +109,7 @@ export default function VaultDetail() {
     color: s.color,
   }))
 
-  if (!isConnected) return <LoadingScreen />
+  if (!authed) return <LoadingScreen />
 
   return (
     <div className="min-h-screen bg-[#F2F2F2]">

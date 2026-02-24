@@ -11,7 +11,7 @@ import {
 } from '@/config/mock-data'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import {
   Area,
   AreaChart,
@@ -25,7 +25,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import { useAccount } from 'wagmi'
+import { useAuthGuard } from '@/hooks/useAuthGuard'
 
 import { AdminTooltip, ChartTooltip } from '@/components/ui/ChartTooltip'
 import { CARD, STRATEGY_ICONS } from '@/components/ui/constants'
@@ -48,16 +48,12 @@ const PAST_DISTRIBUTIONS = [
 ] as const
 
 export default function Admin() {
-  const { isConnected } = useAccount()
+  const authed = useAuthGuard()
   const router = useRouter()
   const [selectedAction, setSelectedAction] = useState<'distribute' | 'rebalance' | null>(null)
   const [actionFeedback, setActionFeedback] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (!isConnected) router.replace('/login')
-  }, [isConnected, router])
-
-  if (!isConnected) return <LoadingScreen />
+  if (!authed) return <LoadingScreen />
 
   const vault = HEARST_VAULT
   const stats = MOCK_PROTOCOL_STATS

@@ -1,21 +1,13 @@
 'use client'
 
 import { Header } from '@/components/Header'
-import {
-  ALL_VAULTS,
-  MOCK_USER_DEPOSITS,
-  TOTAL_USER_DEPOSITED,
-  TOTAL_USER_PENDING,
-  TOTAL_USER_YIELD,
-  fmtUsd,
-  getLockStatusColor,
-  getLockStatusLabel,
-} from '@/config/mock-data'
+import { fmtUsd, getLockStatusColor, getLockStatusLabel } from '@/config/mock-data'
 import type { UserDeposit } from '@/types/product'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { useEffect, useMemo } from 'react'
-import { useAccount } from 'wagmi'
+import { useMemo } from 'react'
+import { useAuthGuard } from '@/hooks/useAuthGuard'
+import { useDemo } from '@/context/demo-context'
 
 import { CARD, STRATEGY_ICONS } from '@/components/ui/constants'
 import { LoadingScreen } from '@/components/ui/LoadingScreen'
@@ -34,7 +26,8 @@ function VaultPositionCard({
   deposit: UserDeposit
   onNavigate: (slug: string) => void
 }) {
-  const vault = ALL_VAULTS.find((v) => v.slug === deposit.vaultSlug)
+  const { vaults } = useDemo()
+  const vault = vaults.find((v) => v.slug === deposit.vaultSlug)
   if (!vault) return null
 
   const totalYield = deposit.claimedYield + deposit.pendingYield
@@ -193,25 +186,32 @@ function VaultPositionCard({
 }
 
 export default function MyVaults() {
-  const { isConnected } = useAccount()
+  const authed = useAuthGuard()
   const router = useRouter()
+  const demo = useDemo()
 
-  useEffect(() => {
-    if (!isConnected) router.replace('/login')
-  }, [isConnected, router])
+  const allDeposits = demo.deposits
+
+  const totalDeposited = useMemo(() => allDeposits.reduce((s, d) => s + d.amount, 0), [allDeposits])
+  const totalYield = useMemo(
+    () => allDeposits.reduce((s, d) => s + d.claimedYield + d.pendingYield, 0),
+    [allDeposits],
+  )
+  const totalPending = useMemo(
+    () => allDeposits.reduce((s, d) => s + d.pendingYield, 0),
+    [allDeposits],
+  )
 
   const activeDeposits = useMemo(
-    () => MOCK_USER_DEPOSITS.filter((d) => d.lockStatus !== 'matured'),
-    [],
+    () => allDeposits.filter((d) => d.lockStatus !== 'matured'),
+    [allDeposits],
   )
   const maturedDeposits = useMemo(
-    () => MOCK_USER_DEPOSITS.filter((d) => d.lockStatus === 'matured'),
-    [],
+    () => allDeposits.filter((d) => d.lockStatus === 'matured'),
+    [allDeposits],
   )
 
-  const totalPending = TOTAL_USER_PENDING
-
-  if (!isConnected) return <LoadingScreen />
+  if (!authed) return <LoadingScreen />
 
   return (
     <div className="min-h-screen bg-[#F2F2F2]">
@@ -229,7 +229,7 @@ export default function MyVaults() {
                 <div>
                   <p className="kpi-label mb-2">My Vaults</p>
                   <h1 className="text-[2rem] sm:text-[2.5rem] font-black text-[#0E0F0F] tracking-tight leading-none">
-                    {fmtUsd(TOTAL_USER_DEPOSITED + TOTAL_USER_YIELD)}
+                    {fmtUsd(totalDeposited + totalYield)}
                   </h1>
                   <p className="text-sm text-[#9EB3A8] mt-1.5">Track your positions and earnings</p>
                 </div>
@@ -261,8 +261,8 @@ export default function MyVaults() {
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-[#9EB3A8]/10 rounded-xl overflow-hidden">
                 {[
                   { label: 'Active Positions', value: String(activeDeposits.length) },
-                  { label: 'Total Deposited', value: fmtUsd(TOTAL_USER_DEPOSITED) },
-                  { label: 'Total Yield', value: fmtUsd(TOTAL_USER_YIELD), accent: true },
+                  { label: 'Total Deposited', value: fmtUsd(totalDeposited) },
+                  { label: 'Total Yield', value: fmtUsd(totalYield), accent: true },
                   { label: 'Matured', value: String(maturedDeposits.length) },
                 ].map((kpi) => (
                   <div key={kpi.label} className="bg-white px-5 py-4">
@@ -337,7 +337,7 @@ export default function MyVaults() {
           )}
 
           {/* ─── Empty state ─── */}
-          {MOCK_USER_DEPOSITS.length === 0 && (
+          {allDeposits.length === 0 && (
             <div className={`${CARD} p-16 text-center`}>
               <div className="w-16 h-16 rounded-2xl bg-[#96EA7A]/10 flex items-center justify-center mx-auto mb-5">
                 <svg

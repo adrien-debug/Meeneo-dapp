@@ -1,7 +1,19 @@
 import type { UserDeposit, VaultConfig } from '@/types/product'
-import { ALL_VAULTS, MOCK_USER_DEPOSITS } from '@/config/mock-data'
+import { ALL_VAULTS } from '@/config/mock-data'
 
 const STORAGE_KEY = 'meeneo-demo'
+const DEMO_MODE_KEY = 'meeneo-demo-mode'
+
+export function isDemoModeActive(): boolean {
+  if (typeof window === 'undefined') return false
+  return localStorage.getItem(DEMO_MODE_KEY) === '1'
+}
+
+export function setDemoModeActive(active: boolean): void {
+  if (typeof window === 'undefined') return
+  if (active) localStorage.setItem(DEMO_MODE_KEY, '1')
+  else localStorage.removeItem(DEMO_MODE_KEY)
+}
 
 export interface DemoState {
   vaults: VaultConfig[]
@@ -13,11 +25,11 @@ export interface DemoState {
 
 function defaultState(): DemoState {
   return {
-    vaults: structuredClone(ALL_VAULTS),
-    deposits: structuredClone(MOCK_USER_DEPOSITS),
+    vaults: [...ALL_VAULTS],
+    deposits: [],
     timeOffsetSeconds: 0,
-    nextDepositId: 100,
-    nextVaultIndex: 4,
+    nextDepositId: 10_000,
+    nextVaultIndex: ALL_VAULTS.length + 1,
   }
 }
 
@@ -26,7 +38,19 @@ export function loadDemo(): DemoState {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return defaultState()
-    return JSON.parse(raw) as DemoState
+    const parsed = JSON.parse(raw) as DemoState
+    if (parsed.nextDepositId < 10_000) {
+      parsed.nextDepositId = 10_000
+      parsed.deposits = parsed.deposits.map((d, i) => ({ ...d, id: 10_000 + i }))
+    }
+    const existingSlugs = new Set(parsed.vaults.map((v) => v.slug))
+    for (const v of ALL_VAULTS) {
+      if (!existingSlugs.has(v.slug)) parsed.vaults.push(v)
+    }
+    if (parsed.nextVaultIndex < ALL_VAULTS.length + 1) {
+      parsed.nextVaultIndex = ALL_VAULTS.length + 1
+    }
+    return parsed
   } catch {
     return defaultState()
   }
@@ -38,7 +62,10 @@ export function saveDemo(state: DemoState): void {
 }
 
 export function resetDemo(): DemoState {
-  if (typeof window !== 'undefined') localStorage.removeItem(STORAGE_KEY)
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem(STORAGE_KEY)
+    localStorage.removeItem(DEMO_MODE_KEY)
+  }
   return defaultState()
 }
 
@@ -134,7 +161,8 @@ export function removeVault(state: DemoState, slug: string): DemoState {
 
 export function addDeposit(state: DemoState, vaultSlug: string, amount: number): DemoState {
   const now = demoNow(state)
-  const vault = state.vaults.find((v) => v.slug === vaultSlug)
+  const vault =
+    state.vaults.find((v) => v.slug === vaultSlug) ?? ALL_VAULTS.find((v) => v.slug === vaultSlug)
   if (!vault) return state
   const id = state.nextDepositId
   const deposit: UserDeposit = {

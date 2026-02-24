@@ -19,9 +19,8 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import { useAccount } from 'wagmi'
+import { useAuthGuard } from '@/hooks/useAuthGuard'
 
-import { CreateVaultModal } from '@/components/demo/CreateVaultModal'
 import { ChartTooltip } from '@/components/ui/ChartTooltip'
 import { CARD, STRATEGY_ICONS } from '@/components/ui/constants'
 import { LoadingScreen } from '@/components/ui/LoadingScreen'
@@ -74,19 +73,14 @@ function ToggleGroup({
 }
 
 export default function Dashboard() {
-  const { isConnected } = useAccount()
+  const authed = useAuthGuard()
   const router = useRouter()
   const { vaults, deposits, deleteVault } = useDemo()
-  const [showCreateVault, setShowCreateVault] = useState(false)
   const [chartStrategy, setChartStrategy] = useState<
     'composite' | 'rwa_mining' | 'usdc_yield' | 'btc_hedged'
   >('composite')
   const [chartMode, setChartMode] = useState<'monthly' | 'cumulative'>('cumulative')
   const [timeRange, setTimeRange] = useState('1Y')
-
-  useEffect(() => {
-    if (!isConnected) router.replace('/login')
-  }, [isConnected, router])
 
   const TOTAL_USER_DEPOSITED = useMemo(() => deposits.reduce((s, d) => s + d.amount, 0), [deposits])
   const TOTAL_USER_YIELD = useMemo(
@@ -190,7 +184,7 @@ export default function Dashboard() {
     }
   }, [chartData])
 
-  if (!isConnected) return <LoadingScreen />
+  if (!authed) return <LoadingScreen />
 
   const activeChartData = chartMode === 'cumulative' ? cumulativeData : chartData
 
@@ -294,7 +288,7 @@ export default function Dashboard() {
             <div className="flex items-center justify-between mb-5">
               <h2 className="section-title">My Vaults</h2>
               <button
-                onClick={() => setShowCreateVault(true)}
+                onClick={() => router.push('/subscribe')}
                 className="text-sm font-semibold text-[#0E0F0F] bg-white border border-[#9EB3A8]/20 hover:border-[#96EA7A] px-4 py-2 rounded-full transition-all flex items-center gap-1.5 hover:shadow-sm"
               >
                 <svg
@@ -310,9 +304,38 @@ export default function Dashboard() {
                     d="M12 4v16m8-8H4"
                   />
                 </svg>
-                New Vault
+                Subscribe
               </button>
             </div>
+            {deposits.length === 0 && (
+              <div className={`${CARD} p-12 text-center mb-4`}>
+                <div className="w-16 h-16 rounded-2xl bg-[#96EA7A]/10 flex items-center justify-center mx-auto mb-5">
+                  <svg
+                    className="w-8 h-8 text-[#96EA7A]"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                    />
+                  </svg>
+                </div>
+                <p className="text-lg font-bold text-[#0E0F0F] mb-2">No active position</p>
+                <p className="text-sm text-[#9EB3A8] mb-6 max-w-xs mx-auto">
+                  Subscribe to start earning yield on your assets
+                </p>
+                <button
+                  onClick={() => router.push('/subscribe')}
+                  className="px-6 py-3 rounded-2xl text-sm font-bold bg-[#96EA7A] text-[#0E0F0F] hover:bg-[#7ED066] shadow-lg shadow-[#96EA7A]/20 transition-all active:scale-[0.98]"
+                >
+                  Subscribe to Vault
+                </button>
+              </div>
+            )}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {vaultStats.map((vs) => {
                 const { vault, stats, color } = vs
@@ -329,10 +352,15 @@ export default function Dashboard() {
                         : null
 
                 return (
-                  <button
+                  <div
                     key={vault.slug}
+                    role="button"
+                    tabIndex={0}
                     onClick={() => router.push(`/vault/${vault.slug}`)}
-                    className={`${CARD} p-0 text-left hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group relative overflow-hidden`}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') router.push(`/vault/${vault.slug}`)
+                    }}
+                    className={`${CARD} p-0 text-left hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group relative overflow-hidden cursor-pointer`}
                   >
                     <div
                       className="h-1 w-full"
@@ -382,12 +410,21 @@ export default function Dashboard() {
                               {statusLabel}
                             </span>
                           )}
-                          <button
+                          <span
+                            role="button"
+                            tabIndex={0}
                             onClick={(e) => {
                               e.stopPropagation()
+                              e.preventDefault()
                               deleteVault(vault.slug)
                             }}
-                            className="w-6 h-6 rounded-lg bg-red-50 hover:bg-red-100 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.stopPropagation()
+                                deleteVault(vault.slug)
+                              }
+                            }}
+                            className="w-6 h-6 rounded-lg bg-red-50 hover:bg-red-100 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all cursor-pointer"
                             title="Delete vault"
                           >
                             <svg
@@ -403,7 +440,7 @@ export default function Dashboard() {
                                 d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                               />
                             </svg>
-                          </button>
+                          </span>
                         </div>
                       </div>
 
@@ -470,7 +507,7 @@ export default function Dashboard() {
                         </div>
                       )}
                     </div>
-                  </button>
+                  </div>
                 )
               })}
             </div>
@@ -954,8 +991,6 @@ export default function Dashboard() {
           </div>
         </div>
       </main>
-
-      {showCreateVault && <CreateVaultModal onClose={() => setShowCreateVault(false)} />}
     </div>
   )
 }
