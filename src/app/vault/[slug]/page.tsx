@@ -8,11 +8,14 @@ import {
   fmt,
   fmtPercent,
   fmtUsd,
+  getActivityForVault,
   getDepositsForVault,
   getLockStatusColor,
   getLockStatusLabel,
   getVaultUserStats,
+  timeAgo,
 } from '@/config/mock-data'
+import { useClaimRewards, useWithdraw } from '@/hooks/useEpochVault'
 import type { StrategyType, VaultStrategy } from '@/types/product'
 import Image from 'next/image'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
@@ -29,56 +32,18 @@ import {
 } from 'recharts'
 import { useAccount } from 'wagmi'
 
-const CARD = 'bg-white rounded-2xl border border-[#9EB3A8]/20'
-const STRATEGY_ICONS: Record<string, string> = { rwa_mining: '/assets/tokens/hearst-logo.png', usdc_yield: '/assets/tokens/usdc.svg', btc_hedged: '/assets/tokens/btc.svg' }
-
-const RISK_COLOR: Record<string, string> = { low: 'text-[#96EA7A]', medium: 'text-[#9EB3A8]', 'medium-high': 'text-[#E8A838]' }
-const RISK_BG: Record<string, string> = { low: 'bg-[#96EA7A]/15 text-[#96EA7A]', medium: 'bg-[#9EB3A8]/15 text-[#9EB3A8]', 'medium-high': 'bg-[#E8A838]/15 text-[#E8A838]' }
-const RISK_HEX: Record<string, string> = { low: '#96EA7A', medium: '#9EB3A8', 'medium-high': '#E8A838' }
-
-let sparklineCounter = 0
-function MiniSparkline({ data, color = '#96EA7A' }: { data: readonly number[]; color?: string }) {
-  const sparkData = data.map((v, i) => ({ v, i }))
-  const [id] = useState(() => `vspk-${color.replace('#', '')}-${++sparklineCounter}`)
-  return (
-    <div className="h-6 w-16">
-      <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={sparkData} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
-          <defs>
-            <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={color} stopOpacity={0.3} />
-              <stop offset="100%" stopColor={color} stopOpacity={0} />
-            </linearGradient>
-          </defs>
-          <Area type="monotone" dataKey="v" stroke={color} strokeWidth={1.5} fill={`url(#${id})`} dot={false} />
-        </AreaChart>
-      </ResponsiveContainer>
-    </div>
-  )
-}
-
-function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: Array<{ value: number; name: string; color?: string }>; label?: string }) {
-  if (!active || !payload?.length) return null
-  return (
-    <div className="bg-[#F2F2F2] border border-[#9EB3A8] text-[#0E0F0F] px-3 py-2 rounded-2xl shadow-xl text-[10px]">
-      <p className="font-medium text-[#9EB3A8] mb-1">{label}</p>
-      {payload.map((p, i) => (
-        <p key={i} className="font-bold flex items-center gap-1.5">
-          <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: p.color }} />
-          {fmtPercent(p.value)}
-        </p>
-      ))}
-    </div>
-  )
-}
+import { ChartTooltip } from '@/components/ui/ChartTooltip'
+import { CARD, RISK_BG, STRATEGY_ICONS } from '@/components/ui/constants'
+import { LoadingScreen } from '@/components/ui/LoadingScreen'
+import { ProgressRing } from '@/components/ui/ProgressRing'
 
 export default function VaultDetail() {
   const { isConnected } = useAccount()
   const router = useRouter()
   const params = useParams()
   const searchParams = useSearchParams()
-  const [subscribeAmount, setSubscribeAmount] = useState('')
-  const [activeTab, setActiveTab] = useState<'subscribe' | 'claim' | 'withdraw'>('subscribe')
+  const { claimRewards, isPending: isClaimPending, isConfirming: isClaimConfirming, isConfirmed: isClaimConfirmed } = useClaimRewards()
+  const { withdraw, isPending: isWithdrawPending, isConfirming: isWithdrawConfirming, isConfirmed: isWithdrawConfirmed } = useWithdraw()
 
   useEffect(() => {
     if (!isConnected) router.replace('/login')
@@ -88,6 +53,7 @@ export default function VaultDetail() {
   const vault = ALL_VAULTS.find(v => v.slug === slug) ?? ALL_VAULTS[0]
   const deposits = getDepositsForVault(vault.slug)
   const vaultUserStats = getVaultUserStats(vault.slug)
+  const vaultActivity = getActivityForVault(vault.slug)
 
   const highlightedStrategy = searchParams.get('strategy') as StrategyType | null
   const [selectedStrategy, setSelectedStrategy] = useState<StrategyType | null>(highlightedStrategy)
@@ -131,60 +97,85 @@ export default function VaultDetail() {
     name: s.label, value: s.allocation, color: s.color,
   }))
 
-  const tvlPercent = vault.tvlCap > 0 ? (vault.currentTvl / vault.tvlCap * 100) : 0
-
-  const riskScore = useMemo(() => {
-    const riskMap = { 'low': 1, 'medium': 2, 'medium-high': 3 }
-    const weighted = vault.strategies.reduce((s, st) => s + (riskMap[st.riskLevel] ?? 2) * st.allocation, 0) / 100
-    return weighted
-  }, [vault.strategies])
-
-  if (!isConnected) return null
+  if (!isConnected) return <LoadingScreen />
 
   return (
     <div className="min-h-screen bg-[#F2F2F2]">
       <Header />
 
-      <main className="pt-16 pb-8">
-        <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-12">
+      <main className="pt-20 pb-10">
+        <div className="page-container">
 
-          {/* ─── Header ──────────────────────────────────────── */}
-          <div className="mb-5 pt-2">
-            <button onClick={() => router.push('/dashboard')} className="flex items-center gap-1 text-[#9EB3A8] hover:text-[#0E0F0F] transition-colors mb-2">
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-              <span className="text-[10px]">Back to Portfolio</span>
-            </button>
+          {/* ─── Hero ─── */}
+          <div className={`${CARD} p-6 sm:p-8 relative overflow-hidden mt-6 mb-5`}>
+            <div className="absolute -top-32 -right-32 w-96 h-96 bg-gradient-to-br from-[#96EA7A]/6 to-transparent rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-gradient-to-tr from-[#9EB3A8]/4 to-transparent rounded-full blur-2xl pointer-events-none" />
 
-            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-              <div>
-                <h1 className="text-xl font-bold text-[#0E0F0F] tracking-tight">{vault.name}</h1>
+            <div className="relative">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
+                <button onClick={() => router.back()} className="w-8 h-8 rounded-xl bg-[#F2F2F2] flex items-center justify-center hover:bg-[#E6F1E7] transition-colors shrink-0 self-start">
+                  <svg className="w-4 h-4 text-[#9EB3A8]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                <div className="flex items-center gap-3 flex-1">
+                  <div className="w-12 h-12 rounded-2xl bg-[#96EA7A]/10 flex items-center justify-center shrink-0">
+                    <Image src="/assets/tokens/hearst.svg" alt={vault.name} width={28} height={28} className="rounded-full" />
+                  </div>
+                  <div>
+                    <h1 className="text-2xl font-black text-[#0E0F0F] tracking-tight">{vault.name}</h1>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      {vault.strategies.map(s => (
+                        <div key={s.type} className="flex items-center gap-1 bg-[#F2F2F2] rounded-full px-2 py-0.5">
+                          <Image src={STRATEGY_ICONS[s.type] ?? ''} alt={s.label} width={10} height={10} className="rounded-full" />
+                          <span className="text-caption text-[#9EB3A8] font-medium">{s.allocation}%</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                {userPosition.totalPending > 0 && (
+                  <button
+                    onClick={() => claimRewards()}
+                    disabled={isClaimPending || isClaimConfirming}
+                    className="flex items-center gap-3 px-5 py-3.5 rounded-2xl bg-[#96EA7A]/5 border border-[#96EA7A]/15 hover:border-[#96EA7A]/40 transition-all self-start sm:self-auto disabled:opacity-50"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-[#96EA7A]/15 flex items-center justify-center">
+                      <svg className="w-5 h-5 text-[#96EA7A]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <div className="text-left">
+                      <p className="text-xs text-[#9EB3A8] font-medium">
+                        {isClaimConfirmed ? 'Claimed!' : 'Pending Yield'}
+                      </p>
+                      <p className="text-lg font-black text-[#96EA7A]">{fmtUsd(userPosition.totalPending)}</p>
+                    </div>
+                  </button>
+                )}
               </div>
 
-              {/* TVL capacity */}
-              <div className={`${CARD} p-3 min-w-[180px]`}>
-                <div className="flex items-center justify-between text-[10px] mb-1.5">
-                  <span className="text-[#9EB3A8] uppercase tracking-wider">TVL Capacity</span>
-                  <span className="text-[#9EB3A8] font-semibold">{tvlPercent.toFixed(0)}%</span>
-                </div>
-                <div className="h-1.5 bg-[#F2F2F2] rounded-full overflow-hidden mb-1.5">
-                  <div className="h-full bg-[#96EA7A] rounded-full transition-all" style={{ width: `${tvlPercent}%` }} />
-                </div>
-                <div className="flex items-center justify-between text-[10px]">
-                  <span className="font-bold text-[#0E0F0F]">{fmtUsd(vault.currentTvl)}</span>
-                  <span className="text-[#9EB3A8]">/ {fmtUsd(vault.tvlCap)}</span>
-                </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-[#9EB3A8]/10 rounded-xl overflow-hidden">
+                {[
+                  { label: 'Your Deposit', value: userPosition.totalAmount > 0 ? fmtUsd(userPosition.totalAmount) : '—' },
+                  { label: 'Composite APY', value: `${vault.compositeApy[0]}–${vault.compositeApy[1]}%`, accent: true },
+                  { label: 'Yield Earned', value: (userPosition.totalClaimed + userPosition.totalPending) > 0 ? fmtUsd(userPosition.totalClaimed + userPosition.totalPending) : '—' },
+                  { label: 'Lock Period', value: `${vault.lockPeriodMonths / 12} Years` },
+                ].map(kpi => (
+                  <div key={kpi.label} className="bg-white px-5 py-4">
+                    <p className="kpi-label mb-1">{kpi.label}</p>
+                    <p className={`text-lg font-black ${'accent' in kpi && kpi.accent ? 'text-[#96EA7A]' : 'text-[#0E0F0F]'}`}>{kpi.value}</p>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
 
-          {/* ─── Strategy Tabs ───────────────────────────────── */}
-          <div className="flex items-center gap-1.5 mb-5 overflow-x-auto pb-1">
+          {/* ─── Strategy Tabs ─── */}
+          <div className="flex items-center gap-1.5 mb-5 overflow-x-auto pb-1 -mx-1 px-1">
             <button
               onClick={() => setSelectedStrategy(null)}
-              className={`px-3 py-1.5 text-[11px] font-semibold rounded-full transition-colors whitespace-nowrap ${!selectedStrategy ? 'bg-gradient-to-r from-[#96EA7A] to-[#7ED066] text-[#0E0F0F]' : 'bg-white text-[#9EB3A8] hover:text-[#9EB3A8] border border-[#9EB3A8]/20'
-                }`}
+              className={`px-4 py-2 text-sm font-semibold rounded-full transition-all whitespace-nowrap shrink-0 ${!selectedStrategy ? 'bg-[#0E0F0F] text-white' : 'bg-white text-[#9EB3A8] hover:text-[#0E0F0F] border border-[#9EB3A8]/20'}`}
             >
               Overview
             </button>
@@ -192,502 +183,452 @@ export default function VaultDetail() {
               <button
                 key={s.type}
                 onClick={() => setSelectedStrategy(s.type)}
-                className={`px-3 py-1.5 text-[11px] font-semibold rounded-full transition-colors flex items-center gap-1.5 whitespace-nowrap ${selectedStrategy === s.type ? 'text-[#0E0F0F] border-2' : 'bg-white text-[#9EB3A8] hover:text-[#0E0F0F] border border-[#9EB3A8]/20'
-                  }`}
-                style={selectedStrategy === s.type ? { borderColor: s.color, backgroundColor: `${s.color}15` } : undefined}
+                className={`px-4 py-2 text-sm font-semibold rounded-full transition-all flex items-center gap-2 whitespace-nowrap shrink-0 ${selectedStrategy === s.type ? 'text-[#0E0F0F] border-2 shadow-sm' : 'bg-white text-[#9EB3A8] hover:text-[#0E0F0F] border border-[#9EB3A8]/20'}`}
+                style={selectedStrategy === s.type ? { borderColor: s.color, backgroundColor: `${s.color}10` } : undefined}
               >
-                <Image src={STRATEGY_ICONS[s.type] ?? ''} alt={s.label} width={14} height={14} className="rounded-full" />
+                <Image src={STRATEGY_ICONS[s.type] ?? ''} alt={s.label} width={16} height={16} className="rounded-full" />
                 {s.label}
-                <span className="text-[10px] opacity-60">{s.allocation}%</span>
+                <span className="text-xs font-bold opacity-50">{s.allocation}%</span>
               </button>
             ))}
           </div>
 
-          <div className="grid grid-cols-12 gap-3 mb-5">
-            {/* ─── Left Column ───────────────────────────────── */}
-            <div className="col-span-12 lg:col-span-8 space-y-3">
+          <div className="space-y-4 mb-6">
 
-              {/* ── OVERVIEW TAB ─────────────────────────────── */}
-              {!strategy && (
-                <>
-                  {/* Vault KPIs Row */}
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
-                    {[
-                      { label: 'TVL', value: fmtUsd(vault.currentTvl), color: 'text-[#0E0F0F]' },
-                      { label: 'Composite APY', value: `${vault.compositeApy[0]}-${vault.compositeApy[1]}%`, color: 'text-[#96EA7A]' },
-                      { label: 'Lock', value: `${vault.lockPeriodMonths / 12}Y`, color: 'text-[#0E0F0F]' },
-                      { label: 'Yield Cliff', value: `${vault.yieldCliffMonths}mo`, color: 'text-[#9EB3A8]' },
-                      { label: 'Epoch', value: String(vault.currentEpoch), color: 'text-[#0E0F0F]' },
-                      { label: 'Min Deposit', value: fmtUsd(vault.minDeposit), color: 'text-[#0E0F0F]' },
-                    ].map(kpi => (
-                      <div key={kpi.label} className={`${CARD} p-2.5`}>
-                        <p className="text-[11px] text-[#9EB3A8] uppercase tracking-wider mb-0.5">{kpi.label}</p>
-                        <p className={`text-sm font-black ${kpi.color}`}>{kpi.value}</p>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Allocation Donut + Strategy Cards */}
-                  <div className="grid grid-cols-12 gap-3">
-                    {/* Donut */}
-                    <div className={`col-span-12 sm:col-span-5 ${CARD} p-4`}>
-                      <h3 className="text-sm font-bold text-[#0E0F0F] mb-3">Strategy Allocation</h3>
-                      <div className="flex items-center gap-3">
-                        <div className="w-20 h-20 shrink-0">
-                          <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
-                              <Pie data={allocationData} innerRadius={28} outerRadius={38} paddingAngle={3} dataKey="value" stroke="none">
-                                {allocationData.map((entry, i) => <Cell key={i} fill={entry.color} />)}
-                              </Pie>
-                            </PieChart>
-                          </ResponsiveContainer>
-                        </div>
-                        <div className="flex-1 space-y-2">
-                          {vault.strategies.map(s => (
-                            <button
-                              key={s.type}
-                              onClick={() => setSelectedStrategy(s.type)}
-                              className="flex items-center justify-between w-full hover:bg-[#F2F2F2] rounded px-1 py-0.5 -mx-1 transition-colors"
-                            >
-                              <div className="flex items-center gap-1.5">
-                                <Image src={STRATEGY_ICONS[s.type] ?? ''} alt={s.label} width={14} height={14} className="rounded-full" />
-                                <span className="text-[10px] text-[#9EB3A8]">{s.label}</span>
-                              </div>
-                              <span className="text-[10px] font-bold text-[#0E0F0F]">{s.allocation}%</span>
-                            </button>
-                          ))}
+            {/* ─── OVERVIEW TAB ─── */}
+            {!strategy && (
+              <>
+                {/* Allocation + Strategy cards */}
+                <div className="grid grid-cols-12 gap-4">
+                  <div className={`col-span-12 lg:col-span-4 ${CARD} p-6 flex flex-col`}>
+                    <h3 className="card-title mb-5">Allocation</h3>
+                    <div className="flex flex-col items-center flex-1 justify-center">
+                      <div className="w-32 h-32 mb-5 relative">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie data={allocationData} innerRadius={40} outerRadius={60} paddingAngle={3} dataKey="value" stroke="none">
+                              {allocationData.map((entry, i) => <Cell key={i} fill={entry.color} />)}
+                            </Pie>
+                          </PieChart>
+                        </ResponsiveContainer>
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                          <Image src="/assets/tokens/hearst-logo.svg" alt="H" width={20} height={20} />
                         </div>
                       </div>
-
-                      {/* Risk gauge */}
-                      <div className="mt-4 pt-3 border-t border-[#9EB3A8]/20">
-                        <div className="flex items-center justify-between mb-1.5">
-                          <span className="text-[10px] text-[#9EB3A8] uppercase tracking-wider">Risk Profile</span>
-                          <span className={`text-[10px] font-bold ${riskScore < 1.5 ? 'text-[#96EA7A]' : riskScore < 2.2 ? 'text-[#9EB3A8]' : 'text-[#E8A838]'}`}>
-                            {riskScore < 1.5 ? 'Low' : riskScore < 2.2 ? 'Medium' : 'Medium-High'}
-                          </span>
-                        </div>
-                        <div className="h-1.5 bg-[#F2F2F2] rounded-full overflow-hidden">
-                          <div
-                            className="h-full rounded-full transition-all"
-                            style={{
-                              width: `${(riskScore / 3) * 100}%`,
-                              background: riskScore < 1.5 ? '#96EA7A' : riskScore < 2.2 ? '#9EB3A8' : '#E8A838',
-                            }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Strategy cards */}
-                    <div className="col-span-12 sm:col-span-7 grid grid-cols-1 gap-2">
-                      {vault.strategies.map(s => {
-                        const perfData = MOCK_MONTHLY_PERFORMANCE.map(m => m[s.type])
-                        return (
+                      <div className="w-full space-y-3">
+                        {vault.strategies.map(s => (
                           <button
                             key={s.type}
                             onClick={() => setSelectedStrategy(s.type)}
-                            className={`${CARD} p-3 text-left hover:border-[#9EB3A8] transition-colors flex items-center gap-3`}
+                            className="flex items-center justify-between w-full hover:bg-[#F2F2F2] rounded-xl px-3 py-2.5 -mx-1 transition-colors group"
                           >
-                            <Image src={STRATEGY_ICONS[s.type] ?? ''} alt={s.label} width={18} height={18} className="rounded-full shrink-0" />
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center justify-between mb-0.5">
-                                <span className="text-[11px] font-bold text-[#0E0F0F]">{s.label}</span>
-                                <span className="text-[10px] font-bold" style={{ color: s.color }}>{s.allocation}%</span>
-                              </div>
-                              <p className="text-[10px] text-[#9EB3A8] truncate">{s.description}</p>
+                            <div className="flex items-center gap-2.5">
+                              <Image src={STRATEGY_ICONS[s.type] ?? ''} alt={s.label} width={18} height={18} className="rounded-full" />
+                              <span className="text-sm text-[#0E0F0F] font-medium">{s.label}</span>
                             </div>
-                            <div className="text-right shrink-0">
-                              <p className="text-[10px] font-bold text-[#0E0F0F]">{s.apyRange[0]}-{s.apyRange[1]}%</p>
-                              <p className={`text-[10px] font-medium ${RISK_COLOR[s.riskLevel]}`}>
-                                {s.riskLevel}
-                              </p>
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-bold text-[#0E0F0F]">{s.allocation}%</span>
+                              <svg className="w-3 h-3 text-[#9EB3A8] opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                              </svg>
                             </div>
-                            <MiniSparkline data={perfData} color={s.color} />
-                            <svg className="w-3 h-3 text-[#9EB3A8] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                            </svg>
                           </button>
-                        )
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Lock Timeline for this vault */}
-                  {deposits.length > 0 && (
-                    <div className={`${CARD} p-4`}>
-                      <h3 className="text-sm font-bold text-[#0E0F0F] mb-3">Your Lock Timeline</h3>
-                      <div className="space-y-3">
-                        {deposits.map(dep => (
-                          <div key={dep.id} className="flex items-center gap-3">
-                            <div className="w-16 shrink-0">
-                              <p className="text-[10px] font-bold text-[#0E0F0F]">{fmtUsd(dep.amount)}</p>
-                              <p className={`text-[10px] font-semibold ${getLockStatusColor(dep.lockStatus)}`}>{getLockStatusLabel(dep.lockStatus)}</p>
-                            </div>
-                            <div className="flex-1">
-                              <div className="relative h-2 bg-[#F2F2F2] rounded-full overflow-hidden">
-                                <div
-                                  className="h-full rounded-full transition-all"
-                                  style={{
-                                    width: `${dep.progressPercent}%`,
-                                    backgroundColor: dep.lockStatus === 'matured' ? '#9EB3A8' : dep.lockStatus === 'yield_claimable' ? '#96EA7A' : '#9EB3A8',
-                                  }}
-                                />
-                                <div className="absolute top-0 h-full w-px bg-[#9EB3A8]" style={{ left: `${(vault.yieldCliffMonths / vault.lockPeriodMonths) * 100}%` }} />
-                              </div>
-                              <div className="flex items-center justify-between text-[10px] text-[#9EB3A8] mt-0.5">
-                                <span>Start</span>
-                                <span>{vault.yieldCliffMonths}mo Cliff</span>
-                                <span>{vault.lockPeriodMonths / 12}Y</span>
-                              </div>
-                            </div>
-                            <div className="w-14 text-right shrink-0">
-                              <span className="text-[10px] font-bold text-[#9EB3A8]">{dep.progressPercent}%</span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Vault Parameters */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div className={`${CARD} p-4`}>
-                      <h3 className="text-sm font-bold text-[#0E0F0F] mb-2">Fee Structure</h3>
-                      <div className="space-y-1.5">
-                        {[
-                          { label: 'Management', value: `${vault.fees.management}%`, sub: 'Annual' },
-                          { label: 'Performance', value: `${vault.fees.performance}%`, sub: 'On yield' },
-                          { label: 'Exit', value: `${vault.fees.exit}%`, sub: 'On principal' },
-                          { label: 'Early Exit', value: `${vault.fees.earlyExit}%`, sub: 'Penalty', warn: true },
-                        ].map(fee => (
-                          <div key={fee.label} className="flex items-center justify-between">
-                            <div>
-                              <span className="text-[10px] text-[#9EB3A8]">{fee.label}</span>
-                              <span className="text-[10px] text-[#9EB3A8] ml-1">({fee.sub})</span>
-                            </div>
-                            <span className={`text-[10px] font-bold ${'warn' in fee && fee.warn ? 'text-[#E8A838]' : 'text-[#0E0F0F]'}`}>{fee.value}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className={`${CARD} p-4`}>
-                      <h3 className="text-sm font-bold text-[#0E0F0F] mb-2">Vault Parameters</h3>
-                      <div className="space-y-1.5">
-                        {[
-                          { label: 'Contract', value: `${vault.contractAddress.slice(0, 6)}...${vault.contractAddress.slice(-4)}` },
-                          { label: 'Network', value: 'Base (8453)' },
-                          { label: 'Deposit Token', value: vault.depositToken },
-                          { label: 'Total Shares', value: fmt(vault.totalShares) },
-                          { label: 'Epoch Duration', value: '30 days' },
-                          { label: 'Current Epoch', value: String(vault.currentEpoch) },
-                        ].map(p => (
-                          <div key={p.label} className="flex items-center justify-between">
-                            <span className="text-[10px] text-[#9EB3A8]">{p.label}</span>
-                            <span className="text-[10px] font-semibold text-[#0E0F0F] font-mono">{p.value}</span>
-                          </div>
                         ))}
                       </div>
                     </div>
                   </div>
-                </>
-              )}
 
-              {/* ── STRATEGY TAB ──────────────────────────────── */}
-              {strategy && (
-                <>
-                  <div className={`${CARD} p-4`}>
-                    <div className="flex items-center gap-2 mb-3">
-                      <Image src={STRATEGY_ICONS[strategy.type] ?? ''} alt={strategy.label} width={20} height={20} className="rounded-full" />
-                      <h2 className="text-sm font-bold text-[#0E0F0F]">{strategy.label}</h2>
-                      <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${RISK_BG[strategy.riskLevel]}`}>
-                        {strategy.riskLevel} risk
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-[#9EB3A8] leading-relaxed mb-3">{strategy.description}</p>
-
-                    <div className="grid grid-cols-3 gap-3">
-                      <div>
-                        <p className="text-[10px] text-[#9EB3A8] uppercase tracking-wider">Allocation</p>
-                        <p className="text-base font-black text-[#0E0F0F]">{strategy.allocation}%</p>
-                      </div>
-                      <div>
-                        <p className="text-[10px] text-[#9EB3A8] uppercase tracking-wider">APY Range</p>
-                        <p className="text-base font-black" style={{ color: strategy.color }}>{strategy.apyRange[0]}-{strategy.apyRange[1]}%</p>
-                      </div>
-                      <div>
-                        <p className="text-[10px] text-[#9EB3A8] uppercase tracking-wider">TVL Allocated</p>
-                        <p className="text-base font-black text-[#0E0F0F]">{fmtUsd(MOCK_PROTOCOL_STATS.tvlByStrategy[strategy.type])}</p>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-wrap gap-1 mt-3 pt-3 border-t border-[#9EB3A8]/20">
-                      {strategy.protocols.map(p => (
-                        <span key={p} className="text-[10px] text-[#9EB3A8] bg-[#F2F2F2] px-2 py-1 rounded-full font-medium">{p}</span>
-                      ))}
-                    </div>
-                  </div>
-
-                  {protocolBreakdown.length > 0 && (
-                    <div className={`${CARD} p-4`}>
-                      <h3 className="text-sm font-bold text-[#0E0F0F] mb-3">Protocol Breakdown</h3>
-                      <div className="flex items-center gap-4">
-                        <div className="w-20 h-20 shrink-0">
-                          <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
-                              <Pie data={protocolBreakdown} innerRadius={26} outerRadius={36} paddingAngle={2} dataKey="pct" stroke="none">
-                                {protocolBreakdown.map((entry, i) => <Cell key={i} fill={entry.color} />)}
-                              </Pie>
-                            </PieChart>
-                          </ResponsiveContainer>
-                        </div>
-                        <div className="flex-1 space-y-2">
-                          {protocolBreakdown.map(p => (
-                            <div key={p.name}>
-                              <div className="flex items-center justify-between mb-0.5">
-                                <div className="flex items-center gap-1.5">
-                                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: p.color }} />
-                                  <span className="text-[10px] text-[#9EB3A8]">{p.name}</span>
-                                </div>
-                                <span className="text-[10px] font-bold text-[#0E0F0F]">{p.pct}%</span>
-                              </div>
-                              <div className="h-1 bg-[#F2F2F2] rounded-full overflow-hidden">
-                                <div className="h-full rounded-full" style={{ width: `${p.pct}%`, backgroundColor: p.color }} />
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </>
-              )}
-
-              {/* Performance Chart (both tabs) */}
-              <div className={`${CARD} overflow-hidden`}>
-                <div className="px-4 py-3 border-b border-[#9EB3A8]/20">
-                  <h3 className="text-sm font-bold text-[#0E0F0F]">
-                    {strategy ? `${strategy.label} Performance` : 'Monthly Performance'}
-                  </h3>
-                  <p className="text-[10px] text-[#9EB3A8]">Monthly yield % by strategy</p>
-                </div>
-                <div className="p-4 pb-2 h-44 lg:h-52">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={chartData} margin={{ top: 5, right: 5, bottom: 0, left: -15 }}>
-                      <defs>
-                        {vault.strategies.map(s => (
-                          <linearGradient key={s.type} id={`vgrad-${s.type}`} x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor={s.color} stopOpacity={0.25} />
-                            <stop offset="100%" stopColor={s.color} stopOpacity={0.02} />
-                          </linearGradient>
-                        ))}
-                      </defs>
-                      <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: '#9EB3A8' }} dy={4} />
-                      <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: '#9EB3A8' }} tickFormatter={(v: number) => `${v}%`} />
-                      <Tooltip content={<ChartTooltip />} />
-                      {strategy ? (
-                        <Area type="monotone" dataKey={strategy.type} stroke={strategy.color} strokeWidth={2}
-                          fill={`url(#vgrad-${strategy.type})`} dot={false}
-                          activeDot={{ r: 3, fill: strategy.color, stroke: '#0E0F0F', strokeWidth: 2 }} />
-                      ) : (
-                        vault.strategies.map(s => (
-                          <Area key={s.type} type="monotone" dataKey={s.type} stroke={s.color} strokeWidth={1.5}
-                            fill={`url(#vgrad-${s.type})`} dot={false}
-                            activeDot={{ r: 2, fill: s.color, stroke: '#0E0F0F', strokeWidth: 2 }} />
-                        ))
-                      )}
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            </div>
-
-            {/* ─── Right Column ───────────────────────────────── */}
-            <div className="col-span-12 lg:col-span-4 space-y-3">
-
-              {/* User Position */}
-              <div className={`${CARD} p-4`}>
-                <h3 className="text-sm font-bold text-[#0E0F0F] mb-3">Your Position</h3>
-                {deposits.length > 0 ? (
-                  <>
-                    <div className="grid grid-cols-2 gap-2 mb-3">
-                      <div className="bg-[#F2F2F2] rounded-xl p-2.5 text-center">
-                        <p className="text-[10px] text-[#9EB3A8] uppercase tracking-wider mb-0.5">Deposited</p>
-                        <p className="text-sm font-black text-[#0E0F0F]">{fmtUsd(vaultUserStats.deposited)}</p>
-                      </div>
-                      <div className="bg-[#F2F2F2] rounded-xl p-2.5 text-center">
-                        <p className="text-[10px] text-[#9EB3A8] uppercase tracking-wider mb-0.5">Yield</p>
-                        <p className="text-sm font-black text-[#96EA7A]">{fmtUsd(vaultUserStats.yieldEarned)}</p>
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] text-[#9EB3A8]">Active Positions</span>
-                        <span className="text-[10px] font-bold text-[#0E0F0F]">{userPosition.count}</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] text-[#9EB3A8]">Pending Yield</span>
-                        <span className="text-[10px] font-bold text-[#9EB3A8]">{fmtUsd(userPosition.totalPending)}</span>
-                      </div>
-                    </div>
-                    <div className="border-t border-[#9EB3A8]/20 mt-3 pt-3 space-y-1.5">
-                      {deposits.map(dep => (
-                        <div key={dep.id} className="flex items-center justify-between py-0.5">
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-[10px] text-[#9EB3A8] font-mono">#{dep.id}</span>
-                            <span className="text-[10px] font-semibold text-[#0E0F0F]">{fmtUsd(dep.amount)}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <div className="h-1 w-10 bg-[#F2F2F2] rounded-full overflow-hidden">
-                              <div className="h-full bg-[#96EA7A] rounded-full" style={{ width: `${dep.progressPercent}%` }} />
-                            </div>
-                            <span className={`text-[10px] font-semibold ${getLockStatusColor(dep.lockStatus)}`}>
-                              {getLockStatusLabel(dep.lockStatus)}
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </>
-                ) : (
-                  <div className="text-center py-4">
-                    <div className="w-10 h-10 bg-[#F2F2F2] rounded-xl flex items-center justify-center mx-auto mb-2">
-                      <svg className="w-5 h-5 text-[#9EB3A8]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                      </svg>
-                    </div>
-                    <p className="text-[11px] text-[#9EB3A8] mb-0.5">Not subscribed to this vault</p>
-                    <p className="text-[10px] text-[#9EB3A8]">Subscribe below to start earning</p>
-                  </div>
-                )}
-              </div>
-
-              {/* Action Panel */}
-              <div className={`${CARD} p-4`}>
-                <div className="flex items-center gap-0.5 bg-[#F2F2F2] rounded-full p-0.5 mb-3">
-                  {(['subscribe', 'claim', 'withdraw'] as const).map(tab => (
-                    <button
-                      key={tab}
-                      onClick={() => setActiveTab(tab)}
-                      className={`flex-1 px-2 py-1 text-[11px] font-semibold rounded-full capitalize transition-colors ${activeTab === tab ? 'bg-[#E6F1E7] text-[#0E0F0F]' : 'text-[#9EB3A8] hover:text-[#0E0F0F]'
-                        }`}
-                    >
-                      {tab}
-                    </button>
-                  ))}
-                </div>
-
-                {activeTab === 'subscribe' && (
-                  <div className="space-y-2.5">
-                    <div>
-                      <label className="text-[10px] text-[#9EB3A8] uppercase tracking-wider mb-1 block">Subscription Amount (USDC)</label>
-                      <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9EB3A8] text-xs">$</span>
-                        <input
-                          value={subscribeAmount}
-                          onChange={(e) => setSubscribeAmount(e.target.value)}
-                          className="w-full pl-6 pr-3 py-2 bg-[#F2F2F2] border border-[#9EB3A8] rounded-xl focus:ring-1 focus:ring-[#96EA7A] focus:border-transparent outline-none text-sm font-bold text-[#0E0F0F]"
-                          placeholder="0.00"
-                        />
-                      </div>
-                      <p className="text-[10px] text-[#9EB3A8] mt-1">Min: {fmtUsd(vault.minDeposit)}</p>
-                    </div>
-                    <div className="bg-[#F2F2F2] rounded-xl p-2.5 space-y-1">
-                      <div className="flex items-center justify-between text-[10px]">
-                        <span className="text-[#9EB3A8]">Lock Period</span>
-                        <span className="text-[#0E0F0F] font-semibold">{vault.lockPeriodMonths / 12} Years</span>
-                      </div>
-                      <div className="flex items-center justify-between text-[10px]">
-                        <span className="text-[#9EB3A8]">Yield Cliff</span>
-                        <span className="text-[#9EB3A8] font-semibold">{vault.yieldCliffMonths} Months</span>
-                      </div>
-                      <div className="flex items-center justify-between text-[10px]">
-                        <span className="text-[#9EB3A8]">Est. APY</span>
-                        <span className="text-[#96EA7A] font-semibold">{vault.compositeApy[0]}-{vault.compositeApy[1]}%</span>
-                      </div>
-                    </div>
-                    <div className="flex gap-1.5">
-                      <button className="flex-1 py-2 bg-[#F2F2F2] text-[#9EB3A8] font-semibold rounded-full text-[11px] hover:bg-[#E6F1E7] border border-[#9EB3A8] transition-colors">
-                        Approve USDC
-                      </button>
-                      <button className="flex-1 py-2 bg-gradient-to-r from-[#96EA7A] to-[#7ED066] text-[#0E0F0F] font-bold rounded-full text-[11px] hover:from-[#7ED066] hover:to-[#7ED066] shadow-sm shadow-[#96EA7A]/20 transition-colors">
-                        Subscribe
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {activeTab === 'claim' && (
-                  <div className="space-y-2.5">
-                    <div className="bg-[#F2F2F2] rounded-xl p-3 text-center">
-                      <p className="text-[10px] text-[#9EB3A8] uppercase tracking-wider mb-1">Claimable Yield</p>
-                      <p className="text-xl font-black text-[#96EA7A]">{fmtUsd(userPosition.totalPending)}</p>
-                    </div>
-                    {userPosition.totalPending > 0 ? (
-                      <button className="w-full py-2 bg-gradient-to-r from-[#96EA7A] to-[#7ED066] text-[#0E0F0F] font-bold rounded-full text-[11px] hover:from-[#7ED066] hover:to-[#7ED066] shadow-sm shadow-[#96EA7A]/20 transition-colors">
-                        Claim All Yield
-                      </button>
-                    ) : (
-                      <div className="text-center py-2">
-                        <p className="text-[10px] text-[#9EB3A8]">No yield available to claim yet.</p>
-                        <p className="text-[10px] text-[#9EB3A8] mt-0.5">Yield becomes claimable after the {vault.yieldCliffMonths}-month cliff.</p>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {activeTab === 'withdraw' && (
-                  <div className="space-y-2.5">
-                    {deposits.filter(d => d.lockStatus === 'matured').length > 0 ? (
-                      <>
-                        <div className="bg-[#F2F2F2] rounded-xl p-3 text-center">
-                          <p className="text-[10px] text-[#9EB3A8] uppercase tracking-wider mb-1">Matured Principal</p>
-                          <p className="text-xl font-black text-[#9EB3A8]">
-                            {fmtUsd(deposits.filter(d => d.lockStatus === 'matured').reduce((s, d) => s + d.amount, 0))}
-                          </p>
-                        </div>
-                        <button className="w-full py-2 bg-[#9EB3A8] text-[#0E0F0F] font-bold rounded-full text-[11px] hover:bg-[#96EA7A] transition-colors">
-                          Withdraw Matured
-                        </button>
-                      </>
-                    ) : (
-                      <div className="text-center py-3">
-                        <p className="text-[10px] text-[#9EB3A8]">No matured deposits available.</p>
-                        <p className="text-[10px] text-[#9EB3A8] mt-0.5">Deposits mature after the {vault.lockPeriodMonths / 12}-year lock period.</p>
-                      </div>
-                    )}
-                    <div className="bg-[#9EB3A8]/10 border border-[#9EB3A8]/20 rounded-2xl p-2.5">
-                      <p className="text-[10px] text-[#9EB3A8] font-medium">Early withdrawal incurs a {vault.fees.earlyExit}% penalty fee.</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Other Vaults */}
-              {ALL_VAULTS.filter(v => v.slug !== vault.slug).length > 0 && (
-                <div className={`${CARD} p-4`}>
-                  <h3 className="text-sm font-bold text-[#0E0F0F] mb-2">Other Vaults</h3>
-                  <div className="space-y-1.5">
-                    {ALL_VAULTS.filter(v => v.slug !== vault.slug).map(v => (
+                  <div className="col-span-12 lg:col-span-8 space-y-3">
+                    {vault.strategies.map(s => (
                       <button
-                        key={v.slug}
-                        onClick={() => router.push(`/vault/${v.slug}`)}
-                        className="w-full flex items-center justify-between p-2 bg-[#F2F2F2] rounded-xl hover:bg-[#E6F1E7] transition-colors"
+                        key={s.type}
+                        onClick={() => setSelectedStrategy(s.type)}
+                        className={`${CARD} p-5 text-left hover:shadow-md hover:-translate-y-0.5 transition-all w-full flex items-start gap-4 group`}
                       >
-                        <div>
-                          <p className="text-[10px] font-semibold text-[#0E0F0F]">{v.name.replace('HearstVault ', '')}</p>
-                          <p className="text-[10px] text-[#9EB3A8]">{v.lockPeriodMonths / 12}Y lock · {v.compositeApy[0]}-{v.compositeApy[1]}% APY</p>
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: `${s.color}15` }}>
+                          <Image src={STRATEGY_ICONS[s.type] ?? ''} alt={s.label} width={22} height={22} className="rounded-full" />
                         </div>
-                        <svg className="w-3 h-3 text-[#9EB3A8]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-sm font-bold text-[#0E0F0F]">{s.label}</span>
+                            <span className={`text-caption font-semibold px-2 py-0.5 rounded-full ${RISK_BG[s.riskLevel]}`}>{s.riskLevel}</span>
+                            <span className="text-xs font-black text-[#0E0F0F] bg-[#F2F2F2] px-2 py-0.5 rounded-full">{s.allocation}%</span>
+                          </div>
+                          <p className="text-xs text-[#9EB3A8] leading-relaxed mb-2">{s.description}</p>
+                          <div className="flex items-center gap-3 flex-wrap">
+                            <span className="text-sm font-black" style={{ color: s.color }}>{s.apyRange[0]}–{s.apyRange[1]}% APY</span>
+                            <div className="h-4 w-px bg-[#9EB3A8]/15" />
+                            <span className="text-sm font-bold text-[#0E0F0F]">{fmtUsd(userPosition.totalAmount * s.allocation / 100)}</span>
+                          </div>
+                        </div>
+                        <svg className="w-4 h-4 text-[#9EB3A8] group-hover:text-[#96EA7A] group-hover:translate-x-0.5 transition-all shrink-0 mt-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
                         </svg>
                       </button>
                     ))}
                   </div>
                 </div>
-              )}
-            </div>
+
+                {/* Performance Chart + Activity */}
+                <div className="grid grid-cols-12 gap-4">
+                  <div className={`col-span-12 lg:col-span-8 ${CARD} overflow-hidden`}>
+                    <div className="px-6 py-4 border-b border-[#9EB3A8]/10">
+                      <h3 className="card-title">Monthly Performance</h3>
+                    </div>
+                    <div className="p-6 pb-3 bg-gradient-to-b from-white to-[#FAFBFA]">
+                      <div className="h-56 lg:h-64">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <AreaChart data={chartData} margin={{ top: 5, right: 5, bottom: 0, left: -15 }}>
+                            <defs>
+                              {vault.strategies.map(s => (
+                                <linearGradient key={s.type} id={`vgrad-ov-${s.type}`} x1="0" y1="0" x2="0" y2="1">
+                                  <stop offset="0%" stopColor={s.color} stopOpacity={0.25} />
+                                  <stop offset="100%" stopColor={s.color} stopOpacity={0.02} />
+                                </linearGradient>
+                              ))}
+                            </defs>
+                            <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#9EB3A8' }} dy={6} />
+                            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#9EB3A8' }} tickFormatter={(v: number) => `${v}%`} />
+                            <Tooltip content={<ChartTooltip />} />
+                            {vault.strategies.map(s => (
+                              <Area key={s.type} type="monotone" dataKey={s.type} stroke={s.color} strokeWidth={2}
+                                fill={`url(#vgrad-ov-${s.type})`} dot={false}
+                                activeDot={{ r: 4, fill: s.color, stroke: '#fff', strokeWidth: 2 }} name={s.label} />
+                            ))}
+                          </AreaChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-center gap-6 px-6 py-3 border-t border-[#9EB3A8]/10">
+                      {vault.strategies.map(s => (
+                        <div key={s.type} className="flex items-center gap-1.5">
+                          <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: s.color }} />
+                          <span className="text-xs text-[#9EB3A8] font-medium">{s.label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className={`col-span-12 lg:col-span-4 ${CARD} overflow-hidden flex flex-col`}>
+                    <div className="px-6 py-4 border-b border-[#9EB3A8]/10">
+                      <h3 className="card-title">Activity</h3>
+                    </div>
+                    <div className="flex-1 overflow-y-auto max-h-[320px]">
+                      {vaultActivity.map((a, i) => (
+                        <div key={a.id} className={`px-5 py-4 flex items-start gap-3 ${i < vaultActivity.length - 1 ? 'border-b border-[#9EB3A8]/5' : ''}`}>
+                          <div className={`mt-0.5 w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
+                            a.type === 'rebalance' ? 'bg-[#9EB3A8]/15' :
+                            a.type === 'distribute' ? 'bg-[#96EA7A]/15' : 'bg-[#5B7A6E]/15'
+                          }`}>
+                            <svg className={`w-3.5 h-3.5 ${
+                              a.type === 'rebalance' ? 'text-[#9EB3A8]' :
+                              a.type === 'distribute' ? 'text-[#96EA7A]' : 'text-[#5B7A6E]'
+                            }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              {a.type === 'rebalance' && <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h5M20 20v-5h-5M4 9a9 9 0 0114.32-4.32M20 15a9 9 0 01-14.32 4.32" />}
+                              {a.type === 'distribute' && <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v8m-4-4h8" />}
+                              {a.type === 'deposit' && <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m0-16l-4 4m4-4l4 4" />}
+                            </svg>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-[#0E0F0F] capitalize">{a.type}</p>
+                            <p className="text-xs text-[#9EB3A8] truncate">{a.description}</p>
+                          </div>
+                          <span className="text-caption text-[#9EB3A8] whitespace-nowrap shrink-0">{timeAgo(a.timestamp)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Your Position */}
+                {deposits.length > 0 && (
+                  <div className={`${CARD} overflow-hidden`}>
+                    <div className="px-6 py-4 border-b border-[#9EB3A8]/10 flex items-center justify-between">
+                      <h3 className="card-title">Your Position</h3>
+                      <span className="text-xs font-semibold text-[#9EB3A8] bg-[#F2F2F2] px-3 py-1.5 rounded-full">
+                        {deposits.length} deposit{deposits.length > 1 ? 's' : ''}
+                      </span>
+                    </div>
+                    <div className="divide-y divide-[#9EB3A8]/5">
+                      {deposits.map((dep) => {
+                        const totalYield = dep.claimedYield + dep.pendingYield
+                        const daysRemaining = Math.max(0, Math.ceil((dep.maturityTimestamp - Date.now() / 1000) / 86400))
+                        const statusColor = '#96EA7A'
+                        const statusBg: Record<string, string> = {
+                          active: 'bg-[#96EA7A]/15',
+                          target_reached: 'bg-[#96EA7A]/15',
+                          matured: 'bg-[#0E0F0F]/8',
+                        }
+
+                        return (
+                          <div key={dep.id} className="p-6">
+                            <div className="flex items-center justify-between mb-4">
+                              <span className={`text-caption font-semibold px-2.5 py-1 rounded-full ${statusBg[dep.lockStatus] ?? ''} ${getLockStatusColor(dep.lockStatus)}`}>
+                                {getLockStatusLabel(dep.lockStatus)}
+                              </span>
+                              <span className="text-xs text-[#9EB3A8] font-medium">
+                                {(dep.lockStatus === 'matured' || dep.lockStatus === 'target_reached')
+                                  ? 'Withdraw available'
+                                  : `${daysRemaining}d to unlock`
+                                }
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-5 mb-5">
+                              <div className="relative shrink-0">
+                                <ProgressRing percent={dep.progressPercent} color={statusColor} />
+                                <span className="absolute inset-0 flex items-center justify-center text-xs font-black text-[#0E0F0F]">
+                                  {dep.progressPercent}%
+                                </span>
+                              </div>
+                              <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-3 flex-1">
+                                <div>
+                                  <p className="kpi-label mb-0.5">Deposited</p>
+                                  <p className="text-base font-black text-[#0E0F0F]">{fmtUsd(dep.amount)}</p>
+                                </div>
+                                <div>
+                                  <p className="kpi-label mb-0.5">Yield Earned</p>
+                                  <p className="text-base font-black text-[#96EA7A]">+{fmtUsd(totalYield)}</p>
+                                </div>
+                                <div>
+                                  <p className="kpi-label mb-0.5">Pending</p>
+                                  <p className="text-base font-black text-[#0E0F0F]">{fmtUsd(dep.pendingYield)}</p>
+                                </div>
+                                <div>
+                                  <p className="kpi-label mb-0.5">Target</p>
+                                  <p className="text-base font-black text-[#0E0F0F]">{fmtPercent(totalYield / dep.amount * 100)} / 36%</p>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="mb-4">
+                              <div className="h-2 bg-[#F2F2F2] rounded-full overflow-hidden">
+                                <div className="h-full rounded-full transition-all duration-700" style={{ width: `${dep.progressPercent}%`, backgroundColor: statusColor }} />
+                              </div>
+                            </div>
+
+                            {(dep.lockStatus === 'matured' || dep.lockStatus === 'target_reached') ? (
+                              <div className="p-5 bg-[#96EA7A]/5 rounded-xl border border-[#96EA7A]/15 space-y-4">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <div className="w-7 h-7 rounded-lg bg-[#96EA7A]/15 flex items-center justify-center">
+                                    <svg className="w-3.5 h-3.5 text-[#96EA7A]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                                    </svg>
+                                  </div>
+                                  <span className="text-sm font-bold text-[#0E0F0F]">Withdraw Available</span>
+                                </div>
+
+                                {(() => {
+                                  const exitFee = dep.amount * vault.fees.exit / 100
+                                  const netReceive = dep.amount + dep.pendingYield - exitFee
+                                  return (
+                                    <>
+                                      <div className="space-y-0">
+                                        <div className="flex justify-between py-2 border-b border-[#9EB3A8]/8">
+                                          <span className="text-xs text-[#9EB3A8]">Principal</span>
+                                          <span className="text-sm font-bold text-[#0E0F0F]">{fmtUsd(dep.amount)}</span>
+                                        </div>
+                                        {dep.pendingYield > 0 && (
+                                          <div className="flex justify-between py-2 border-b border-[#9EB3A8]/8">
+                                            <span className="text-xs text-[#9EB3A8]">Unclaimed Yield</span>
+                                            <span className="text-sm font-bold text-[#96EA7A]">+{fmtUsd(dep.pendingYield)}</span>
+                                          </div>
+                                        )}
+                                        <div className="flex justify-between py-2 border-b border-[#9EB3A8]/8">
+                                          <span className="text-xs text-[#9EB3A8]">Exit Fee ({vault.fees.exit}%)</span>
+                                          <span className="text-sm font-bold text-[#0E0F0F]">−{fmtUsd(exitFee)}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center pt-3">
+                                          <span className="text-sm font-semibold text-[#0E0F0F]">You Receive</span>
+                                          <span className="text-lg font-black text-[#0E0F0F]">{fmtUsd(netReceive)}</span>
+                                        </div>
+                                      </div>
+
+                                      <button
+                                        onClick={() => withdraw(String(dep.amount))}
+                                        disabled={isWithdrawPending || isWithdrawConfirming}
+                                        className="w-full h-12 rounded-xl text-sm font-bold bg-[#96EA7A] text-[#0E0F0F] hover:bg-[#7ED066] shadow-lg shadow-[#96EA7A]/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.97]"
+                                      >
+                                        {isWithdrawPending ? 'Confirm in wallet...' : isWithdrawConfirming ? 'Processing...' : isWithdrawConfirmed ? 'Withdrawn ✓' : `Withdraw ${fmtUsd(netReceive)}`}
+                                      </button>
+                                    </>
+                                  )
+                                })()}
+                              </div>
+                            ) : dep.pendingYield > 0 && (
+                              <div className="flex items-center justify-between p-4 bg-[#96EA7A]/5 rounded-xl border border-[#96EA7A]/15">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-8 h-8 rounded-lg bg-[#96EA7A]/15 flex items-center justify-center">
+                                    <svg className="w-4 h-4 text-[#96EA7A]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                  </div>
+                                  <div>
+                                    <p className="text-sm font-bold text-[#0E0F0F]">
+                                      {isClaimConfirmed ? 'Claimed!' : fmtUsd(dep.pendingYield)}
+                                    </p>
+                                    <p className="text-xs text-[#9EB3A8]">monthly yield to claim</p>
+                                  </div>
+                                </div>
+                                <button
+                                  onClick={() => claimRewards()}
+                                  disabled={isClaimPending || isClaimConfirming}
+                                  className="px-5 py-2.5 rounded-xl text-sm font-bold bg-[#96EA7A] text-[#0E0F0F] hover:bg-[#7ED066] transition-colors disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.97]"
+                                >
+                                  {isClaimPending ? 'Confirm in wallet...' : isClaimConfirming ? 'Processing...' : isClaimConfirmed ? 'Done' : 'Claim'}
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Vault Info */}
+                <div className={`${CARD} overflow-hidden`}>
+                  <div className="px-6 py-4 border-b border-[#9EB3A8]/10">
+                    <h3 className="card-title">Vault Info</h3>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 p-6 gap-6">
+                    <div className="space-y-0">
+                      {[
+                        { label: 'Management', value: `${vault.fees.management}%`, sub: 'Annual' },
+                        { label: 'Performance', value: `${vault.fees.performance}%`, sub: 'On yield' },
+                        { label: 'Exit', value: `${vault.fees.exit}%`, sub: 'On principal' },
+                        { label: 'Early Exit', value: `${vault.fees.earlyExit}%`, sub: 'Penalty', warn: true },
+                      ].map((fee) => (
+                        <div key={fee.label} className="flex items-center justify-between py-3 border-b border-[#9EB3A8]/8 last:border-0">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-[#0E0F0F]">{fee.label}</span>
+                            <span className="text-caption text-[#9EB3A8]">({fee.sub})</span>
+                          </div>
+                          <span className={`text-sm font-bold ${'warn' in fee && fee.warn ? 'text-[#E8A838]' : 'text-[#0E0F0F]'}`}>{fee.value}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="space-y-0">
+                      {[
+                        { label: 'Contract', value: `${vault.contractAddress.slice(0, 6)}...${vault.contractAddress.slice(-4)}`, mono: true },
+                        { label: 'Network', value: 'Base (8453)' },
+                        { label: 'Deposit Token', value: vault.depositToken },
+                        { label: 'Total Shares', value: fmt(vault.totalShares), mono: true },
+                      ].map((p) => (
+                        <div key={p.label} className="flex items-center justify-between py-3 border-b border-[#9EB3A8]/8 last:border-0">
+                          <span className="text-sm text-[#0E0F0F]">{p.label}</span>
+                          <span className={`text-sm font-bold text-[#0E0F0F] ${'mono' in p && p.mono ? 'font-mono' : ''}`}>{p.value}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* ─── STRATEGY TAB ─── */}
+            {strategy && (
+              <>
+                <div className={`${CARD} p-6`}>
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ backgroundColor: `${strategy.color}15` }}>
+                      <Image src={STRATEGY_ICONS[strategy.type] ?? ''} alt={strategy.label} width={24} height={24} className="rounded-full" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h2 className="text-lg font-bold text-[#0E0F0F]">{strategy.label}</h2>
+                        <span className={`text-caption font-semibold px-2 py-0.5 rounded-full ${RISK_BG[strategy.riskLevel]}`}>
+                          {strategy.riskLevel} risk
+                        </span>
+                      </div>
+                      <p className="text-xs text-[#9EB3A8] mt-0.5">{strategy.description}</p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-px bg-[#9EB3A8]/10 rounded-xl overflow-hidden mb-4">
+                    <div className="bg-white px-5 py-4">
+                      <p className="kpi-label mb-1">Allocation</p>
+                      <p className="text-lg font-black text-[#0E0F0F]">{strategy.allocation}%</p>
+                    </div>
+                    <div className="bg-white px-5 py-4">
+                      <p className="kpi-label mb-1">APY Range</p>
+                      <p className="text-lg font-black" style={{ color: strategy.color }}>{strategy.apyRange[0]}–{strategy.apyRange[1]}%</p>
+                    </div>
+                    <div className="bg-white px-5 py-4">
+                      <p className="kpi-label mb-1">TVL Allocated</p>
+                      <p className="text-lg font-black text-[#0E0F0F]">{fmtUsd(MOCK_PROTOCOL_STATS.tvlByStrategy[strategy.type])}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-1.5">
+                    {strategy.protocols.map(p => (
+                      <span key={p} className="text-xs text-[#9EB3A8] bg-[#F2F2F2] px-3 py-1.5 rounded-full font-medium">{p}</span>
+                    ))}
+                  </div>
+                </div>
+
+                {protocolBreakdown.length > 0 && (
+                  <div className={`${CARD} p-6`}>
+                    <h3 className="card-title mb-5">Protocol Breakdown</h3>
+                    <div className="flex items-center gap-6">
+                      <div className="w-24 h-24 shrink-0">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie data={protocolBreakdown} innerRadius={28} outerRadius={42} paddingAngle={2} dataKey="pct" stroke="none">
+                              {protocolBreakdown.map((entry, i) => <Cell key={i} fill={entry.color} />)}
+                            </Pie>
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
+                      <div className="flex-1 space-y-3">
+                        {protocolBreakdown.map(p => (
+                          <div key={p.name}>
+                            <div className="flex items-center justify-between mb-1">
+                              <div className="flex items-center gap-2">
+                                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: p.color }} />
+                                <span className="text-sm text-[#0E0F0F] font-medium">{p.name}</span>
+                              </div>
+                              <span className="text-sm font-bold text-[#0E0F0F]">{p.pct}%</span>
+                            </div>
+                            <div className="h-1.5 bg-[#F2F2F2] rounded-full overflow-hidden">
+                              <div className="h-full rounded-full" style={{ width: `${p.pct}%`, backgroundColor: p.color }} />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className={`${CARD} overflow-hidden`}>
+                  <div className="px-6 py-4 border-b border-[#9EB3A8]/10">
+                    <h3 className="card-title">{strategy.label} Performance</h3>
+                    <p className="text-xs text-[#9EB3A8] mt-0.5">Monthly yield %</p>
+                  </div>
+                  <div className="p-6 pb-3 bg-gradient-to-b from-white to-[#FAFBFA]">
+                    <div className="h-56 lg:h-64">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={chartData} margin={{ top: 5, right: 5, bottom: 0, left: -15 }}>
+                          <defs>
+                            <linearGradient id={`vgrad-st-${strategy.type}`} x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor={strategy.color} stopOpacity={0.25} />
+                              <stop offset="100%" stopColor={strategy.color} stopOpacity={0.02} />
+                            </linearGradient>
+                          </defs>
+                          <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#9EB3A8' }} dy={6} />
+                          <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#9EB3A8' }} tickFormatter={(v: number) => `${v}%`} />
+                          <Tooltip content={<ChartTooltip />} />
+                          <Area type="monotone" dataKey={strategy.type} stroke={strategy.color} strokeWidth={2.5}
+                            fill={`url(#vgrad-st-${strategy.type})`} dot={false}
+                            activeDot={{ r: 5, fill: strategy.color, stroke: '#fff', strokeWidth: 2 }} name={strategy.label} />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+
           </div>
         </div>
       </main>

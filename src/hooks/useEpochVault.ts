@@ -1,10 +1,10 @@
 import { CONTRACT_ADDRESSES } from '@/config/contracts'
-import TestEpochVault24hABI from '@/contracts/TestEpochVault24h.json'
-import { formatUnits, keccak256, parseUnits, toHex } from 'viem'
+import EpochVaultABI from '@/contracts/EpochVault.json'
+import { formatUnits, parseUnits } from 'viem'
 import { useAccount, useContractRead, useDeployContract, useWaitForTransactionReceipt, useWriteContract } from 'wagmi'
 
 // Contract ABI
-const abi = TestEpochVault24hABI.abi
+const abi = EpochVaultABI.abi
 
 // Hook for reading vault information
 export function useVaultInfo() {
@@ -74,12 +74,12 @@ export function useUserInfo() {
   const withdrawalLockInfo = userInfo ? (() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const firstDepositTime = Number((userInfo as any)[4])
-    const lockPeriod = 4 * 365 * 24 * 60 * 60 // 4 years in seconds
+    const lockPeriod = 3 * 365 * 24 * 60 * 60 // 3 years in seconds
     const lockEndTime = firstDepositTime + lockPeriod
     const currentTime = Math.floor(Date.now() / 1000)
     const canWithdrawNow = currentTime >= lockEndTime
     const timeRemaining = Math.max(0, lockEndTime - currentTime)
-    
+
     return {
       firstDepositTime: firstDepositTime.toString(),
       lockEndTime: lockEndTime.toString(),
@@ -363,11 +363,11 @@ export function useEpochTracking() {
   // Calculate time until next epoch
   const getTimeUntilNextEpoch = () => {
     if (!epochStartTime || !epochDuration) return null
-    
+
     const now = Math.floor(Date.now() / 1000)
     const epochEndTime = Number(epochStartTime) + Number(epochDuration)
     const timeRemaining = epochEndTime - now
-    
+
     return timeRemaining > 0 ? timeRemaining : 0
   }
 
@@ -378,7 +378,7 @@ export function useEpochTracking() {
     const hours = Math.floor(seconds / 3600)
     const minutes = Math.floor((seconds % 3600) / 60)
     const secs = seconds % 60
-    
+
     if (hours > 0) {
       return `${hours}h ${minutes}m ${secs}s`
     } else if (minutes > 0) {
@@ -434,50 +434,17 @@ export function useAuthorizedWithdraw() {
   const { writeContract, data: hash, isPending, error } = useWriteContract()
 
   const authorizedWithdraw = async (amount: string) => {
-    console.log('🔍 ===== AUTHORIZED WITHDRAW DEBUG START =====')
-    console.log('🔍 AuthorizedWithdraw called with amount:', amount)
-    console.log('🔍 Contract address:', CONTRACT_ADDRESSES.EPOCH_VAULT)
-    
-    if (!amount || amount === '0') {
-      console.log('❌ Amount is empty or zero, returning early')
-      return
-    }
+    if (!amount || amount === '0') return
 
-    console.log('✅ Proceeding with admin withdrawal, amount:', amount)
-    
     try {
-      const parsedAmount = parseUnits(amount, 6)
-      console.log('🔍 Parsed amount (6 decimals):', parsedAmount.toString())
-      
-      const contractCall = {
+      writeContract({
         address: CONTRACT_ADDRESSES.EPOCH_VAULT as `0x${string}`,
         abi,
         functionName: 'adminWithdraw',
-        args: [parsedAmount],
-      }
-      
-      // Calculate the actual method ID
-      const functionSignature = 'adminWithdraw(uint256)'
-      const hash = keccak256(toHex(functionSignature))
-      const methodId = hash.slice(0, 10) // First 4 bytes (8 hex chars + 0x)
-      
-      console.log('📝 ===== CONTRACT CALL DETAILS =====')
-      console.log('📝 Address:', contractCall.address)
-      console.log('📝 Function Name:', contractCall.functionName)
-      console.log('📝 Function Signature:', functionSignature)
-      console.log('📝 Calculated Method ID:', methodId)
-      console.log('📝 Expected Method ID: 0x7c5b4a37 (adminWithdraw(uint256))')
-      console.log('📝 Method ID Match:', methodId === '0x7c5b4a37' ? '✅ YES' : '❌ NO')
-      console.log('📝 Args:', contractCall.args)
-      console.log('📝 ===== END CONTRACT CALL DETAILS =====')
-      
-      writeContract(contractCall)
-      
-      console.log('✅ writeContract called successfully')
-      console.log('🔍 ===== AUTHORIZED WITHDRAW DEBUG END =====')
+        args: [parseUnits(amount, 6)],
+      })
     } catch (err) {
-      console.error('❌ Authorized withdrawal error:', err)
-      console.log('🔍 ===== AUTHORIZED WITHDRAW DEBUG END (ERROR) =====')
+      console.error('Authorized withdrawal error:', err)
     }
   }
 
@@ -531,48 +498,38 @@ export function useDeployVault() {
   const { deployContract, data: hash, isPending, error } = useDeployContract()
 
   const deployVault = async (assetAddress: string, ownerAddress: string) => {
-    console.log('🚀 ===== DEPLOY VAULT START =====')
-    console.log('🚀 Asset Address:', assetAddress)
-    console.log('🚀 Owner Address:', ownerAddress)
-    
     if (!assetAddress || !ownerAddress) {
-      console.error('❌ Missing required addresses')
+      console.error('Deploy vault: missing required addresses')
       return
     }
 
     try {
-      // Import EpochVault dynamically for bytecode
       const EpochVaultABI = await import('@/contracts/EpochVault.json')
-      
+
       deployContract({
         abi: EpochVaultABI.abi,
         bytecode: EpochVaultABI.bytecode as `0x${string}`,
         args: [assetAddress as `0x${string}`, ownerAddress as `0x${string}`],
       })
-      console.log('✅ Deploy transaction submitted')
     } catch (err) {
-      console.error('❌ Deploy vault error:', err)
+      console.error('Deploy vault error:', err)
     }
   }
 
   // Deploy with custom ABI and bytecode
   const deployCustomVault = async (abiJson: string, bytecode: string, args: string[]) => {
-    console.log('🚀 ===== DEPLOY CUSTOM VAULT START =====')
-    console.log('🚀 Args:', args)
-    
     if (!abiJson || !bytecode) {
-      console.error('❌ Missing ABI or bytecode')
+      console.error('Deploy custom vault: missing ABI or bytecode')
       return
     }
 
     try {
       const parsedAbi = JSON.parse(abiJson)
-      
-      // Convert args to proper types based on constructor inputs
+
       const constructor = parsedAbi.find((item: { type: string }) => item.type === 'constructor')
       const typedArgs = args.map((arg, index) => {
         const inputType = constructor?.inputs?.[index]?.type || 'string'
-        
+
         if (inputType === 'address') {
           return arg as `0x${string}`
         } else if (inputType.startsWith('uint') || inputType.startsWith('int')) {
@@ -582,15 +539,14 @@ export function useDeployVault() {
         }
         return arg
       })
-      
+
       deployContract({
         abi: parsedAbi,
         bytecode: bytecode as `0x${string}`,
         args: typedArgs,
       })
-      console.log('✅ Custom deploy transaction submitted')
     } catch (err) {
-      console.error('❌ Deploy custom vault error:', err)
+      console.error('Deploy custom vault error:', err)
     }
   }
 

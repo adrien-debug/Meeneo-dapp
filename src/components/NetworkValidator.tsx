@@ -37,9 +37,9 @@ export function NetworkValidator() {
           </svg>
         </div>
 
-        <h3 className="text-sm font-bold text-[#0E0F0F] mb-1">Wrong Network</h3>
+        <h3 className="card-title mb-1">Wrong Network</h3>
 
-        <p className="text-[11px] text-[#9EB3A8] mb-4">
+        <p className="text-xs text-[#9EB3A8] mb-4">
           Connected to <strong className="text-[#0E0F0F]">{chain?.name}</strong>.
           HearstVault requires <strong className="text-[#0E0F0F]">Base</strong>.
         </p>
@@ -47,13 +47,13 @@ export function NetworkValidator() {
         <div className="space-y-2">
           <button
             onClick={handleSwitchToBase}
-            className="w-full px-4 py-2 bg-[#96EA7A] hover:bg-[#7ED066] text-[#0E0F0F] font-semibold text-[11px] rounded-md transition-colors"
+            className="w-full px-4 py-2 bg-[#96EA7A] hover:bg-[#7ED066] text-[#0E0F0F] font-semibold text-xs rounded-md transition-colors"
           >
             Switch to Base
           </button>
           <button
             onClick={() => setShowNetworkPrompt(false)}
-            className="w-full px-4 py-2 bg-[#F2F2F2] hover:bg-[#E6F1E7] text-[#9EB3A8] font-medium text-[11px] rounded-md transition-colors"
+            className="w-full px-4 py-2 bg-[#F2F2F2] hover:bg-[#E6F1E7] text-[#9EB3A8] font-medium text-xs rounded-md transition-colors"
           >
             Cancel
           </button>

@@ -37,7 +37,7 @@ export const PRODUCTS: LegacyProduct[] = [
     description: HEARST_VAULT.description,
     token: 'USDC',
     depositToken: 'USDC',
-    apr: 12,
+    apr: (HEARST_VAULT.compositeApy[0] + HEARST_VAULT.compositeApy[1]) / 2,
     lockPeriod: 3,
     minDeposit: HEARST_VAULT.minDeposit,
     contractAddress: HEARST_VAULT.contractAddress,

@@ -38,6 +38,17 @@ const nextConfig: NextConfig = {
     CUSTOM_KEY: process.env.CUSTOM_KEY,
   },
 
+  // Proxy simulation API to Railway backend
+  async rewrites() {
+    const simulationApi = process.env.SIMULATION_API_URL || 'https://hearst-connect-backend-production.up.railway.app';
+    return [
+      {
+        source: '/api/simulation/:path*',
+        destination: `${simulationApi}/api/:path*`,
+      },
+    ];
+  },
+
   // Headers for security
   async headers() {
     return [

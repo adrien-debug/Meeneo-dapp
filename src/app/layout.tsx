@@ -1,3 +1,4 @@
+import { Footer } from '@/components/Footer';
 import { NetworkValidator } from '@/components/NetworkValidator';
 import ContextProvider from '@/context';
 import type { Metadata } from "next";
@@ -27,10 +28,13 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${inter.variable} antialiased bg-[#F2F2F2]`}
+        className={`${inter.variable} font-[family-name:var(--font-inter)] antialiased bg-[var(--background)]`}
       >
         <ContextProvider cookies={cookies}>
-          {children}
+          <div className="pb-20">
+            {children}
+          </div>
+          <Footer />
           <NetworkValidator />
         </ContextProvider>
       </body>

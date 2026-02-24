@@ -1,5 +1,5 @@
 export type StrategyType = 'rwa_mining' | 'usdc_yield' | 'btc_hedged'
-export type LockStatus = 'locked' | 'yield_claimable' | 'matured'
+export type LockStatus = 'active' | 'target_reached' | 'matured'
 export type ProductStatus = 'active' | 'coming_soon' | 'paused' | 'closed'
 
 export interface VaultStrategy {
@@ -38,7 +38,6 @@ export interface VaultConfig {
   tvlCap: number
   currentTvl: number
   totalShares: number
-  currentEpoch: number
   depositToken: string
   chainId: number
   status: ProductStatus
@@ -70,4 +69,5 @@ export interface RecentTransaction {
   timestamp: number
   address: string
   strategy?: StrategyType
+  vaultName?: string
 }
