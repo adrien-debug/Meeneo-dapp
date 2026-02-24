@@ -2,65 +2,54 @@
 
 import { Header } from '@/components/Header'
 import Link from 'next/link'
-import { HEARST_VAULT, fmtUsd } from '@/config/mock-data'
-import { useDeposit, useUSDCAllowance, useUSDCApproval } from '@/hooks/useEpochVault'
+import { fmtUsd } from '@/config/mock-data'
+import { useDemo } from '@/context/demo-context'
 import Image from 'next/image'
-import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { useEffect, useMemo, useState } from 'react'
 import { Cell, Pie, PieChart, ResponsiveContainer } from 'recharts'
 import { useAccount } from 'wagmi'
 
 import { CARD, STRATEGY_ICONS } from '@/components/ui/constants'
 import { LoadingScreen } from '@/components/ui/LoadingScreen'
 
-const vault = HEARST_VAULT
-
-const allocationData = vault.strategies.map((s) => ({
-  name: s.label,
-  value: s.allocation,
-  color: s.color,
-}))
-
 export default function ProductPage() {
   const { isConnected } = useAccount()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const { vaults, deposit: demoDeposit } = useDemo()
   const [amount, setAmount] = useState('')
   const [step, setStep] = useState<'deposit' | 'confirm'>('deposit')
-
-  const {
-    deposit,
-    isPending: isDepositPending,
-    isConfirming: isDepositConfirming,
-    isConfirmed: isDepositConfirmed,
-  } = useDeposit()
-  const {
-    approve,
-    isPending: isApprovePending,
-    isConfirming: isApproveConfirming,
-    isConfirmed: isApproveConfirmed,
-  } = useUSDCApproval()
-  const { allowance } = useUSDCAllowance()
+  const [isDepositConfirmed, setIsDepositConfirmed] = useState(false)
+  const [selectedSlug, setSelectedSlug] = useState(searchParams.get('vault') || '')
 
   useEffect(() => {
     if (!isConnected) router.replace('/login')
   }, [isConnected, router])
 
+  useEffect(() => {
+    if (!selectedSlug && vaults.length > 0) setSelectedSlug(vaults[0].slug)
+  }, [vaults, selectedSlug])
+
+  const vault = useMemo(() => vaults.find((v) => v.slug === selectedSlug), [vaults, selectedSlug])
+
+  const allocationData = useMemo(
+    () =>
+      vault?.strategies.map((s) => ({ name: s.label, value: s.allocation, color: s.color })) ?? [],
+    [vault],
+  )
+
   const parsedAmount = parseFloat(amount) || 0
-  const isValidAmount = parsedAmount >= vault.minDeposit
-  const needsApproval = parsedAmount > parseFloat(allowance)
+  const isValidAmount = vault ? parsedAmount >= vault.minDeposit : false
 
   const handleDeposit = () => {
-    if (needsApproval && !isApproveConfirmed) {
-      approve(amount)
-    } else {
-      deposit(amount)
-    }
+    if (!vault) return
+    demoDeposit(vault.slug, parsedAmount)
+    setIsDepositConfirmed(true)
   }
 
-  const isProcessing =
-    isDepositPending || isDepositConfirming || isApprovePending || isApproveConfirming
-
   if (!isConnected) return <LoadingScreen />
+  if (!vault) return <LoadingScreen />
 
   return (
     <div className="min-h-screen bg-[#F2F2F2]">
@@ -68,8 +57,32 @@ export default function ProductPage() {
 
       <main className="pt-20 pb-10">
         <div className="page-container">
+          {/* ─── Vault Selector ─── */}
+          {vaults.length > 1 && (
+            <div className="flex items-center gap-2 mt-6 mb-2 overflow-x-auto pb-1">
+              {vaults.map((v) => (
+                <button
+                  key={v.slug}
+                  onClick={() => {
+                    setSelectedSlug(v.slug)
+                    setStep('deposit')
+                    setAmount('')
+                    setIsDepositConfirmed(false)
+                  }}
+                  className={`px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all ${
+                    v.slug === selectedSlug
+                      ? 'bg-[#96EA7A] text-black'
+                      : 'bg-white text-[#9EB3A8] border border-[#9EB3A8]/20 hover:border-[#96EA7A]'
+                  }`}
+                >
+                  {v.name}
+                </button>
+              ))}
+            </div>
+          )}
+
           {/* ─── Hero ─── */}
-          <div className={`${CARD} p-6 sm:p-8 relative overflow-hidden mt-6 mb-6`}>
+          <div className={`${CARD} p-6 sm:p-8 relative overflow-hidden mt-4 mb-6`}>
             <div className="absolute -top-32 -right-32 w-96 h-96 bg-gradient-to-br from-[#96EA7A]/6 to-transparent rounded-full blur-3xl pointer-events-none" />
             <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-gradient-to-tr from-[#9EB3A8]/4 to-transparent rounded-full blur-2xl pointer-events-none" />
 
@@ -553,27 +566,15 @@ export default function ProductPage() {
                     <div className="flex gap-3">
                       <button
                         onClick={() => setStep('deposit')}
-                        disabled={isProcessing}
-                        className="flex-1 h-14 rounded-2xl text-sm font-bold bg-[#F2F2F2] text-[#9EB3A8] hover:bg-[#E6F1E7] hover:text-[#0E0F0F] transition-all disabled:opacity-50"
+                        className="flex-1 h-14 rounded-2xl text-sm font-bold bg-[#F2F2F2] text-[#9EB3A8] hover:bg-[#E6F1E7] hover:text-[#0E0F0F] transition-all"
                       >
                         Back
                       </button>
                       <button
                         onClick={handleDeposit}
-                        disabled={isProcessing}
-                        className="flex-[2] h-14 rounded-2xl text-base font-bold bg-[#96EA7A] text-[#0E0F0F] hover:bg-[#7ED066] shadow-lg shadow-[#96EA7A]/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
+                        className="flex-[2] h-14 rounded-2xl text-base font-bold bg-[#96EA7A] text-[#0E0F0F] hover:bg-[#7ED066] shadow-lg shadow-[#96EA7A]/20 transition-all active:scale-[0.98]"
                       >
-                        {isApprovePending
-                          ? 'Approve in wallet...'
-                          : isApproveConfirming
-                            ? 'Approving...'
-                            : needsApproval && !isApproveConfirmed
-                              ? 'Approve USDC'
-                              : isDepositPending
-                                ? 'Confirm in wallet...'
-                                : isDepositConfirming
-                                  ? 'Processing...'
-                                  : 'Deposit'}
+                        Deposit (Demo)
                       </button>
                     </div>
                   )}

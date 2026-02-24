@@ -1,21 +1,11 @@
 'use client'
 
 import { Header } from '@/components/Header'
-import {
-  ALL_VAULTS,
-  MOCK_MONTHLY_PERFORMANCE,
-  MOCK_RECENT_TRANSACTIONS,
-  MOCK_USER_DEPOSITS,
-  TOTAL_USER_DEPOSITED,
-  TOTAL_USER_PENDING,
-  TOTAL_USER_YIELD,
-  fmtPercent,
-  fmtUsd,
-  getVaultUserStats,
-} from '@/config/mock-data'
+import { MOCK_MONTHLY_PERFORMANCE, fmtPercent, fmtUsd } from '@/config/mock-data'
+import { useDemo } from '@/context/demo-context'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   Area,
   AreaChart,
@@ -31,6 +21,7 @@ import {
 } from 'recharts'
 import { useAccount } from 'wagmi'
 
+import { CreateVaultModal } from '@/components/demo/CreateVaultModal'
 import { ChartTooltip } from '@/components/ui/ChartTooltip'
 import { CARD, STRATEGY_ICONS } from '@/components/ui/constants'
 import { LoadingScreen } from '@/components/ui/LoadingScreen'
@@ -85,6 +76,8 @@ function ToggleGroup({
 export default function Dashboard() {
   const { isConnected } = useAccount()
   const router = useRouter()
+  const { vaults, deposits, deleteVault } = useDemo()
+  const [showCreateVault, setShowCreateVault] = useState(false)
   const [chartStrategy, setChartStrategy] = useState<
     'composite' | 'rwa_mining' | 'usdc_yield' | 'btc_hedged'
   >('composite')
@@ -95,8 +88,29 @@ export default function Dashboard() {
     if (!isConnected) router.replace('/login')
   }, [isConnected, router])
 
-  const vaults = ALL_VAULTS
+  const TOTAL_USER_DEPOSITED = useMemo(() => deposits.reduce((s, d) => s + d.amount, 0), [deposits])
+  const TOTAL_USER_YIELD = useMemo(
+    () => deposits.reduce((s, d) => s + d.claimedYield + d.pendingYield, 0),
+    [deposits],
+  )
+  const TOTAL_USER_PENDING = useMemo(
+    () => deposits.reduce((s, d) => s + d.pendingYield, 0),
+    [deposits],
+  )
   const totalPortfolio = TOTAL_USER_DEPOSITED + TOTAL_USER_YIELD
+
+  const getVaultUserStats = useCallback(
+    (slug: string) => {
+      const deps = deposits.filter((d) => d.vaultSlug === slug)
+      return {
+        deposited: deps.reduce((s, d) => s + d.amount, 0),
+        yieldEarned: deps.reduce((s, d) => s + d.claimedYield + d.pendingYield, 0),
+        pending: deps.reduce((s, d) => s + d.pendingYield, 0),
+        count: deps.length,
+      }
+    },
+    [deposits],
+  )
 
   const vaultStats = useMemo(
     () =>
@@ -105,7 +119,7 @@ export default function Dashboard() {
         stats: getVaultUserStats(v.slug),
         color: VAULT_COLORS[i % VAULT_COLORS.length],
       })),
-    [vaults],
+    [vaults, getVaultUserStats],
   )
 
   const globalAllocationData = useMemo(
@@ -280,7 +294,7 @@ export default function Dashboard() {
             <div className="flex items-center justify-between mb-5">
               <h2 className="section-title">My Vaults</h2>
               <button
-                onClick={() => router.push('/subscribe')}
+                onClick={() => setShowCreateVault(true)}
                 className="text-sm font-semibold text-[#0E0F0F] bg-white border border-[#9EB3A8]/20 hover:border-[#96EA7A] px-4 py-2 rounded-full transition-all flex items-center gap-1.5 hover:shadow-sm"
               >
                 <svg
@@ -304,7 +318,7 @@ export default function Dashboard() {
                 const { vault, stats, color } = vs
                 const hasPositions = stats.count > 0
                 const roiPct = stats.deposited > 0 ? (stats.yieldEarned / stats.deposited) * 100 : 0
-                const deposit = MOCK_USER_DEPOSITS.find((d) => d.vaultSlug === vault.slug)
+                const deposit = deposits.find((d) => d.vaultSlug === vault.slug)
                 const statusLabel =
                   deposit?.lockStatus === 'matured'
                     ? 'Matured'
@@ -356,17 +370,41 @@ export default function Dashboard() {
                             </p>
                           </div>
                         </div>
-                        {statusLabel && (
-                          <span
-                            className={`text-caption font-semibold px-2 py-0.5 rounded-full shrink-0 ${
-                              statusLabel === 'Matured'
-                                ? 'bg-[#0E0F0F]/8 text-[#0E0F0F]'
-                                : 'bg-[#96EA7A]/10 text-[#96EA7A]'
-                            }`}
+                        <div className="flex items-center gap-1.5">
+                          {statusLabel && (
+                            <span
+                              className={`text-caption font-semibold px-2 py-0.5 rounded-full shrink-0 ${
+                                statusLabel === 'Matured'
+                                  ? 'bg-[#0E0F0F]/8 text-[#0E0F0F]'
+                                  : 'bg-[#96EA7A]/10 text-[#96EA7A]'
+                              }`}
+                            >
+                              {statusLabel}
+                            </span>
+                          )}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              deleteVault(vault.slug)
+                            }}
+                            className="w-6 h-6 rounded-lg bg-red-50 hover:bg-red-100 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
+                            title="Delete vault"
                           >
-                            {statusLabel}
-                          </span>
-                        )}
+                            <svg
+                              className="w-3 h-3 text-red-400"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                              />
+                            </svg>
+                          </button>
+                        </div>
                       </div>
 
                       {/* Strategy pockets */}
@@ -511,7 +549,7 @@ export default function Dashboard() {
                 {vaultStats.map((vs) => {
                   if (vs.stats.deposited === 0) return null
                   const avgApy = (vs.vault.compositeApy[0] + vs.vault.compositeApy[1]) / 2 / 100
-                  const deposit = MOCK_USER_DEPOSITS.find((d) => d.vaultSlug === vs.vault.slug)
+                  const deposit = deposits.find((d) => d.vaultSlug === vs.vault.slug)
                   const monthsElapsed = deposit
                     ? Math.floor((Date.now() / 1000 - deposit.depositTimestamp) / (30 * 86400))
                     : 0
@@ -811,7 +849,7 @@ export default function Dashboard() {
               <div className="flex items-center justify-between px-6 py-4 border-b border-[#9EB3A8]/10">
                 <h3 className="card-title">Positions</h3>
                 <span className="text-xs font-semibold text-[#9EB3A8] bg-[#F2F2F2] px-3 py-1.5 rounded-full">
-                  {MOCK_RECENT_TRANSACTIONS.length} active
+                  {deposits.length} active
                 </span>
               </div>
               <div className="overflow-x-auto">
@@ -827,27 +865,22 @@ export default function Dashboard() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#9EB3A8]/5">
-                    {MOCK_RECENT_TRANSACTIONS.map((tx) => {
-                      const matchedVault = ALL_VAULTS.find((v) => v.name === tx.vaultName)
-                      const deposit = MOCK_USER_DEPOSITS.find(
-                        (d) => d.vaultSlug === matchedVault?.slug,
-                      )
-                      const yieldEarned = deposit ? deposit.claimedYield + deposit.pendingYield : 0
-                      const roiPct =
-                        deposit && deposit.amount > 0 ? (yieldEarned / deposit.amount) * 100 : 0
-                      const statusLabel = deposit
-                        ? deposit.lockStatus === 'matured'
+                    {deposits.map((dep) => {
+                      const matchedVault = vaults.find((v) => v.slug === dep.vaultSlug)
+                      const yieldEarned = dep.claimedYield + dep.pendingYield
+                      const roiPct = dep.amount > 0 ? (yieldEarned / dep.amount) * 100 : 0
+                      const statusLabel =
+                        dep.lockStatus === 'matured'
                           ? 'Matured'
-                          : deposit.lockStatus === 'target_reached'
+                          : dep.lockStatus === 'target_reached'
                             ? 'Target'
                             : 'Active'
-                        : '—'
-                      const progress = deposit?.progressPercent ?? 0
+                      const progress = dep.progressPercent
                       return (
                         <tr
-                          key={tx.id}
+                          key={dep.id}
                           className="hover:bg-[#F2F2F2]/60 transition-colors cursor-pointer group"
-                          onClick={() => router.push(`/vault/${matchedVault?.slug ?? ''}`)}
+                          onClick={() => router.push(`/vault/${dep.vaultSlug}`)}
                         >
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-3">
@@ -861,20 +894,23 @@ export default function Dashboard() {
                               </div>
                               <div>
                                 <p className="text-sm font-semibold text-[#0E0F0F] group-hover:text-[#0E0F0F]">
-                                  {tx.vaultName ?? 'Vault'}
+                                  {matchedVault?.name ?? 'Vault'}
                                 </p>
                                 <p className="text-xs text-[#9EB3A8]">
-                                  {new Date(tx.timestamp * 1000).toLocaleDateString('en-US', {
-                                    day: 'numeric',
-                                    month: 'short',
-                                    year: 'numeric',
-                                  })}
+                                  {new Date(dep.depositTimestamp * 1000).toLocaleDateString(
+                                    'en-US',
+                                    {
+                                      day: 'numeric',
+                                      month: 'short',
+                                      year: 'numeric',
+                                    },
+                                  )}
                                 </p>
                               </div>
                             </div>
                           </td>
                           <td className="text-sm font-bold text-[#0E0F0F] text-right px-4 py-4">
-                            {fmtUsd(tx.amount)}
+                            {fmtUsd(dep.amount)}
                           </td>
                           <td className="text-sm font-bold text-[#96EA7A] text-right px-4 py-4">
                             +{fmtUsd(yieldEarned)}
@@ -918,6 +954,8 @@ export default function Dashboard() {
           </div>
         </div>
       </main>
+
+      {showCreateVault && <CreateVaultModal onClose={() => setShowCreateVault(false)} />}
     </div>
   )
 }

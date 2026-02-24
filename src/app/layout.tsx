@@ -1,5 +1,6 @@
 import { Footer } from '@/components/Footer'
 import { NetworkValidator } from '@/components/NetworkValidator'
+import { DemoWrapper } from '@/components/demo/DemoWrapper'
 import ContextProvider from '@/context'
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
@@ -32,9 +33,11 @@ export default async function RootLayout({
         className={`${inter.variable} font-[family-name:var(--font-inter)] antialiased bg-[var(--background)]`}
       >
         <ContextProvider cookies={cookies}>
-          <div className="pb-20">{children}</div>
-          <Footer />
-          <NetworkValidator />
+          <DemoWrapper>
+            <div className="pb-20">{children}</div>
+            <Footer />
+            <NetworkValidator />
+          </DemoWrapper>
         </ContextProvider>
       </body>
     </html>
