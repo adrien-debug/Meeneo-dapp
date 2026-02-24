@@ -6,24 +6,12 @@ import { HEARST_VAULT, fmtUsd } from '@/config/mock-data'
 import { useDeposit, useUSDCAllowance, useUSDCApproval } from '@/hooks/useEpochVault'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { useCallback, useEffect, useState } from 'react'
-import {
-  Area,
-  AreaChart,
-  CartesianGrid,
-  Cell,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts'
+import { useEffect, useState } from 'react'
+import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
 import { useAccount } from 'wagmi'
 
 import { CARD, RISK_BG, STRATEGY_ICONS } from '@/components/ui/constants'
 import { LoadingScreen } from '@/components/ui/LoadingScreen'
-import { simulationApi, buildSimulationRequest, type SimulationResponse, type ScenarioResult } from '@/lib/simulation-api'
 
 const vault = HEARST_VAULT
 
@@ -41,34 +29,13 @@ export default function ProductPage() {
   const { approve, isPending: isApprovePending, isConfirming: isApproveConfirming, isConfirmed: isApproveConfirmed } = useUSDCApproval()
   const { allowance } = useUSDCAllowance()
 
-  const [simResult, setSimResult] = useState<SimulationResponse | null>(null)
-  const [simLoading, setSimLoading] = useState(false)
-  const [simError, setSimError] = useState('')
-  const [simScenario, setSimScenario] = useState<'bear' | 'base' | 'bull'>('base')
-
   useEffect(() => {
     if (!isConnected) router.replace('/login')
   }, [isConnected, router])
 
   const parsedAmount = parseFloat(amount) || 0
   const isValidAmount = parsedAmount >= vault.minDeposit
-  const canSimulate = parsedAmount > 0
   const needsApproval = parsedAmount > parseFloat(allowance)
-
-  const runSimulation = useCallback(async (amt: number) => {
-    if (amt <= 0) return
-    setSimLoading(true)
-    setSimError('')
-    try {
-      const req = buildSimulationRequest(amt)
-      const res = await simulationApi.simulate(req)
-      setSimResult(res)
-    } catch (e: unknown) {
-      setSimError(e instanceof Error ? e.message : 'Simulation failed')
-    } finally {
-      setSimLoading(false)
-    }
-  }, [])
 
   const handleDeposit = () => {
     if (needsApproval && !isApproveConfirmed) {
@@ -261,167 +228,41 @@ export default function ProductPage() {
 
             {/* Box 2 — Simulation */}
             <div className={`${CARD} p-6 flex flex-col`}>
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="kpi-label">Simulation</h3>
-                {simResult && (
-                  <div className="flex gap-1 bg-[#F2F2F2] rounded-lg p-0.5">
-                    {(['bear', 'base', 'bull'] as const).map(s => (
-                      <button
-                        key={s}
-                        onClick={() => setSimScenario(s)}
-                        className={`px-2.5 py-1 rounded-md text-caption font-bold transition-all ${
-                          simScenario === s
-                            ? s === 'bear' ? 'bg-white text-[#E8A838] shadow-sm'
-                              : s === 'bull' ? 'bg-white text-[#96EA7A] shadow-sm'
-                              : 'bg-white text-[#0E0F0F] shadow-sm'
-                            : 'text-[#9EB3A8] hover:text-[#0E0F0F]'
-                        }`}
-                      >
-                        {s.charAt(0).toUpperCase() + s.slice(1)}
-                      </button>
-                    ))}
-                  </div>
-                )}
+              <div className="flex items-center gap-2.5 mb-4">
+                <div className="w-8 h-8 rounded-xl bg-[#96EA7A]/10 flex items-center justify-center">
+                  <svg className="w-4 h-4 text-[#96EA7A]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+                  </svg>
+                </div>
+                <h3 className="text-sm font-black text-[#0E0F0F]">Simulation</h3>
               </div>
 
-              <div className="flex-1 flex flex-col">
-                {/* No simulation yet */}
-                {!simResult && !simLoading && !simError && (
-                  <div className="flex-1 flex flex-col items-center justify-center text-center py-6">
-                    <div className="w-12 h-12 rounded-2xl bg-[#96EA7A]/10 flex items-center justify-center mb-3">
-                      <svg className="w-6 h-6 text-[#96EA7A]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                      </svg>
+              <p className="text-xs text-[#9EB3A8] leading-relaxed mb-4">
+                Model your investment across <span className="text-[#0E0F0F] font-semibold">bear, base & bull</span> scenarios over 36 months with our advanced analytics engine.
+              </p>
+
+              <div className="space-y-0 rounded-xl bg-[#F2F2F2] overflow-hidden divide-y divide-[#9EB3A8]/10 mb-4">
+                {[
+                  { icon: '₿', label: 'BTC Price Curves', desc: 'Deterministic & ML forecasts' },
+                  { icon: '⛏', label: 'Network & Mining', desc: 'Hashrate, difficulty, hosting' },
+                  { icon: '⚙', label: 'Product Config', desc: '3-bucket capital allocation' },
+                  { icon: '📊', label: 'Results', desc: 'Multi-scenario comparison' },
+                ].map(item => (
+                  <div key={item.label} className="flex items-center gap-3 px-3 py-2.5">
+                    <span className="w-6 h-6 rounded-lg bg-white flex items-center justify-center text-xs">{item.icon}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[11px] font-bold text-[#0E0F0F]">{item.label}</p>
+                      <p className="text-[10px] text-[#9EB3A8]">{item.desc}</p>
                     </div>
-                    <p className="text-sm font-bold text-[#0E0F0F] mb-1">36-Month Projection</p>
-                    <p className="text-xs text-[#9EB3A8] mb-4 max-w-[200px]">Enter an amount and run the simulation to see projected returns across scenarios.</p>
-                    <button
-                      onClick={() => runSimulation(parsedAmount)}
-                      disabled={!canSimulate}
-                      className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-all ${
-                        canSimulate
-                          ? 'bg-[#0E0F0F] text-white hover:bg-[#2a2b2b] active:scale-[0.98]'
-                          : 'bg-[#F2F2F2] text-[#9EB3A8] cursor-not-allowed'
-                      }`}
-                    >
-                      Run Simulation
-                    </button>
                   </div>
-                )}
+                ))}
+              </div>
 
-                {/* Loading */}
-                {simLoading && (
-                  <div className="flex-1 flex flex-col items-center justify-center py-8">
-                    <div className="w-8 h-8 border-2 border-[#96EA7A] border-t-transparent rounded-full animate-spin mb-3" />
-                    <p className="text-xs text-[#9EB3A8] font-medium">Running 3-scenario simulation...</p>
-                  </div>
-                )}
-
-                {/* Error */}
-                {simError && !simLoading && (
-                  <div className="flex-1 flex flex-col items-center justify-center py-6">
-                    <p className="text-xs text-[#E8A838] mb-3">{simError}</p>
-                    <button
-                      onClick={() => runSimulation(parsedAmount)}
-                      className="px-4 py-2 rounded-lg text-xs font-bold bg-[#0E0F0F] text-white hover:bg-[#2a2b2b]"
-                    >
-                      Retry
-                    </button>
-                  </div>
-                )}
-
-                {/* Results */}
-                {simResult && !simLoading && (() => {
-                  const sc: ScenarioResult = simResult.scenario_results[simScenario]
-                  const m = sc.aggregated.metrics
-                  const portfolio = sc.aggregated.monthly_portfolio
-                  const decision = sc.aggregated.decision
-
-                  return (
-                    <>
-                      {/* Decision badge */}
-                      <div className={`flex items-center gap-2 mb-3 px-3 py-1.5 rounded-lg ${
-                        decision === 'APPROVED' ? 'bg-[#96EA7A]/10' : decision === 'ADJUST' ? 'bg-[#E8A838]/10' : 'bg-red-500/10'
-                      }`}>
-                        <div className={`w-2 h-2 rounded-full ${
-                          decision === 'APPROVED' ? 'bg-[#96EA7A]' : decision === 'ADJUST' ? 'bg-[#E8A838]' : 'bg-red-500'
-                        }`} />
-                        <span className={`text-caption font-bold ${
-                          decision === 'APPROVED' ? 'text-[#96EA7A]' : decision === 'ADJUST' ? 'text-[#E8A838]' : 'text-red-500'
-                        }`}>{decision}</span>
-                        <span className="text-caption text-[#9EB3A8] ml-auto">{simScenario} scenario</span>
-                      </div>
-
-                      {/* Key metrics */}
-                      <div className="grid grid-cols-2 gap-2 mb-3">
-                        {[
-                          { label: 'Eff. APR', value: `${(m.effective_apr * 100).toFixed(1)}%`, good: m.effective_apr >= 0.08 },
-                          { label: 'Total Return', value: `${(m.total_return_pct * 100).toFixed(1)}%`, good: m.total_return_pct > 0 },
-                          { label: 'Final Value', value: fmtUsd(m.final_portfolio_usd), good: m.capital_preservation_ratio >= 1 },
-                          { label: 'Capital Pres.', value: `${(m.capital_preservation_ratio * 100).toFixed(0)}%`, good: m.capital_preservation_ratio >= 1 },
-                        ].map(kpi => (
-                          <div key={kpi.label} className="bg-[#F2F2F2] rounded-lg px-3 py-2">
-                            <p className="text-[10px] text-[#9EB3A8] font-semibold uppercase">{kpi.label}</p>
-                            <p className={`text-sm font-black ${kpi.good ? 'text-[#0E0F0F]' : 'text-[#E8A838]'}`}>{kpi.value}</p>
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* Portfolio chart */}
-                      <div className="h-[120px] w-full mb-3">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <AreaChart data={portfolio} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
-                            <defs>
-                              <linearGradient id="simGrad" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stopColor="#96EA7A" stopOpacity={0.3} />
-                                <stop offset="100%" stopColor="#96EA7A" stopOpacity={0} />
-                              </linearGradient>
-                            </defs>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#9EB3A8" strokeOpacity={0.1} />
-                            <XAxis dataKey="month" tick={{ fontSize: 9, fill: '#9EB3A8' }} tickFormatter={(v: number) => `M${v}`} interval={5} />
-                            <YAxis tick={{ fontSize: 9, fill: '#9EB3A8' }} tickFormatter={(v: number) => `$${(v / 1e6).toFixed(1)}M`} width={50} />
-                            <Tooltip
-                              contentStyle={{ background: '#fff', border: '1px solid #9EB3A8', borderRadius: 8, fontSize: 11 }}
-                              formatter={(v?: number) => [fmtUsd(v ?? 0), '']}
-                              labelFormatter={(l) => `Month ${l}`}
-                            />
-                            <Area type="monotone" dataKey="total_portfolio_usd" stroke="#96EA7A" strokeWidth={2} fill="url(#simGrad)" name="Portfolio" />
-                          </AreaChart>
-                        </ResponsiveContainer>
-                      </div>
-
-                      {/* Yield + Holding summary */}
-                      <div className="space-y-1.5 mb-3">
-                        <div className="flex justify-between text-xs">
-                          <span className="text-[#9EB3A8]">Yield Paid (36M)</span>
-                          <span className="font-bold text-[#0E0F0F]">{fmtUsd(m.total_yield_paid_usd)}</span>
-                        </div>
-                        <div className="flex justify-between text-xs">
-                          <span className="text-[#9EB3A8]">BTC Target Hit</span>
-                          <span className={`font-bold ${sc.btc_holding_bucket.metrics.target_hit ? 'text-[#96EA7A]' : 'text-[#9EB3A8]'}`}>
-                            {sc.btc_holding_bucket.metrics.target_hit
-                              ? `Month ${sc.btc_holding_bucket.metrics.sell_month}`
-                              : 'Not reached'}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Re-run button */}
-                      <button
-                        onClick={() => runSimulation(parsedAmount)}
-                        disabled={!canSimulate || simLoading}
-                        className="w-full py-2 rounded-xl text-xs font-bold bg-[#0E0F0F] text-white hover:bg-[#2a2b2b] transition-colors disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
-                      >
-                        Re-run Simulation
-                      </button>
-                    </>
-                  )
-                })()}
-
-                {/* Link to full simulation tools */}
+              <div className="mt-auto">
                 <Link href="/simulation"
-                  className="mt-3 flex items-center justify-center gap-1.5 w-full py-2 rounded-xl text-[11px] font-bold text-[#96EA7A] bg-[#96EA7A]/5 hover:bg-[#96EA7A]/10 transition-all">
-                  Full Simulation Tools →
+                  className="group flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-sm font-bold bg-[#96EA7A] text-[#0E0F0F] hover:bg-[#7ED066] active:scale-[0.97] transition-all shadow-sm shadow-[#96EA7A]/20">
+                  Open Simulation
+                  <span className="group-hover:translate-x-0.5 transition-transform">→</span>
                 </Link>
               </div>
             </div>

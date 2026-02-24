@@ -11,8 +11,7 @@ import { useAccount, useDisconnect } from 'wagmi'
 const NAV_ITEMS = [
   { label: 'Dashboard', href: '/dashboard' },
   { label: 'My Vaults', href: '/my-vaults' },
-  { label: 'Subscribe', href: '/subscribe' },
-  { label: 'Simulation', href: '/simulation' },
+  { label: 'Product', href: '/subscribe' },
 ] as const
 
 export function Header() {
