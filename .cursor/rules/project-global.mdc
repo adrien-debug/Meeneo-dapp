@@ -1,0 +1,51 @@
+---
+description: Global project rules for Meeneo/HearstVault dApp
+alwaysApply: true
+---
+
+# Meeneo — HearstVault dApp
+
+## Stack
+- Next.js 16 (App Router) + React 19 + TypeScript 5
+- Tailwind CSS 4 (PostCSS) — design tokens in `globals.css`
+- Web3: Wagmi v2, AppKit/Reown v1.8, Viem v2, Ethers v6
+- Charts: Recharts v3
+- State: TanStack Query v5
+- Deploy: Vercel (standalone output) — CI via GitHub Actions
+- Network: Base Mainnet (8453) + Base Sepolia (84532)
+
+## Architecture
+- `src/app/` — Next.js App Router pages
+- `src/components/` — React components (functional only)
+- `src/components/ui/` — Reusable UI primitives
+- `src/hooks/` — Custom React hooks
+- `src/config/` — Env, wagmi, contracts, products, mock-data
+- `src/contracts/` — ABI JSON files
+- `src/types/` — TypeScript type definitions
+- `src/lib/` — Utilities and API clients
+- `src/context/` — React Context providers
+
+## Conventions
+- Imports: use `@/*` alias → `./src/*`
+- Components: functional + named exports, colocated styles
+- Hooks: prefix `use`, one concern per hook
+- No `any` — use proper types from `src/types/`
+- Error handling: always log with context, never swallow errors
+- Mock-first: all data flows support mock fallback
+
+## Web3 Rules
+- Contract addresses in `src/config/contracts.ts` — never hardcode
+- Chain config in `src/config/wagmi.ts`
+- Use Viem for read, Wagmi hooks for reactive state
+- Always validate network before transactions (NetworkValidator)
+
+## Styling
+- Tailwind utility classes — no inline styles
+- Design tokens: `--hearst-*` CSS variables in `globals.css`
+- Color scale: green (#96EA7A), dark backgrounds
+- Spacing: 8px base system
+
+## Language
+- Code: English (variables, comments, commits)
+- User-facing: English
+- Dev communication: French

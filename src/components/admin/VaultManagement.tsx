@@ -15,7 +15,7 @@ export function VaultManagement({ vaultSlug }: VaultManagementProps) {
   const { address } = useAccount()
 
   // Find vault from products
-  const vault = PRODUCTS.find(p => p.slug === vaultSlug)
+  const vault = PRODUCTS.find((p) => p.slug === vaultSlug)
   const vaultAddress = vault?.contractAddress as `0x${string}` | undefined
 
   // Vault info
@@ -63,12 +63,16 @@ export function VaultManagement({ vaultSlug }: VaultManagementProps) {
       }, 3000)
       return () => clearTimeout(timeout)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [actions.isConfirmed])
 
   // Check admin roles
-  const isRewardDepositor = address?.toLowerCase() === HARDCODED_ADDRESSES.REWARD_DEPOSITOR.toLowerCase()
-  const isAuthorizedWithdrawal = address?.toLowerCase() === HARDCODED_ADDRESSES.AUTHORIZED_WITHDRAWAL.toLowerCase()
-  const isAdminDepositor = address?.toLowerCase() === HARDCODED_ADDRESSES.ADMIN_DEPOSITOR.toLowerCase()
+  const isRewardDepositor =
+    address?.toLowerCase() === HARDCODED_ADDRESSES.REWARD_DEPOSITOR.toLowerCase()
+  const isAuthorizedWithdrawal =
+    address?.toLowerCase() === HARDCODED_ADDRESSES.AUTHORIZED_WITHDRAWAL.toLowerCase()
+  const isAdminDepositor =
+    address?.toLowerCase() === HARDCODED_ADDRESSES.ADMIN_DEPOSITOR.toLowerCase()
 
   if (!vault) {
     return (
@@ -120,8 +124,12 @@ export function VaultManagement({ vaultSlug }: VaultManagementProps) {
         </div>
         <div className="bg-white border border-[#9EB3A8]/20 rounded-xl p-4">
           <p className="text-xs text-[#9EB3A8] mb-1">Temps restant</p>
-          <p className={`text-2xl font-bold ${timeLeft <= 3600 ? 'text-[#0E0F0F]' : 'text-[#0E0F0F]'}`}>
-            {timeLeft > 0 ? `${Math.floor(timeLeft / 3600)}h ${Math.floor((timeLeft % 3600) / 60)}m` : '0'}
+          <p
+            className={`text-2xl font-bold ${timeLeft <= 3600 ? 'text-[#0E0F0F]' : 'text-[#0E0F0F]'}`}
+          >
+            {timeLeft > 0
+              ? `${Math.floor(timeLeft / 3600)}h ${Math.floor((timeLeft % 3600) / 60)}m`
+              : '0'}
           </p>
         </div>
       </div>
@@ -137,7 +145,9 @@ export function VaultManagement({ vaultSlug }: VaultManagementProps) {
               </span>
               <div>
                 <p className="font-semibold text-[#0E0F0F]">Epoch prêt à avancer</p>
-                <p className="text-sm text-[#9EB3A8]">L&apos;epoch actuel est terminé et peut être avancé</p>
+                <p className="text-sm text-[#9EB3A8]">
+                  L&apos;epoch actuel est terminé et peut être avancé
+                </p>
               </div>
             </div>
             <button
@@ -157,21 +167,35 @@ export function VaultManagement({ vaultSlug }: VaultManagementProps) {
         <div className="bg-white border border-[#9EB3A8]/20 rounded-2xl p-6">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 bg-[#96EA7A]/20 rounded-xl flex items-center justify-center">
-              <svg className="w-5 h-5 text-[#0E0F0F]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <svg
+                className="w-5 h-5 text-[#0E0F0F]"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
               </svg>
             </div>
             <div>
               <h3 className="text-lg font-semibold text-[#0E0F0F]">Distribuer les Rewards</h3>
               {isRewardDepositor && (
-                <span className="text-xs px-2 py-0.5 bg-[#96EA7A]/20 text-[#0E0F0F] rounded-full">Autorisé</span>
+                <span className="text-xs px-2 py-0.5 bg-[#96EA7A]/20 text-[#0E0F0F] rounded-full">
+                  Autorisé
+                </span>
               )}
             </div>
           </div>
 
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-[#0E0F0F] mb-2">Montant (USDC)</label>
+              <label className="block text-sm font-medium text-[#0E0F0F] mb-2">
+                Montant (USDC)
+              </label>
               <input
                 type="number"
                 value={rewardAmount}
@@ -194,21 +218,35 @@ export function VaultManagement({ vaultSlug }: VaultManagementProps) {
         <div className="bg-white border border-[#9EB3A8]/20 rounded-2xl p-6">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 bg-[#E6F1E7] rounded-xl flex items-center justify-center">
-              <svg className="w-5 h-5 text-[#9EB3A8]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+              <svg
+                className="w-5 h-5 text-[#9EB3A8]"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
+                />
               </svg>
             </div>
             <div>
               <h3 className="text-lg font-semibold text-[#0E0F0F]">Retrait Admin</h3>
               {isAuthorizedWithdrawal && (
-                <span className="text-xs px-2 py-0.5 bg-[#E6F1E7] text-[#9EB3A8] rounded-full">Autorisé</span>
+                <span className="text-xs px-2 py-0.5 bg-[#E6F1E7] text-[#9EB3A8] rounded-full">
+                  Autorisé
+                </span>
               )}
             </div>
           </div>
 
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-[#0E0F0F] mb-2">Montant (USDC)</label>
+              <label className="block text-sm font-medium text-[#0E0F0F] mb-2">
+                Montant (USDC)
+              </label>
               <input
                 type="number"
                 value={withdrawAmount}
@@ -231,21 +269,35 @@ export function VaultManagement({ vaultSlug }: VaultManagementProps) {
         <div className="bg-white border border-[#9EB3A8]/20 rounded-2xl p-6">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 bg-[#E6F1E7] rounded-xl flex items-center justify-center">
-              <svg className="w-5 h-5 text-[#9EB3A8]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              <svg
+                className="w-5 h-5 text-[#9EB3A8]"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 4v16m8-8H4"
+                />
               </svg>
             </div>
             <div>
               <h3 className="text-lg font-semibold text-[#0E0F0F]">Dépôt Admin</h3>
               {isAdminDepositor && (
-                <span className="text-xs px-2 py-0.5 bg-[#E6F1E7] text-[#9EB3A8] rounded-full">Autorisé</span>
+                <span className="text-xs px-2 py-0.5 bg-[#E6F1E7] text-[#9EB3A8] rounded-full">
+                  Autorisé
+                </span>
               )}
             </div>
           </div>
 
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-[#0E0F0F] mb-2">Montant (USDC)</label>
+              <label className="block text-sm font-medium text-[#0E0F0F] mb-2">
+                Montant (USDC)
+              </label>
               <input
                 type="number"
                 value={adminDepositAmount}
@@ -256,7 +308,9 @@ export function VaultManagement({ vaultSlug }: VaultManagementProps) {
             </div>
             <button
               onClick={() => actions.adminDeposit(adminDepositAmount)}
-              disabled={!adminDepositAmount || actions.isPending || parseFloat(adminDepositAmount) <= 0}
+              disabled={
+                !adminDepositAmount || actions.isPending || parseFloat(adminDepositAmount) <= 0
+              }
               className="w-full py-3 bg-[#9EB3A8] text-[#0E0F0F] font-semibold rounded-xl hover:bg-[#7ED066] disabled:opacity-50 transition-all"
             >
               {actions.isPending ? 'Dépôt...' : 'Déposer'}
@@ -268,8 +322,18 @@ export function VaultManagement({ vaultSlug }: VaultManagementProps) {
         <div className="bg-white border border-[#9EB3A8]/20 rounded-2xl p-6">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 bg-[#F2F2F2] rounded-xl flex items-center justify-center">
-              <svg className="w-5 h-5 text-[#9EB3A8]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <svg
+                className="w-5 h-5 text-[#9EB3A8]"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
               </svg>
             </div>
             <h3 className="text-lg font-semibold text-[#0E0F0F]">Informations</h3>
@@ -279,7 +343,9 @@ export function VaultManagement({ vaultSlug }: VaultManagementProps) {
             <div>
               <p className="text-[#9EB3A8] mb-1">Durée d&apos;epoch</p>
               <p className="font-medium text-[#0E0F0F]">
-                {vaultInfo.epochDuration ? `${Math.floor(vaultInfo.epochDuration / 86400)} jours` : '-'}
+                {vaultInfo.epochDuration
+                  ? `${Math.floor(vaultInfo.epochDuration / 86400)} jours`
+                  : '-'}
               </p>
             </div>
             <div>
@@ -299,7 +365,12 @@ export function VaultManagement({ vaultSlug }: VaultManagementProps) {
       {/* Success/Error Messages */}
       {actions.isConfirmed && (
         <div className="bg-[#96EA7A]/10 border border-[#96EA7A]/30 rounded-xl p-4 flex items-center gap-3">
-          <svg className="w-5 h-5 text-[#0E0F0F]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg
+            className="w-5 h-5 text-[#0E0F0F]"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
           </svg>
           <span className="text-[#0E0F0F] font-medium">Transaction confirmée !</span>
@@ -308,8 +379,18 @@ export function VaultManagement({ vaultSlug }: VaultManagementProps) {
 
       {actions.error && (
         <div className="bg-[#F2F2F2] border border-[#9EB3A8]/20 rounded-xl p-4 flex items-center gap-3">
-          <svg className="w-5 h-5 text-[#0E0F0F]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          <svg
+            className="w-5 h-5 text-[#0E0F0F]"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M6 18L18 6M6 6l12 12"
+            />
           </svg>
           <span className="text-[#0E0F0F] font-medium">Erreur: {actions.error.message}</span>
         </div>
@@ -334,7 +415,7 @@ export function CreateVault() {
   const [customBytecode, setCustomBytecode] = useState('')
   const [constructorParams, setConstructorParams] = useState<ConstructorParam[]>([
     { name: '_asset', type: 'address', value: CONTRACT_ADDRESSES.USDC || '' },
-    { name: '_owner', type: 'address', value: '' }
+    { name: '_owner', type: 'address', value: '' },
   ])
   const [abiError, setAbiError] = useState<string | null>(null)
 
@@ -345,15 +426,13 @@ export function CreateVault() {
     isConfirming: isDeployConfirming,
     isConfirmed: isDeployConfirmed,
     deployedAddress,
-    error: deployError
+    error: deployError,
   } = useDeployVault()
 
   // Set default owner address when wallet connects
   useEffect(() => {
     if (address && constructorParams[1]?.value === '') {
-      setConstructorParams(prev => prev.map((p, i) =>
-        i === 1 ? { ...p, value: address } : p
-      ))
+      setConstructorParams((prev) => prev.map((p, i) => (i === 1 ? { ...p, value: address } : p)))
     }
   }, [address, constructorParams])
 
@@ -373,15 +452,16 @@ export function CreateVault() {
       const constructor = abi.find((item: { type: string }) => item.type === 'constructor')
 
       if (!constructor) {
-        setAbiError('Aucun constructeur trouvé dans l\'ABI')
+        setAbiError("Aucun constructeur trouvé dans l'ABI")
         return
       }
 
-      const params = constructor.inputs?.map((input: { name: string; type: string }) => ({
-        name: input.name,
-        type: input.type,
-        value: ''
-      })) || []
+      const params =
+        constructor.inputs?.map((input: { name: string; type: string }) => ({
+          name: input.name,
+          type: input.type,
+          value: '',
+        })) || []
 
       setConstructorParams(params)
       setCustomABI(JSON.stringify(abi))
@@ -389,7 +469,7 @@ export function CreateVault() {
         setCustomBytecode(bytecode)
       }
     } catch {
-      setAbiError('Erreur de parsing JSON: vérifiez le format de l\'ABI')
+      setAbiError("Erreur de parsing JSON: vérifiez le format de l'ABI")
     }
   }
 
@@ -408,15 +488,13 @@ export function CreateVault() {
 
   // Update constructor param value
   const updateParamValue = (index: number, value: string) => {
-    setConstructorParams(prev => prev.map((p, i) =>
-      i === index ? { ...p, value } : p
-    ))
+    setConstructorParams((prev) => prev.map((p, i) => (i === index ? { ...p, value } : p)))
   }
 
   // Deploy with standard EpochVault
   const handleStandardDeploy = () => {
-    const assetAddress = constructorParams.find(p => p.name === '_asset')?.value || ''
-    const ownerAddress = constructorParams.find(p => p.name === '_owner')?.value || ''
+    const assetAddress = constructorParams.find((p) => p.name === '_asset')?.value || ''
+    const ownerAddress = constructorParams.find((p) => p.name === '_owner')?.value || ''
     deployVault(assetAddress, ownerAddress)
   }
 
@@ -426,14 +504,14 @@ export function CreateVault() {
       setAbiError('ABI et Bytecode requis pour le déploiement custom')
       return
     }
-    const args = constructorParams.map(p => p.value)
+    const args = constructorParams.map((p) => p.value)
     deployCustomVault(customABI, customBytecode, args)
   }
 
   const handleDeploy = useCustomABI ? handleCustomDeploy : handleStandardDeploy
   const isFormValid = useCustomABI
-    ? customABI && customBytecode && constructorParams.every(p => p.value)
-    : constructorParams.every(p => p.value)
+    ? customABI && customBytecode && constructorParams.every((p) => p.value)
+    : constructorParams.every((p) => p.value)
 
   return (
     <div className="space-y-6">
@@ -442,8 +520,18 @@ export function CreateVault() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 bg-gradient-to-br from-[#96EA7A] to-[#7ED066] rounded-2xl flex items-center justify-center">
-              <svg className="w-7 h-7 text-[#0E0F0F]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              <svg
+                className="w-7 h-7 text-[#0E0F0F]"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                />
               </svg>
             </div>
             <div>
@@ -465,15 +553,19 @@ export function CreateVault() {
                 } else {
                   setConstructorParams([
                     { name: '_asset', type: 'address', value: CONTRACT_ADDRESSES.USDC || '' },
-                    { name: '_owner', type: 'address', value: address || '' }
+                    { name: '_owner', type: 'address', value: address || '' },
                   ])
                 }
               }}
-              className={`relative w-12 h-6 rounded-full transition-colors ${useCustomABI ? 'bg-[#96EA7A]' : 'bg-[#9EB3A8]'
-                }`}
+              className={`relative w-12 h-6 rounded-full transition-colors ${
+                useCustomABI ? 'bg-[#96EA7A]' : 'bg-[#9EB3A8]'
+              }`}
             >
-              <span className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${useCustomABI ? 'translate-x-6' : ''
-                }`} />
+              <span
+                className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${
+                  useCustomABI ? 'translate-x-6' : ''
+                }`}
+              />
             </button>
           </div>
         </div>
@@ -483,13 +575,25 @@ export function CreateVault() {
       <div className="bg-white border border-[#9EB3A8]/20 rounded-2xl p-6">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 bg-[#E6F1E7] rounded-xl flex items-center justify-center">
-            <svg className="w-5 h-5 text-[#9EB3A8]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+            <svg
+              className="w-5 h-5 text-[#9EB3A8]"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
+              />
             </svg>
           </div>
           <div>
             <h3 className="text-lg font-semibold text-[#0E0F0F]">Constructor Parameters (ABI)</h3>
-            <p className="text-sm text-[#9EB3A8]">Paramètres requis par le constructeur du smart contract</p>
+            <p className="text-sm text-[#9EB3A8]">
+              Paramètres requis par le constructeur du smart contract
+            </p>
           </div>
         </div>
 
@@ -506,7 +610,9 @@ export function CreateVault() {
                 onChange={handleABIFileUpload}
                 className="w-full px-4 py-2 bg-white border border-[#9EB3A8]/20 rounded-xl text-[#0E0F0F] text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-[#E6F1E7] file:text-[#0E0F0F] file:font-medium hover:file:bg-[#96EA7A]/20"
               />
-              <p className="text-xs text-[#9EB3A8] mt-1">Uploadez le fichier JSON contenant l&apos;ABI et le bytecode</p>
+              <p className="text-xs text-[#9EB3A8] mt-1">
+                Uploadez le fichier JSON contenant l&apos;ABI et le bytecode
+              </p>
             </div>
 
             <div>
@@ -545,7 +651,12 @@ export function CreateVault() {
               <div className="bg-[#F2F2F2] border border-[#9EB3A8]/20 rounded-lg p-3">
                 <p className="text-sm text-[#0E0F0F] flex items-center gap-2">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
                   </svg>
                   {abiError}
                 </p>
@@ -565,12 +676,19 @@ export function CreateVault() {
                 </label>
                 {useCustomABI && (
                   <button
-                    onClick={() => setConstructorParams(prev => prev.filter((_, i) => i !== index))}
+                    onClick={() =>
+                      setConstructorParams((prev) => prev.filter((_, i) => i !== index))
+                    }
                     className="text-[#9EB3A8] hover:text-[#0E0F0F] p-1 rounded transition-colors"
                     title="Supprimer ce paramètre"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
                     </svg>
                   </button>
                 )}
@@ -583,7 +701,9 @@ export function CreateVault() {
                 className="w-full px-4 py-3 bg-[#F2F2F2] border border-[#9EB3A8]/20 rounded-xl text-[#0E0F0F] placeholder-[#9EB3A8] font-mono text-sm focus:outline-none focus:ring-2 focus:ring-[#96EA7A]/30 focus:border-[#96EA7A] transition-all"
               />
               {param.name === '_asset' && !useCustomABI && (
-                <p className="text-xs text-[#9EB3A8] mt-1">Token ERC20 pour les dépôts (ex: USDC)</p>
+                <p className="text-xs text-[#9EB3A8] mt-1">
+                  Token ERC20 pour les dépôts (ex: USDC)
+                </p>
               )}
               {param.name === '_owner' && !useCustomABI && (
                 <p className="text-xs text-[#9EB3A8] mt-1">Adresse admin du vault</p>
@@ -594,8 +714,18 @@ export function CreateVault() {
 
         {constructorParams.length === 0 && useCustomABI && (
           <div className="text-center py-8 text-[#9EB3A8]">
-            <svg className="w-12 h-12 mx-auto mb-3 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            <svg
+              className="w-12 h-12 mx-auto mb-3 opacity-50"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              />
             </svg>
             <p>Chargez un fichier ABI ou ajoutez des paramètres manuellement</p>
           </div>
@@ -609,13 +739,18 @@ export function CreateVault() {
                 const name = prompt('Nom du paramètre (ex: _token):')
                 const type = prompt('Type Solidity (ex: address, uint256, bool):')
                 if (name && type) {
-                  setConstructorParams(prev => [...prev, { name, type, value: '' }])
+                  setConstructorParams((prev) => [...prev, { name, type, value: '' }])
                 }
               }}
               className="flex items-center gap-2 px-4 py-2 text-sm text-[#0E0F0F] bg-[#E6F1E7] hover:bg-[#E6F1E7] rounded-lg transition-colors"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                />
               </svg>
               Ajouter un paramètre manuellement
             </button>
@@ -626,7 +761,12 @@ export function CreateVault() {
                 className="ml-3 flex items-center gap-2 px-4 py-2 text-sm text-[#0E0F0F] bg-[#F2F2F2] hover:bg-[#E6F1E7] rounded-lg transition-colors"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                  />
                 </svg>
                 Réinitialiser
               </button>
@@ -661,15 +801,31 @@ export function CreateVault() {
             {isDeploying || isDeployConfirming ? (
               <>
                 <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                  ></path>
                 </svg>
                 {isDeploying ? 'Déploiement en cours...' : 'Confirmation...'}
               </>
             ) : (
               <>
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                  />
                 </svg>
                 Déployer le Vault
               </>
@@ -680,8 +836,18 @@ export function CreateVault() {
           {deployError && (
             <div className="bg-[#F2F2F2] border border-[#9EB3A8]/20 rounded-xl p-4">
               <p className="text-sm text-[#0E0F0F] flex items-center gap-2">
-                <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <svg
+                  className="w-4 h-4 flex-shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
                 <span className="break-all">Erreur: {deployError.message}</span>
               </p>
@@ -692,7 +858,12 @@ export function CreateVault() {
             <div className="bg-[#E6F1E7] border border-[#9EB3A8]/20 rounded-xl p-4">
               <h4 className="text-sm font-medium text-[#0E0F0F] mb-2 flex items-center gap-2">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
                 </svg>
                 Vault déployé avec succès !
               </h4>
@@ -708,7 +879,12 @@ export function CreateVault() {
                   className="text-xs text-[#96EA7A] hover:underline flex items-center gap-1"
                 >
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"
+                    />
                   </svg>
                   Copier l&apos;adresse
                 </button>
@@ -721,27 +897,45 @@ export function CreateVault() {
         <div className="space-y-4">
           <div className="bg-[#F2F2F2] border border-[#9EB3A8]/20 rounded-xl p-4">
             <h4 className="text-sm font-medium text-[#0E0F0F] mb-3 flex items-center gap-2">
-              <svg className="w-4 h-4 text-[#9EB3A8]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <svg
+                className="w-4 h-4 text-[#9EB3A8]"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
               </svg>
               Configuration EpochVault
             </h4>
             <ul className="space-y-2 text-sm text-[#9EB3A8]">
               <li className="flex items-start gap-2">
                 <span className="text-[#96EA7A] mt-0.5">•</span>
-                <span>Durée d&apos;epoch: <span className="font-mono text-[#0E0F0F]">30 jours</span></span>
+                <span>
+                  Durée d&apos;epoch: <span className="font-mono text-[#0E0F0F]">30 jours</span>
+                </span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-[#96EA7A] mt-0.5">•</span>
-                <span>Lock période: <span className="font-mono text-[#0E0F0F]">4 ans</span></span>
+                <span>
+                  Lock période: <span className="font-mono text-[#0E0F0F]">4 ans</span>
+                </span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-[#96EA7A] mt-0.5">•</span>
-                <span>Distribution: <span className="font-mono text-[#0E0F0F]">Mensuelle APR</span></span>
+                <span>
+                  Distribution: <span className="font-mono text-[#0E0F0F]">Mensuelle APR</span>
+                </span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-[#96EA7A] mt-0.5">•</span>
-                <span>Whitelist: <span className="font-mono text-[#0E0F0F]">Optionnelle</span></span>
+                <span>
+                  Whitelist: <span className="font-mono text-[#0E0F0F]">Optionnelle</span>
+                </span>
               </li>
             </ul>
           </div>
@@ -749,12 +943,18 @@ export function CreateVault() {
           <div className="bg-[#E6F1E7] border border-[#9EB3A8]/20 rounded-xl p-4">
             <h4 className="text-sm font-medium text-[#0E0F0F] mb-2 flex items-center gap-2">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                />
               </svg>
               Important
             </h4>
             <p className="text-xs text-[#9EB3A8]">
-              Le déploiement nécessite des frais de gas. Assurez-vous d&apos;avoir assez d&apos;ETH sur le réseau cible.
+              Le déploiement nécessite des frais de gas. Assurez-vous d&apos;avoir assez d&apos;ETH
+              sur le réseau cible.
             </p>
           </div>
 
@@ -762,7 +962,12 @@ export function CreateVault() {
             <div className="bg-[#E6F1E7] border border-[#9EB3A8]/20 rounded-xl p-4">
               <h4 className="text-sm font-medium text-[#0E0F0F] mb-2 flex items-center gap-2">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
+                  />
                 </svg>
                 ABI du Constructeur
               </h4>

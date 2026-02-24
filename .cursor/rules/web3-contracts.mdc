@@ -1,0 +1,31 @@
+---
+description: Web3 and smart contract interaction rules
+globs: src/hooks/use*.ts, src/config/contracts.ts, src/config/wagmi.ts, src/contracts/**
+alwaysApply: false
+---
+
+# Web3 & Contracts
+
+## Contract Reads
+```typescript
+// Use Wagmi useReadContract for reactive reads
+const { data } = useReadContract({
+  address: CONTRACTS.HEARST_VAULT_PROXY,
+  abi: EpochVaultABI,
+  functionName: 'totalAssets',
+})
+```
+
+## Contract Writes
+```typescript
+// Use useWriteContract + useWaitForTransactionReceipt
+const { writeContract } = useWriteContract()
+const { isLoading } = useWaitForTransactionReceipt({ hash })
+```
+
+## Safety
+- Always check `isConnected` before contract calls
+- Validate chain ID matches expected network
+- Handle reverts with user-friendly messages
+- Never expose private keys or service account keys
+- ABI files in `src/contracts/` — import as JSON

@@ -64,10 +64,44 @@ NEXT_PUBLIC_RPC_URL=https://mainnet.base.org
 ### Development
 
 ```bash
-npm run dev        # Start dev server (default port 3000)
-npm run build      # Production build
-npm run lint       # Lint check
+npm run dev           # Dev server (port 3110, Turbopack)
+npm run build         # Production build (Turbopack)
+npm run start         # Serve production build (port 3110)
+npm run lint          # ESLint check
+npm run format        # Prettier — format all source files
+npm run format:check  # Prettier — check formatting (CI)
+npm run test          # Vitest — watch mode
+npm run test:run      # Vitest — single run
+npm run test:coverage # Vitest — coverage report
 ```
+
+### Dev Tooling
+
+| Tool | Purpose |
+|------|---------|
+| **Prettier** | Code formatting (`.prettierrc`) |
+| **Husky** | Git hooks (pre-commit) |
+| **lint-staged** | Run lint+format only on staged files |
+| **Vitest** | Unit & component tests (`vitest.config.ts`) |
+| **ESLint 9** | Linting with Next.js rules |
+
+### Cursor AI Setup
+
+Project rules are in `.cursor/rules/` for AI-assisted development:
+- `project-global.mdc` — Stack, architecture, conventions
+- `react-components.mdc` — React patterns
+- `web3-contracts.mdc` — Smart contract interaction rules
+- `testing.mdc` — Testing conventions
+
+MCP servers configured globally (`~/.cursor/mcp.json`):
+- **Context7** — Up-to-date library documentation
+- **Sequential Thinking** — Structured reasoning for complex tasks
+- **Playwright** — Browser automation & E2E testing
+- **Memory** — Persistent memory across sessions
+- **Vercel** — Deployment management
+- **GitHub** — Issues, PRs, code review
+- **Figma** — Design-to-code workflow
+- **Supabase** (x3) — Database management
 
 ## Vault Specifications
 

@@ -1,0 +1,28 @@
+---
+description: React component patterns for Meeneo
+globs: src/components/**/*.tsx, src/app/**/*.tsx
+alwaysApply: false
+---
+
+# React Components
+
+## Pattern
+- Functional components with named exports
+- Props interface above component: `interface FooProps { ... }`
+- Use `'use client'` directive only when needed (hooks, events, browser APIs)
+- Server components by default in `src/app/`
+
+## Hooks
+- Extract reusable logic into `src/hooks/`
+- Use TanStack Query for async data (`useQuery`, `useMutation`)
+- Use Wagmi hooks for on-chain reads (`useReadContract`, `useAccount`)
+
+## State
+- Local state: `useState` / `useReducer`
+- Server state: TanStack Query
+- Global: React Context in `src/context/`
+- No Redux, no Zustand
+
+## Error Boundaries
+- Wrap pages with error boundaries
+- Show user-friendly fallback, log details to console

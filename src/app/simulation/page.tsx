@@ -1,102 +1,140 @@
 'use client'
 
-import { CARD } from '@/components/ui/constants'
-import { simulationApi } from '@/lib/simulation-api'
-import Link from 'next/link'
-import { useEffect, useState } from 'react'
+import { Header } from '@/components/Header'
+import SimStepper from '@/components/simulation/SimStepper'
+import StepBtcCurve from '@/components/simulation/steps/StepBtcCurve'
+import StepNetworkCurve from '@/components/simulation/steps/StepNetworkCurve'
+import StepMinersHosting from '@/components/simulation/steps/StepMinersHosting'
+import StepProductConfig from '@/components/simulation/steps/StepProductConfig'
+import StepResults from '@/components/simulation/steps/StepResults'
+import { useCallback, useMemo, useState } from 'react'
 
-const TOOLS = [
-  {
-    href: '/simulation/btc-price-curve',
-    short: '1',
-    title: 'BTC Price Curve',
-    desc: 'Generate deterministic or ML-forecast BTC price scenarios over 36–120 months.',
-    color: '#E8A838',
-  },
-  {
-    href: '/simulation/network-curve',
-    short: '2',
-    title: 'Network Curve',
-    desc: 'Model network difficulty, hashrate, fees, and hashprice evolution.',
-    color: '#5B7A6E',
-  },
-  {
-    href: '/simulation/miners-hosting',
-    short: '3',
-    title: 'Miners & Hosting',
-    desc: 'Manage miner catalog (ASIC specs) and hosting sites (electricity, uptime).',
-    color: '#9EB3A8',
-  },
-  {
-    href: '/simulation/product-config',
-    short: '4',
-    title: 'Product Config',
-    desc: '3-bucket capital allocation: Yield, BTC Holding, Mining. Run bear/base/bull simulation.',
-    color: '#96EA7A',
-  },
-  {
-    href: '/simulation/results',
-    short: '5',
-    title: 'Results',
-    desc: 'View past simulation runs with full scenario comparison, charts, and waterfall detail.',
-    color: '#0E0F0F',
-  },
-]
+type WizardStep = 0 | 1 | 2 | 3 | 4
 
-export default function SimulationOverview() {
-  const [apiOk, setApiOk] = useState<boolean | null>(null)
+export default function SimulationWizard() {
+  const [step, setStep] = useState<WizardStep>(0)
+  const [btcCurveId, setBtcCurveId] = useState('')
+  const [networkCurveId, setNetworkCurveId] = useState('')
+  const [minerIds, setMinerIds] = useState<string[]>([])
+  const [siteIds, setSiteIds] = useState<string[]>([])
+  const [runId, setRunId] = useState('')
 
-  useEffect(() => {
-    simulationApi.health().then(() => setApiOk(true)).catch(() => setApiOk(false))
+  const completed = useMemo(
+    () => [
+      !!btcCurveId,
+      !!networkCurveId,
+      minerIds.length > 0 && siteIds.length > 0,
+      !!runId,
+      false,
+    ],
+    [btcCurveId, networkCurveId, minerIds.length, siteIds.length, runId],
+  )
+
+  const canGoNext = completed[step]
+
+  const goNext = useCallback(() => {
+    if (step < 4 && canGoNext) setStep((step + 1) as WizardStep)
+  }, [step, canGoNext])
+
+  const goBack = useCallback(() => {
+    if (step > 0) setStep((step - 1) as WizardStep)
+  }, [step])
+
+  const handleStepClick = useCallback(
+    (s: number) => {
+      if (s <= step || completed[s] || (s > 0 && completed[s - 1])) {
+        setStep(s as WizardStep)
+      }
+    },
+    [step, completed],
+  )
+
+  const resetWizard = useCallback(() => {
+    setStep(0)
+    setBtcCurveId('')
+    setNetworkCurveId('')
+    setMinerIds([])
+    setSiteIds([])
+    setRunId('')
   }, [])
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-2xl font-black text-[#0E0F0F] tracking-tight mb-1">Simulation Tools</h1>
-        <p className="text-sm text-[#9EB3A8]">
-          Full-stack mining analytics — model BTC prices, network economics, and run 36-month product simulations.
-        </p>
-        <div className="flex items-center gap-2 mt-3">
-          <div className={`w-2 h-2 rounded-full ${apiOk === true ? 'bg-[#96EA7A]' : apiOk === false ? 'bg-red-500' : 'bg-[#9EB3A8] animate-pulse'}`} />
-          <span className="text-xs text-[#9EB3A8] font-medium">
-            {apiOk === true ? 'API Connected' : apiOk === false ? 'API Offline' : 'Checking...'}
-          </span>
-        </div>
-      </div>
+    <div className="min-h-screen bg-[#F2F2F2]">
+      <Header />
+      <div className="pt-16">
+        <SimStepper current={step} completed={completed} onStepClick={handleStepClick} />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {TOOLS.map(tool => (
-          <Link key={tool.href} href={tool.href}>
-            <div className={`${CARD} p-5 h-full hover:border-[#96EA7A]/40 hover:shadow-lg hover:shadow-[#96EA7A]/5 transition-all group cursor-pointer`}>
-              <div className="flex items-center gap-3 mb-3">
-                <span
-                  className="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-black text-white"
-                  style={{ backgroundColor: tool.color }}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+          {step === 0 && (
+            <StepBtcCurve onComplete={(id) => setBtcCurveId(id)} completedCurveId={btcCurveId} />
+          )}
+          {step === 1 && (
+            <StepNetworkCurve
+              onComplete={(id) => setNetworkCurveId(id)}
+              completedCurveId={networkCurveId}
+            />
+          )}
+          {step === 2 && (
+            <StepMinersHosting
+              onComplete={({ minerIds: m, siteIds: s }) => {
+                setMinerIds(m)
+                setSiteIds(s)
+              }}
+            />
+          )}
+          {step === 3 && (
+            <StepProductConfig
+              btcCurveId={btcCurveId}
+              networkCurveId={networkCurveId}
+              minerIds={minerIds}
+              siteIds={siteIds}
+              onComplete={(id) => {
+                setRunId(id)
+                setStep(4)
+              }}
+            />
+          )}
+          {step === 4 && <StepResults runId={runId} onReset={resetWizard} />}
+
+          {/* Navigation buttons */}
+          {step < 4 && (
+            <div className="flex items-center justify-between mt-8 pt-6 border-t border-[#9EB3A8]/10">
+              <button
+                onClick={goBack}
+                disabled={step === 0}
+                className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-all ${
+                  step === 0
+                    ? 'bg-[#F2F2F2] text-[#9EB3A8]/40 cursor-not-allowed'
+                    : 'bg-white border border-[#9EB3A8]/20 text-[#9EB3A8] hover:text-[#0E0F0F] hover:border-[#9EB3A8]/40'
+                }`}
+              >
+                ← Back
+              </button>
+
+              <div className="flex items-center gap-3">
+                {!canGoNext && (
+                  <span className="text-[11px] text-[#9EB3A8] font-medium">
+                    {step === 0 && 'Run or load a BTC curve to continue'}
+                    {step === 1 && 'Run or load a network curve to continue'}
+                    {step === 2 && 'Need at least 1 miner and 1 site'}
+                    {step === 3 && 'Run a simulation to see results'}
+                  </span>
+                )}
+                <button
+                  onClick={goNext}
+                  disabled={!canGoNext}
+                  className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${
+                    canGoNext
+                      ? 'bg-[#96EA7A] text-[#0E0F0F] hover:bg-[#7ED066] active:scale-[0.97] shadow-sm shadow-[#96EA7A]/20'
+                      : 'bg-[#F2F2F2] text-[#9EB3A8] cursor-not-allowed'
+                  }`}
                 >
-                  {tool.short}
-                </span>
-                <h3 className="text-sm font-bold text-[#0E0F0F] group-hover:text-[#96EA7A] transition-colors">{tool.title}</h3>
+                  Next →
+                </button>
               </div>
-              <p className="text-xs text-[#9EB3A8] leading-relaxed">{tool.desc}</p>
             </div>
-          </Link>
-        ))}
-      </div>
-
-      <div className={`${CARD} p-5 mt-6`}>
-        <h3 className="text-xs font-semibold text-[#9EB3A8] uppercase tracking-wider mb-3">Workflow</h3>
-        <div className="flex flex-wrap items-center gap-2 text-xs text-[#0E0F0F]">
-          {['BTC Curve', 'Network Curve', 'Miners & Hosting', 'Product Config', 'Results'].map((step, i) => (
-            <div key={step} className="flex items-center gap-2">
-              <span className="px-2.5 py-1 rounded-full bg-[#F2F2F2] font-bold">{step}</span>
-              {i < 4 && <span className="text-[#9EB3A8]">→</span>}
-            </div>
-          ))}
+          )}
         </div>
-        <p className="text-[10px] text-[#9EB3A8] mt-2">
-          Generate curves first (steps 1-2), configure miners/hosting (step 3), then run the full product simulation (step 4) and analyze results (step 5).
-        </p>
       </div>
     </div>
   )

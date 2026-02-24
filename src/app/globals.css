@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @theme {
   /* Custom Breakpoints */
@@ -17,41 +17,60 @@
 }
 
 :root {
-  --hearst-green: #96EA7A;
-  --hearst-green-dark: #7ED066;
-  --hearst-green-light: #E6F1E7;
-  --background: #F2F2F2;
-  --foreground: #0E0F0F;
-  --card: #FFFFFF;
+  --hearst-green: #96ea7a;
+  --hearst-green-dark: #7ed066;
+  --hearst-green-light: #e6f1e7;
+  --background: #f2f2f2;
+  --foreground: #0e0f0f;
+  --card: #ffffff;
   --card-border: rgba(158, 179, 168, 0.2);
-  --card-hover: #E6F1E7;
-  --muted: #748C82;
+  --card-hover: #e6f1e7;
+  --muted: #748c82;
 
   /* ── Typography Scale (8px base, major-third ratio) ── */
-  --text-caption: 0.625rem;   /* 10px — KPI labels, micro-badges */
-  --text-small: 0.75rem;      /* 12px — table cells, secondary info */
-  --text-body: 0.875rem;      /* 14px — body text, nav items */
-  --text-base: 1rem;          /* 16px — card values, data points */
-  --text-heading-sm: 1.125rem; /* 18px — section sub-headings */
-  --text-heading: 1.5rem;     /* 24px — page titles */
-  --text-display: 2rem;       /* 32px — hero numbers */
+  --text-caption: 0.625rem;
+  /* 10px — KPI labels, micro-badges */
+  --text-small: 0.75rem;
+  /* 12px — table cells, secondary info */
+  --text-body: 0.875rem;
+  /* 14px — body text, nav items */
+  --text-base: 1rem;
+  /* 16px — card values, data points */
+  --text-heading-sm: 1.125rem;
+  /* 18px — section sub-headings */
+  --text-heading: 1.5rem;
+  /* 24px — page titles */
+  --text-display: 2rem;
+  /* 32px — hero numbers */
 
   /* ── Spacing Scale (8px system) ── */
-  --space-1: 0.25rem;  /* 4px */
-  --space-2: 0.5rem;   /* 8px */
-  --space-3: 0.75rem;  /* 12px */
-  --space-4: 1rem;     /* 16px */
-  --space-5: 1.25rem;  /* 20px */
-  --space-6: 1.5rem;   /* 24px */
-  --space-8: 2rem;     /* 32px */
-  --space-10: 2.5rem;  /* 40px */
-  --space-12: 3rem;    /* 48px */
+  --space-1: 0.25rem;
+  /* 4px */
+  --space-2: 0.5rem;
+  /* 8px */
+  --space-3: 0.75rem;
+  /* 12px */
+  --space-4: 1rem;
+  /* 16px */
+  --space-5: 1.25rem;
+  /* 20px */
+  --space-6: 1.5rem;
+  /* 24px */
+  --space-8: 2rem;
+  /* 32px */
+  --space-10: 2.5rem;
+  /* 40px */
+  --space-12: 3rem;
+  /* 48px */
 
   /* ── Layout ── */
   --content-max: 1440px;
-  --radius-sm: 0.5rem;   /* 8px */
-  --radius-md: 0.75rem;  /* 12px */
-  --radius-lg: 1rem;     /* 16px */
+  --radius-sm: 0.5rem;
+  /* 8px */
+  --radius-md: 0.75rem;
+  /* 12px */
+  --radius-lg: 1rem;
+  /* 16px */
   --radius-full: 9999px;
 }
 
@@ -86,22 +105,21 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #F2F2F2;
+  background: #f2f2f2;
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #9EB3A8;
+  background: #9eb3a8;
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #96EA7A;
+  background: #96ea7a;
 }
 
 /* Mining animations */
 @keyframes hash {
-
   0%,
   100% {
     opacity: 1;
@@ -127,7 +145,9 @@ body {
 }
 
 .card-hover:hover {
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
   transform: translateY(-4px);
 }
 
@@ -140,44 +160,44 @@ body {
 
 /* Custom Hearst Green utilities using CSS variables */
 .bg-hearst-green {
-  background-color: #96EA7A !important;
+  background-color: #96ea7a !important;
 }
 
 .bg-hearst-green-dark {
-  background-color: #7ED066 !important;
+  background-color: #7ed066 !important;
 }
 
 .hover\:bg-hearst-green-dark:hover {
-  background-color: #7ED066 !important;
+  background-color: #7ed066 !important;
 }
 
 .text-hearst-green {
-  color: #96EA7A !important;
+  color: #96ea7a !important;
 }
 
 .border-hearst-green {
-  border-color: #96EA7A !important;
+  border-color: #96ea7a !important;
 }
 
 .focus\:ring-hearst-green:focus {
-  --tw-ring-color: #96EA7A;
+  --tw-ring-color: #96ea7a;
 }
 
 /* Mining Colors utilities */
 .text-mining-orange {
-  color: #F59E0B !important;
+  color: #f59e0b !important;
 }
 
 .text-mining-blue {
-  color: #3B82F6 !important;
+  color: #3b82f6 !important;
 }
 
 .text-mining-purple {
-  color: #8B5CF6 !important;
+  color: #8b5cf6 !important;
 }
 
 .text-mining-red {
-  color: #EF4444 !important;
+  color: #ef4444 !important;
 }
 
 .bg-mining-orange\/20 {
