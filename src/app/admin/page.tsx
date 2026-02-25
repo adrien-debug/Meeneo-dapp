@@ -9,10 +9,12 @@ import {
   fmtPercent,
   fmtUsd,
 } from '@/config/mock-data'
-import { useAuthGuard } from '@/hooks/useAuthGuard'
+import { CONTRACT_ADDRESSES } from '@/config/contracts'
+import { useAdminGuard } from '@/hooks/useAdminGuard'
+import { useDistributeRewards, useAdvanceEpoch } from '@/hooks/useEpochVault'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   Area,
   AreaChart,
@@ -48,10 +50,61 @@ const PAST_DISTRIBUTIONS = [
 ] as const
 
 export default function Admin() {
-  const authed = useAuthGuard()
+  const authed = useAdminGuard()
   const router = useRouter()
   const [selectedAction, setSelectedAction] = useState<'distribute' | 'rebalance' | null>(null)
   const [actionFeedback, setActionFeedback] = useState<string | null>(null)
+  const [distributeAmount, setDistributeAmount] = useState('')
+  const distributeInputRef = useRef<HTMLInputElement>(null)
+
+  const {
+    distributeRewards,
+    isPending: isDistributing,
+    isConfirmed: isDistributed,
+    error: distributeError,
+  } = useDistributeRewards()
+
+  const {
+    advanceEpoch,
+    isPending: isAdvancing,
+    isConfirmed: isAdvanced,
+    error: advanceError,
+  } = useAdvanceEpoch()
+
+  useEffect(() => {
+    if (isDistributed) {
+      setActionFeedback('Distribution confirmed on-chain')
+      setSelectedAction(null)
+      setDistributeAmount('')
+      const t = setTimeout(() => setActionFeedback(null), 4000)
+      return () => clearTimeout(t)
+    }
+  }, [isDistributed])
+
+  useEffect(() => {
+    if (isAdvanced) {
+      setActionFeedback('Rebalance / epoch advanced on-chain')
+      setSelectedAction(null)
+      const t = setTimeout(() => setActionFeedback(null), 4000)
+      return () => clearTimeout(t)
+    }
+  }, [isAdvanced])
+
+  useEffect(() => {
+    if (distributeError) {
+      setActionFeedback(`Distribution failed: ${distributeError.message.slice(0, 80)}`)
+      const t = setTimeout(() => setActionFeedback(null), 6000)
+      return () => clearTimeout(t)
+    }
+  }, [distributeError])
+
+  useEffect(() => {
+    if (advanceError) {
+      setActionFeedback(`Rebalance failed: ${advanceError.message.slice(0, 80)}`)
+      const t = setTimeout(() => setActionFeedback(null), 6000)
+      return () => clearTimeout(t)
+    }
+  }, [advanceError])
 
   if (!authed) return <LoadingScreen />
 
@@ -77,14 +130,25 @@ export default function Admin() {
           )}
 
           {/* ─── Hero ─── */}
-          <div className={`${CARD} p-6 sm:p-8 relative overflow-hidden mt-6 mb-5`}>
-            <div className="absolute -top-32 -right-32 w-96 h-96 bg-gradient-to-br from-[#9EB3A8]/6 to-transparent rounded-full blur-3xl pointer-events-none" />
+          <div className={`${CARD} p-6 sm:p-8 relative overflow-hidden mt-6 mb-6`}>
+            <div className="absolute inset-0 pointer-events-none">
+              <Image
+                src="/assets/backgrounds/dashboard-hero-bg.png"
+                alt=""
+                fill
+                className="object-cover opacity-20 mix-blend-multiply"
+                sizes="100vw"
+              />
+            </div>
+            <div className="absolute -top-32 -right-32 w-96 h-96 bg-gradient-to-br from-[#96EA7A]/6 to-transparent rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-gradient-to-tr from-[#9EB3A8]/4 to-transparent rounded-full blur-2xl pointer-events-none" />
 
             <div className="relative">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+              <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6 mb-8">
                 <div>
+                  <p className="kpi-label mb-2">Protocol Management</p>
                   <div className="flex items-center gap-2 mb-2">
-                    <h1 className="text-[2rem] sm:text-[2.5rem] font-black text-[#0E0F0F] tracking-tight leading-none">
+                    <h1 className="text-display font-black text-[var(--foreground)] tracking-tight leading-none">
                       Operational Cockpit
                     </h1>
                     <div className="flex items-center gap-1.5 px-2.5 py-1 bg-[#96EA7A]/10 rounded-full">
@@ -132,10 +196,13 @@ export default function Admin() {
                     accent: true,
                   },
                 ].map((kpi) => (
-                  <div key={kpi.label} className="bg-white px-5 py-4">
+                  <div
+                    key={kpi.label}
+                    className="bg-white px-5 py-4 hover:bg-[#F2F2F2]/60 transition-colors"
+                  >
                     <p className="kpi-label mb-1">{kpi.label}</p>
                     <p
-                      className={`text-lg font-black ${'accent' in kpi && kpi.accent ? 'text-[#96EA7A]' : 'text-[#0E0F0F]'}`}
+                      className={`text-base font-black truncate ${'accent' in kpi && kpi.accent ? 'text-[#96EA7A]' : 'text-[#0E0F0F]'}`}
                     >
                       {kpi.value}
                     </p>
@@ -155,20 +222,23 @@ export default function Admin() {
                     <div className="flex-1">
                       <label className="block kpi-label mb-2">Reward Amount (USDC)</label>
                       <input
+                        ref={distributeInputRef}
+                        value={distributeAmount}
+                        onChange={(e) => setDistributeAmount(e.target.value)}
                         className="w-full h-14 px-4 rounded-2xl bg-[#F2F2F2] border border-[#9EB3A8]/20 text-[#0E0F0F] font-black text-xl focus:ring-2 focus:ring-[#96EA7A] focus:border-transparent outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         placeholder="0.00"
                         type="number"
                       />
                     </div>
                     <button
+                      disabled={isDistributing || !distributeAmount || distributeAmount === '0'}
                       onClick={() => {
-                        setActionFeedback('Distribution submitted successfully')
-                        setSelectedAction(null)
-                        setTimeout(() => setActionFeedback(null), 4000)
+                        if (!distributeAmount || distributeAmount === '0') return
+                        distributeRewards(distributeAmount)
                       }}
-                      className="h-14 px-6 rounded-2xl text-base font-bold bg-[#96EA7A] text-[#0E0F0F] hover:bg-[#7ED066] shadow-lg shadow-[#96EA7A]/20 transition-all active:scale-[0.98] shrink-0"
+                      className="h-14 px-6 rounded-2xl text-base font-bold bg-[#96EA7A] text-[#0E0F0F] hover:bg-[#7ED066] shadow-lg shadow-[#96EA7A]/20 transition-all active:scale-[0.98] shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Confirm
+                      {isDistributing ? 'Sending…' : 'Confirm'}
                     </button>
                   </div>
                 </div>
@@ -213,14 +283,11 @@ export default function Admin() {
                     })}
                   </div>
                   <button
-                    onClick={() => {
-                      setActionFeedback('Rebalance executed successfully')
-                      setSelectedAction(null)
-                      setTimeout(() => setActionFeedback(null), 4000)
-                    }}
-                    className="w-full h-12 rounded-2xl text-sm font-bold bg-[#0E0F0F] text-white hover:bg-[#0E0F0F]/90 transition-all active:scale-[0.98]"
+                    disabled={isAdvancing}
+                    onClick={() => advanceEpoch()}
+                    className="w-full h-12 rounded-2xl text-sm font-bold bg-[#0E0F0F] text-white hover:bg-[#0E0F0F]/90 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Execute Rebalance
+                    {isAdvancing ? 'Sending…' : 'Execute Rebalance'}
                   </button>
                 </div>
               )}

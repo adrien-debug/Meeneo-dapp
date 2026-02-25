@@ -2,6 +2,7 @@
 
 import { Header } from '@/components/Header'
 import { CARD } from '@/components/ui/constants'
+import Image from 'next/image'
 import { LoadingScreen } from '@/components/ui/LoadingScreen'
 import { TransactionProgress } from '@/components/ui/TransactionProgress'
 import { fmtUsd, getLockStatusColor, getLockStatusLabel } from '@/config/mock-data'
@@ -55,26 +56,86 @@ export default function WithdrawPage() {
 
       <main className="pt-20 pb-10">
         <div className="page-container">
-          <div className="mt-6 mb-6 flex items-center gap-3">
-            <button
-              onClick={() => router.back()}
-              className="w-8 h-8 rounded-xl bg-white flex items-center justify-center hover:bg-[#E6F1E7] transition-colors shrink-0"
-            >
-              <svg
-                className="w-4 h-4 text-[#9EB3A8]"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 19l-7-7 7-7"
-                />
-              </svg>
-            </button>
-            <h1 className="section-title">Withdraw</h1>
+          <div className={`${CARD} p-6 sm:p-8 relative overflow-hidden mt-6 mb-6`}>
+            <div className="absolute inset-0 pointer-events-none">
+              <Image
+                src="/assets/backgrounds/dashboard-hero-bg.png"
+                alt=""
+                fill
+                className="object-cover opacity-20 mix-blend-multiply"
+                sizes="100vw"
+              />
+            </div>
+            <div className="absolute -top-32 -right-32 w-96 h-96 bg-gradient-to-br from-[#96EA7A]/6 to-transparent rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-gradient-to-tr from-[#9EB3A8]/4 to-transparent rounded-full blur-2xl pointer-events-none" />
+            <div className="relative">
+              <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6 mb-8">
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => router.back()}
+                    className="w-9 h-9 rounded-xl bg-[#F2F2F2] flex items-center justify-center hover:bg-[#E6F1E7] transition-colors shrink-0"
+                  >
+                    <svg
+                      className="w-4 h-4 text-[#9EB3A8]"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 19l-7-7 7-7"
+                      />
+                    </svg>
+                  </button>
+                  <div>
+                    <p className="kpi-label mb-2">Matured Positions</p>
+                    <h1 className="text-display font-black text-[var(--foreground)] tracking-tight">
+                      Withdraw
+                    </h1>
+                  </div>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-[#9EB3A8]/10 rounded-xl overflow-hidden">
+                {[
+                  {
+                    label: 'Ready',
+                    value: `${maturedDeposits.filter((d) => !withdrawnIds.has(d.id)).length}`,
+                  },
+                  {
+                    label: 'Total Value',
+                    value: fmtUsd(
+                      maturedDeposits
+                        .filter((d) => !withdrawnIds.has(d.id))
+                        .reduce((s, d) => s + d.amount, 0),
+                    ),
+                  },
+                  {
+                    label: 'Yield Earned',
+                    value: fmtUsd(
+                      maturedDeposits
+                        .filter((d) => !withdrawnIds.has(d.id))
+                        .reduce((s, d) => s + d.claimedYield + d.pendingYield, 0),
+                    ),
+                    accent: true,
+                  },
+                  { label: 'Withdrawn', value: `${withdrawnIds.size}` },
+                ].map((kpi) => (
+                  <div
+                    key={kpi.label}
+                    className="bg-white px-5 py-4 hover:bg-[#F2F2F2]/60 transition-colors"
+                  >
+                    <p className="kpi-label mb-1">{kpi.label}</p>
+                    <p
+                      className={`text-base font-black truncate ${'accent' in kpi && kpi.accent ? 'text-[#96EA7A]' : 'text-[#0E0F0F]'}`}
+                    >
+                      {kpi.value}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
 
           {maturedDeposits.length === 0 && (
@@ -105,7 +166,12 @@ export default function WithdrawPage() {
                   <div key={dep.id} className={`${CARD} p-6`}>
                     <div className="flex items-center justify-between mb-4">
                       <div>
-                        <p className="text-sm font-bold text-[#0E0F0F]">{vault.name}</p>
+                        <p className="text-sm font-bold text-[#0E0F0F]">
+                          {vault.name}{' '}
+                          <span className="text-caption font-mono font-bold text-[#9EB3A8]">
+                            {vault.refNumber}
+                          </span>
+                        </p>
                         <span
                           className={`text-caption font-bold ${getLockStatusColor(dep.lockStatus)}`}
                         >

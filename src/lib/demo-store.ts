@@ -67,7 +67,6 @@ export function demoNow(state: DemoState): number {
 
 const DAY = 86400
 const MONTH = 30 * DAY
-const YEAR = 365 * DAY
 
 export function addVault(
   state: DemoState,
@@ -87,8 +86,10 @@ export function addVault(
 ): DemoState {
   const idx = state.nextVaultIndex
   const slug = `vault-${idx}`
+  const ref = `#${String(idx).padStart(2, '0')}`
   const vault: VaultConfig = {
     slug,
+    refNumber: ref,
     name: partial.name || `Hearst ${String(idx).padStart(2, '0')}`,
     description: partial.description || 'Custom vault',
     contractAddress: `0x${idx.toString(16).padStart(40, '0')}` as `0x${string}`,
@@ -150,11 +151,13 @@ export function subscribeToProduct(
 ): { state: DemoState; vaultSlug: string } {
   const idx = state.nextVaultIndex
   const slug = `vault-${idx}`
+  const ref = `#${String(idx).padStart(2, '0')}`
   const now = demoNow(state)
 
   const vault: VaultConfig = {
     ...product,
     slug,
+    refNumber: ref,
     currentTvl: amount,
     totalShares: amount,
   }
@@ -258,7 +261,6 @@ export function advanceTime(state: DemoState, seconds: number): DemoState {
     const vault = state.vaults.find((v) => v.slug === d.vaultSlug)
     const avgApy = vault ? (vault.compositeApy[0] + vault.compositeApy[1]) / 2 / 100 : 0.1
     const monthsElapsed = elapsed / MONTH
-    const monthsClaimable = cliffPassed ? Math.max(0, monthsElapsed - vault!.yieldCliffMonths) : 0
     const totalYieldEarned = d.amount * avgApy * (monthsElapsed / 12)
     const pending = cliffPassed ? Math.max(0, totalYieldEarned - d.claimedYield) : 0
     return {

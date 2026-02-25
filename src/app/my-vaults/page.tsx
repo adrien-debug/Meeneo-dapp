@@ -14,9 +14,9 @@ import { LoadingScreen } from '@/components/ui/LoadingScreen'
 import { ProgressRing } from '@/components/ui/ProgressRing'
 
 const STATUS_BG: Record<string, string> = {
-  active: 'bg-[#96EA7A]/20 border border-[#96EA7A]/30',
-  target_reached: 'bg-[#96EA7A]/20 border border-[#96EA7A]/30',
-  matured: 'bg-[#0E0F0F]/10 border border-[#0E0F0F]/15',
+  active: 'bg-[#96EA7A]/15 border border-[#96EA7A]/30',
+  target_reached: 'bg-[#96EA7A]/15 border border-[#96EA7A]/30',
+  matured: 'bg-[#0E0F0F]/8 border border-[#0E0F0F]/15',
 }
 
 function VaultPositionCard({
@@ -50,26 +50,21 @@ function VaultPositionCard({
       onClick={() => onNavigate(vault.slug)}
     >
       {/* Header — same style as product cards */}
-      <div className="bg-[#E6F1E7] px-6 pt-6 pb-5 rounded-t-3xl relative overflow-hidden">
+      <div className="px-6 pt-6 pb-5 rounded-t-3xl relative overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
           <Image
             src={bgImage}
             alt=""
             fill
-            className="object-cover opacity-30 mix-blend-multiply"
+            className="object-cover"
             sizes="(max-width: 768px) 100vw, 50vw"
           />
         </div>
-        <div
-          className="absolute inset-0 opacity-30"
-          style={{
-            background: `radial-gradient(circle at 80% 20%, ${vault.strategies[0]?.color ?? '#96EA7A'}33, transparent 60%)`,
-          }}
-        />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/30 to-white pointer-events-none" />
         <div className="relative">
           <div className="flex items-start justify-between mb-3">
             <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-xl bg-white/60 backdrop-blur-sm flex items-center justify-center shrink-0">
+              <div className="w-11 h-11 rounded-xl bg-[#0E0F0F]/8 backdrop-blur-sm flex items-center justify-center shrink-0">
                 <Image
                   src="/assets/tokens/hearst.svg"
                   alt={vault.name}
@@ -79,8 +74,13 @@ function VaultPositionCard({
                 />
               </div>
               <div>
-                <p className="text-sm font-bold text-[#0E0F0F]">{vault.name}</p>
-                <p className="text-xs text-[#0E0F0F]/50 mt-0.5">
+                <p className="text-sm font-bold text-[#0E0F0F]">
+                  {vault.name}{' '}
+                  <span className="text-caption font-mono font-bold text-[#0E0F0F]">
+                    {vault.refNumber}
+                  </span>
+                </p>
+                <p className="text-xs text-[#0E0F0F] mt-0.5">
                   Since{' '}
                   {depositDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
                 </p>
@@ -93,7 +93,7 @@ function VaultPositionCard({
                 {getLockStatusLabel(deposit.lockStatus)}
               </span>
               <svg
-                className="w-4 h-4 text-[#9EB3A8] group-hover:text-[#96EA7A] group-hover:translate-x-0.5 transition-all"
+                className="w-4 h-4 text-[#0E0F0F] group-hover:text-[#96EA7A] group-hover:translate-x-0.5 transition-all"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -113,7 +113,7 @@ function VaultPositionCard({
             {vault.strategies.map((s) => (
               <div
                 key={s.type}
-                className="flex items-center gap-1 bg-white/50 rounded-full px-2 py-0.5"
+                className="flex items-center gap-1 bg-[#0E0F0F]/10 rounded-full px-2 py-0.5"
               >
                 <Image
                   src={STRATEGY_ICONS[s.type] ?? ''}
@@ -122,7 +122,7 @@ function VaultPositionCard({
                   height={10}
                   className="rounded-full"
                 />
-                <span className="text-caption text-[#0E0F0F]/60 font-medium">{s.allocation}%</span>
+                <span className="text-caption text-[#0E0F0F] font-medium">{s.allocation}%</span>
               </div>
             ))}
           </div>
@@ -251,17 +251,54 @@ export default function MyVaults() {
 
       <main className="pt-20 pb-10">
         <div className="page-container">
-          {/* ─── Hero — compact bar layout (different from Dashboard) ─── */}
-          <div className="mt-6 mb-6 space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-              <div>
-                <h1 className="section-title">My Vaults</h1>
-              </div>
-              {totalPending > 0 && (
-                <div className="flex items-center gap-3 px-5 py-3.5 rounded-2xl bg-[#96EA7A]/5 border border-[#96EA7A]/15 self-start sm:self-auto">
-                  <div className="w-10 h-10 rounded-xl bg-[#96EA7A]/15 flex items-center justify-center">
+          {/* ─── Hero ─── */}
+          <div className={`${CARD} p-6 sm:p-8 relative overflow-hidden mt-6 mb-6`}>
+            <div className="absolute inset-0 pointer-events-none">
+              <Image
+                src="/assets/backgrounds/dashboard-hero-bg.png"
+                alt=""
+                fill
+                className="object-cover opacity-20 mix-blend-multiply"
+                sizes="100vw"
+              />
+            </div>
+            <div className="absolute -top-32 -right-32 w-96 h-96 bg-gradient-to-br from-[#96EA7A]/6 to-transparent rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-gradient-to-tr from-[#9EB3A8]/4 to-transparent rounded-full blur-2xl pointer-events-none" />
+
+            <div className="relative">
+              <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6 mb-8">
+                <div>
+                  <p className="kpi-label mb-2">My Positions</p>
+                  <h1 className="text-display font-black text-[var(--foreground)] tracking-tight">
+                    My Vaults
+                  </h1>
+                </div>
+                {totalPending > 0 && (
+                  <button
+                    onClick={() => router.push('/withdraw')}
+                    className="flex items-center gap-3 px-5 py-3.5 rounded-2xl bg-[#96EA7A]/5 border border-[#96EA7A]/20 hover:border-[#96EA7A]/50 hover:bg-[#96EA7A]/10 transition-all group self-start lg:self-auto"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-[#96EA7A]/15 flex items-center justify-center">
+                      <svg
+                        className="w-5 h-5 text-[#96EA7A]"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                    </div>
+                    <div className="text-left">
+                      <p className="text-xs text-[var(--muted)] font-medium">Pending Yield</p>
+                      <p className="text-lg font-black text-[#96EA7A]">{fmtUsd(totalPending)}</p>
+                    </div>
                     <svg
-                      className="w-5 h-5 text-[#96EA7A]"
+                      className="w-4 h-4 text-[#9EB3A8] group-hover:text-[#96EA7A] group-hover:translate-x-0.5 transition-all ml-1"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -270,34 +307,33 @@ export default function MyVaults() {
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={2}
-                        d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                        d="M9 5l7 7-7 7"
                       />
                     </svg>
-                  </div>
-                  <div className="text-left">
-                    <p className="text-xs text-[#9EB3A8] font-medium">Total Pending</p>
-                    <p className="text-lg font-black text-[#96EA7A]">{fmtUsd(totalPending)}</p>
-                  </div>
-                </div>
-              )}
-            </div>
+                  </button>
+                )}
+              </div>
 
-            <div className="flex flex-wrap gap-3">
-              {[
-                { label: 'Active', value: String(activeDeposits.length) },
-                { label: 'Deposited', value: fmtUsd(totalDeposited) },
-                { label: 'Yield', value: fmtUsd(totalYield), accent: true },
-                { label: 'Matured', value: String(maturedDeposits.length) },
-              ].map((kpi) => (
-                <div key={kpi.label} className={`${CARD} px-5 py-3 flex items-center gap-3`}>
-                  <span className="kpi-label">{kpi.label}</span>
-                  <span
-                    className={`text-base font-black ${'accent' in kpi && kpi.accent ? 'text-[#96EA7A]' : 'text-[#0E0F0F]'}`}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-[#9EB3A8]/10 rounded-xl overflow-hidden">
+                {[
+                  { label: 'Active', value: String(activeDeposits.length) },
+                  { label: 'Deposited', value: fmtUsd(totalDeposited) },
+                  { label: 'Yield Earned', value: fmtUsd(totalYield), accent: true },
+                  { label: 'Matured', value: String(maturedDeposits.length) },
+                ].map((kpi) => (
+                  <div
+                    key={kpi.label}
+                    className="bg-white px-5 py-4 hover:bg-[#F2F2F2]/60 transition-colors"
                   >
-                    {kpi.value}
-                  </span>
-                </div>
-              ))}
+                    <p className="kpi-label mb-1">{kpi.label}</p>
+                    <p
+                      className={`text-base font-black truncate ${'accent' in kpi && kpi.accent ? 'text-[#96EA7A]' : 'text-[#0E0F0F]'}`}
+                    >
+                      {kpi.value}
+                    </p>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
 
@@ -305,7 +341,7 @@ export default function MyVaults() {
           {activeDeposits.length > 0 && (
             <div className="mb-8">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="section-title">Active</h2>
+                <h2 className="text-lg font-bold text-[#0E0F0F]">Active</h2>
                 <span className="text-xs font-semibold text-[#9EB3A8] bg-[#F2F2F2] px-3 py-1.5 rounded-full">
                   {activeDeposits.length} position{activeDeposits.length > 1 ? 's' : ''}
                 </span>
@@ -326,7 +362,7 @@ export default function MyVaults() {
           {maturedDeposits.length > 0 && (
             <div className="mb-8">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="section-title">Matured — Ready to Withdraw</h2>
+                <h2 className="text-lg font-bold text-[#0E0F0F]">Matured — Ready to Withdraw</h2>
                 <button
                   onClick={() => router.push('/withdraw')}
                   className="text-sm font-semibold text-[#0E0F0F] bg-white border border-[#9EB3A8]/20 hover:border-[#96EA7A] px-4 py-2 rounded-full transition-all flex items-center gap-1.5 hover:shadow-sm"

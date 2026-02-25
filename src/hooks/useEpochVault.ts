@@ -1,5 +1,6 @@
 import { CONTRACT_ADDRESSES } from '@/config/contracts'
 import EpochVaultABI from '@/contracts/EpochVault.json'
+import { useVaultReads } from '@/hooks/useVaultReads'
 import { formatUnits, parseUnits } from 'viem'
 import {
   useAccount,
@@ -9,47 +10,19 @@ import {
   useWriteContract,
 } from 'wagmi'
 
-// Contract ABI
 const abi = EpochVaultABI.abi
+const VAULT_ADDRESS = CONTRACT_ADDRESSES.EPOCH_VAULT as `0x${string}`
 
-// Hook for reading vault information
+type UserInfoTuple = readonly [bigint, bigint, bigint, bigint, bigint]
+
 export function useVaultInfo() {
-  const { data: totalDeposits } = useContractRead({
-    address: CONTRACT_ADDRESSES.EPOCH_VAULT as `0x${string}`,
-    abi,
-    functionName: 'totalDeposits',
-  })
-
-  const { data: currentEpoch } = useContractRead({
-    address: CONTRACT_ADDRESSES.EPOCH_VAULT as `0x${string}`,
-    abi,
-    functionName: 'currentEpoch',
-  })
-
-  const { data: monthlyAPR } = useContractRead({
-    address: CONTRACT_ADDRESSES.EPOCH_VAULT as `0x${string}`,
-    abi,
-    functionName: 'monthlyAPR',
-  })
-
-  const { data: annualAPR } = useContractRead({
-    address: CONTRACT_ADDRESSES.EPOCH_VAULT as `0x${string}`,
-    abi,
-    functionName: 'getAnnualAPR',
-  })
-
-  const { data: whitelistEnabled } = useContractRead({
-    address: CONTRACT_ADDRESSES.EPOCH_VAULT as `0x${string}`,
-    abi,
-    functionName: 'whitelistEnabled',
-  })
-
+  const reads = useVaultReads(VAULT_ADDRESS)
   return {
-    totalDeposits: totalDeposits ? formatUnits(totalDeposits as bigint, 6) : '0',
-    currentEpoch: currentEpoch?.toString() || '0',
-    monthlyAPR: monthlyAPR ? Number(monthlyAPR) / 100 : 0,
-    annualAPR: annualAPR ? Number(annualAPR) / 100 : 0,
-    whitelistEnabled: whitelistEnabled || false,
+    totalDeposits: reads.totalDeposits,
+    currentEpoch: reads.currentEpoch.toString(),
+    monthlyAPR: reads.monthlyAPR,
+    annualAPR: reads.annualAPR,
+    whitelistEnabled: reads.whitelistEnabled,
   }
 }
 
@@ -58,7 +31,7 @@ export function useUserInfo() {
   const { address } = useAccount()
 
   const { data: userInfo } = useContractRead({
-    address: CONTRACT_ADDRESSES.EPOCH_VAULT as `0x${string}`,
+    address: VAULT_ADDRESS,
     abi,
     functionName: 'userInfo',
     args: address ? [address] : undefined,
@@ -66,7 +39,7 @@ export function useUserInfo() {
   })
 
   const { data: pendingRewards } = useContractRead({
-    address: CONTRACT_ADDRESSES.EPOCH_VAULT as `0x${string}`,
+    address: VAULT_ADDRESS,
     abi,
     functionName: 'pendingRewards',
     args: address ? [address] : undefined,
@@ -76,12 +49,12 @@ export function useUserInfo() {
   // Note: canWithdraw and getWithdrawalLockInfo functions don't exist in the new ABI
   // We'll calculate withdrawal lock info client-side based on userInfo
 
-  // Calculate withdrawal lock info based on first deposit time
-  const withdrawalLockInfo = userInfo
+  const info = userInfo as UserInfoTuple | undefined
+
+  const withdrawalLockInfo = info
     ? (() => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const firstDepositTime = Number((userInfo as any)[4])
-        const lockPeriod = 3 * 365 * 24 * 60 * 60 // 3 years in seconds
+        const firstDepositTime = Number(info[4])
+        const lockPeriod = 3 * 365 * 24 * 60 * 60
         const lockEndTime = firstDepositTime + lockPeriod
         const currentTime = Math.floor(Date.now() / 1000)
         const canWithdrawNow = currentTime >= lockEndTime
@@ -99,18 +72,13 @@ export function useUserInfo() {
   const canWithdraw = withdrawalLockInfo?.canWithdrawNow || false
 
   return {
-    userInfo: userInfo
+    userInfo: info
       ? {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          depositAmount: formatUnits((userInfo as any)[0], 6),
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          lastClaimedEpoch: (userInfo as any)[1].toString(),
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          pendingRewards: formatUnits((userInfo as any)[2], 6),
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          lastDepositEpoch: (userInfo as any)[3].toString(),
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          firstDepositTime: (userInfo as any)[4].toString(),
+          depositAmount: formatUnits(info[0], 6),
+          lastClaimedEpoch: info[1].toString(),
+          pendingRewards: formatUnits(info[2], 6),
+          lastDepositEpoch: info[3].toString(),
+          firstDepositTime: info[4].toString(),
         }
       : null,
     pendingRewards: pendingRewards ? formatUnits(pendingRewards as bigint, 6) : '0',
@@ -128,7 +96,7 @@ export function useDeposit() {
 
     try {
       writeContract({
-        address: CONTRACT_ADDRESSES.EPOCH_VAULT as `0x${string}`,
+        address: VAULT_ADDRESS,
         abi,
         functionName: 'deposit',
         args: [parseUnits(amount, 6)],
@@ -159,7 +127,7 @@ export function useWithdraw() {
   const withdraw = async (amount: string = '0') => {
     try {
       writeContract({
-        address: CONTRACT_ADDRESSES.EPOCH_VAULT as `0x${string}`,
+        address: VAULT_ADDRESS,
         abi,
         functionName: 'withdraw',
         args: [parseUnits(amount, 6)],
@@ -190,7 +158,7 @@ export function useClaimRewards() {
   const claimRewards = async () => {
     try {
       writeContract({
-        address: CONTRACT_ADDRESSES.EPOCH_VAULT as `0x${string}`,
+        address: VAULT_ADDRESS,
         abi,
         functionName: 'claimRewards',
       })
@@ -220,7 +188,7 @@ export function useRedepositRewards() {
   const redepositRewards = async () => {
     try {
       writeContract({
-        address: CONTRACT_ADDRESSES.EPOCH_VAULT as `0x${string}`,
+        address: VAULT_ADDRESS,
         abi,
         functionName: 'redeposit',
       })
@@ -262,11 +230,8 @@ export function useUSDCAllowance() {
       },
     ],
     functionName: 'allowance',
-    args:
-      address && CONTRACT_ADDRESSES.EPOCH_VAULT
-        ? [address, CONTRACT_ADDRESSES.EPOCH_VAULT as `0x${string}`]
-        : undefined,
-    query: { enabled: !!address && !!CONTRACT_ADDRESSES.EPOCH_VAULT },
+    args: address ? [address, VAULT_ADDRESS] : undefined,
+    query: { enabled: !!address },
   })
 
   return {
@@ -295,7 +260,7 @@ export function useUSDCApproval() {
           },
         ],
         functionName: 'approve',
-        args: [CONTRACT_ADDRESSES.EPOCH_VAULT as `0x${string}`, parseUnits(amount, 6)],
+        args: [VAULT_ADDRESS, parseUnits(amount, 6)],
       })
     } catch (err) {
       console.error('Approval error:', err)
@@ -323,7 +288,7 @@ export function useDistributeRewards() {
   const distributeRewards = async (amount: string) => {
     try {
       writeContract({
-        address: CONTRACT_ADDRESSES.EPOCH_VAULT as `0x${string}`,
+        address: VAULT_ADDRESS,
         abi,
         functionName: 'distributeRewards',
         args: [parseUnits(amount, 6)],
@@ -347,68 +312,36 @@ export function useDistributeRewards() {
   }
 }
 
-// Hook for epoch tracking and management
 export function useEpochTracking() {
-  const { data: currentEpoch } = useContractRead({
-    address: CONTRACT_ADDRESSES.EPOCH_VAULT as `0x${string}`,
-    abi,
-    functionName: 'currentEpoch',
-  })
+  const reads = useVaultReads(VAULT_ADDRESS)
 
-  const { data: epochStartTime } = useContractRead({
-    address: CONTRACT_ADDRESSES.EPOCH_VAULT as `0x${string}`,
-    abi,
-    functionName: 'epochStartTime',
-  })
-
-  const { data: shouldAdvanceEpoch } = useContractRead({
-    address: CONTRACT_ADDRESSES.EPOCH_VAULT as `0x${string}`,
-    abi,
-    functionName: 'shouldAdvanceEpoch',
-  })
-
-  const { data: epochDuration } = useContractRead({
-    address: CONTRACT_ADDRESSES.EPOCH_VAULT as `0x${string}`,
-    abi,
-    functionName: 'EPOCH_DURATION',
-  })
-
-  // Calculate time until next epoch
   const getTimeUntilNextEpoch = () => {
-    if (!epochStartTime || !epochDuration) return null
-
+    if (!reads.epochStartTime || !reads.epochDuration) return null
     const now = Math.floor(Date.now() / 1000)
-    const epochEndTime = Number(epochStartTime) + Number(epochDuration)
+    const epochEndTime = reads.epochStartTime + reads.epochDuration
     const timeRemaining = epochEndTime - now
-
     return timeRemaining > 0 ? timeRemaining : 0
   }
 
-  const timeUntilNextEpoch = getTimeUntilNextEpoch()
-
-  // Format time remaining
   const formatTimeRemaining = (seconds: number) => {
     const hours = Math.floor(seconds / 3600)
     const minutes = Math.floor((seconds % 3600) / 60)
     const secs = seconds % 60
-
-    if (hours > 0) {
-      return `${hours}h ${minutes}m ${secs}s`
-    } else if (minutes > 0) {
-      return `${minutes}m ${secs}s`
-    } else {
-      return `${secs}s`
-    }
+    if (hours > 0) return `${hours}h ${minutes}m ${secs}s`
+    if (minutes > 0) return `${minutes}m ${secs}s`
+    return `${secs}s`
   }
 
+  const timeUntilNextEpoch = getTimeUntilNextEpoch()
+
   return {
-    currentEpoch: currentEpoch ? Number(currentEpoch) : 0,
-    epochStartTime: epochStartTime ? Number(epochStartTime) : 0,
-    shouldAdvanceEpoch: shouldAdvanceEpoch || false,
-    epochDuration: epochDuration ? Number(epochDuration) : 0,
+    currentEpoch: reads.currentEpoch,
+    epochStartTime: reads.epochStartTime,
+    shouldAdvanceEpoch: reads.shouldAdvanceEpoch,
+    epochDuration: reads.epochDuration,
     timeUntilNextEpoch,
     formattedTimeRemaining: timeUntilNextEpoch ? formatTimeRemaining(timeUntilNextEpoch) : '0s',
-    isEpochReady: shouldAdvanceEpoch || false,
+    isEpochReady: reads.shouldAdvanceEpoch,
   }
 }
 
@@ -419,7 +352,7 @@ export function useAdvanceEpoch() {
   const advanceEpoch = async () => {
     try {
       writeContract({
-        address: CONTRACT_ADDRESSES.EPOCH_VAULT as `0x${string}`,
+        address: VAULT_ADDRESS,
         abi,
         functionName: 'advanceEpoch',
       })
@@ -451,7 +384,7 @@ export function useAuthorizedWithdraw() {
 
     try {
       writeContract({
-        address: CONTRACT_ADDRESSES.EPOCH_VAULT as `0x${string}`,
+        address: VAULT_ADDRESS,
         abi,
         functionName: 'adminWithdraw',
         args: [parseUnits(amount, 6)],
@@ -482,7 +415,7 @@ export function useAdminDeposit() {
   const adminDeposit = async (amount: string) => {
     try {
       writeContract({
-        address: CONTRACT_ADDRESSES.EPOCH_VAULT as `0x${string}`,
+        address: VAULT_ADDRESS,
         abi,
         functionName: 'adminDeposit',
         args: [parseUnits(amount, 6)],

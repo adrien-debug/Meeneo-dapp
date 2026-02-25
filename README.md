@@ -9,7 +9,7 @@ A Next.js application for institutional-grade multi-strategy USDC vaults on Base
 - `/login` — Wallet connection, product overview, strategy allocation visual
 - `/dashboard` — Portfolio overview: allocation donut, strategy cards, lock timeline, deposits table, performance charts, activity feed
 - `/vault/[slug]` — Vault detail: strategy deep-dive, protocol breakdown, user position, deposit/claim/withdraw actions, performance chart
-- `/admin` — Operational cockpit: TVL by strategy, epoch management, reward distribution, rebalancing, system health, live transactions
+- `/admin` — Operational cockpit (admin-only): TVL by strategy, epoch management, on-chain reward distribution & rebalancing, system health, live transactions
 
 ### Tech Stack
 
@@ -31,10 +31,14 @@ A Next.js application for institutional-grade multi-strategy USDC vaults on Base
 - `Header` — Dark navbar with Portfolio/Vaults/Admin nav, Base network badge
 - `NetworkValidator` — Modal to switch to Base when on wrong network
 
-### Hooks (kept for on-chain integration)
+### Hooks
 
-- `useEpochVault` — Single vault contract interactions
-- `useMultiVault` — Multi-vault contract interactions
+- `useVaultReads` — Shared vault read logic (DRY base for both single & multi-vault hooks)
+- `useEpochVault` — Single vault contract interactions (deposit, withdraw, claim, deploy)
+- `useMultiVault` — Multi-vault contract interactions (admin actions per vault)
+- `useAdminGuard` — Admin role verification (only hardcoded admin wallets or demo mode)
+- `useAuthGuard` — General authentication guard (wallet connected or demo mode)
+- `useAppKitSafe` — Safe wrapper around AppKit (no-op in dev without WalletConnect ID)
 
 ## Getting Started
 

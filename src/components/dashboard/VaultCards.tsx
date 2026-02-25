@@ -125,7 +125,10 @@ export function VaultCards({
                         </div>
                         <div>
                           <p className="text-sm font-bold text-[#0E0F0F] leading-tight">
-                            {vault.name}
+                            {vault.name}{' '}
+                            <span className="text-caption font-mono font-bold text-[#9EB3A8]">
+                              {vault.refNumber}
+                            </span>
                           </p>
                           <p className="text-xs text-[#0E0F0F]/50 mt-0.5">
                             {deposit

@@ -127,8 +127,65 @@ export default function ProductPage() {
 
       <main className="pt-20 pb-10">
         <div className="page-container">
+          {/* ════════════════════════════════════════════════════════════
+             STEP 0 — Product Selection
+             ════════════════════════════════════════════════════════════ */}
+          {step === 'select' && (
+            <div className={`${CARD} p-6 sm:p-8 relative overflow-hidden mt-6 mb-6`}>
+              <div className="absolute inset-0 pointer-events-none">
+                <Image
+                  src="/assets/backgrounds/dashboard-hero-bg.png"
+                  alt=""
+                  fill
+                  className="object-cover opacity-20 mix-blend-multiply"
+                  sizes="100vw"
+                />
+              </div>
+              <div className="absolute -top-32 -right-32 w-96 h-96 bg-gradient-to-br from-[#96EA7A]/6 to-transparent rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-gradient-to-tr from-[#9EB3A8]/4 to-transparent rounded-full blur-2xl pointer-events-none" />
+
+              <div className="relative">
+                <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6 lg:min-h-[74px] mb-8">
+                  <div>
+                    <p className="kpi-label mb-2">Vault Selection</p>
+                    <h1 className="text-display font-black text-[var(--foreground)] tracking-tight">
+                      Invest in Institutional Vaults
+                    </h1>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-[#9EB3A8]/10 rounded-xl overflow-hidden">
+                  {[
+                    { label: 'Products', value: `${ALL_VAULTS.length}` },
+                    {
+                      label: 'Best APY',
+                      value: fmtApy(
+                        ALL_VAULTS.reduce(
+                          (best, v) => (v.compositeApy[1] > best[1] ? v.compositeApy : best),
+                          ALL_VAULTS[0].compositeApy,
+                        ),
+                      ),
+                    },
+                    {
+                      label: 'Min Entry',
+                      value: fmtUsd(Math.min(...ALL_VAULTS.map((v) => v.minDeposit))),
+                    },
+                    { label: 'Network', value: 'Base' },
+                  ].map((kpi) => (
+                    <div
+                      key={kpi.label}
+                      className="bg-white px-5 py-4 hover:bg-[#F2F2F2]/60 transition-colors"
+                    >
+                      <p className="kpi-label mb-1">{kpi.label}</p>
+                      <p className="text-base font-black text-[#0E0F0F] truncate">{kpi.value}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* ─── Stepper ─── */}
-          <div className="flex items-center justify-center gap-2 sm:gap-3 mt-6 mb-8 px-2">
+          <div className="flex items-center justify-center gap-2 sm:gap-3 mb-8 px-2">
             {(['select', 'overview', 'deposit', 'success'] as Step[]).map((s, i) => {
               const labels = ['Select', 'Product', 'Deposit', 'Confirmed']
               const current = ['select', 'overview', 'deposit', 'success'].indexOf(step)
@@ -184,30 +241,17 @@ export default function ProductPage() {
             })}
           </div>
 
-          {/* ════════════════════════════════════════════════════════════
-             STEP 0 — Product Selection
-             ════════════════════════════════════════════════════════════ */}
           {step === 'select' && (
             <>
-              {/* Hero */}
-              <div className="mb-8 mt-2">
-                <h2 className="text-2xl sm:text-3xl font-black text-[#0E0F0F] tracking-tight">
-                  Invest in Institutional Vaults
-                </h2>
-                <p className="text-sm text-[#9EB3A8] mt-2 max-w-xl">
-                  Select a vault strategy to deploy capital into Bitcoin mining, DeFi yield, and
-                  hedged positions — managed by Hearst.
-                </p>
-              </div>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {ALL_VAULTS.map((v) => (
                   <button
                     key={v.slug}
                     onClick={() => selectProduct(v)}
-                    className="text-left hover:-translate-y-1 transition-all duration-300 group relative overflow-hidden cursor-pointer flex flex-col rounded-3xl shadow-md hover:shadow-2xl"
+                    className="text-left hover:-translate-y-1.5 transition-all duration-300 group relative overflow-hidden cursor-pointer flex flex-col rounded-3xl shadow-md hover:shadow-2xl border border-transparent hover:border-[#96EA7A]/30"
                   >
                     {/* Header */}
-                    <div className="bg-[#E6F1E7] px-6 sm:px-8 pt-6 sm:pt-8 pb-5 rounded-t-3xl relative overflow-hidden">
+                    <div className="px-6 sm:px-8 pt-6 sm:pt-8 pb-6 rounded-t-3xl relative overflow-hidden">
                       <div className="absolute inset-0 pointer-events-none">
                         <Image
                           src={
@@ -217,43 +261,103 @@ export default function ProductPage() {
                           }
                           alt=""
                           fill
-                          className="object-cover opacity-30 mix-blend-multiply"
+                          className="object-cover"
                           sizes="50vw"
                         />
                       </div>
-                      <div
-                        className="absolute inset-0 opacity-30"
-                        style={{
-                          background: `radial-gradient(circle at 80% 20%, ${v.strategies[0]?.color ?? '#96EA7A'}33, transparent 60%)`,
-                        }}
-                      />
+                      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/30 to-white pointer-events-none" />
                       <div className="relative">
-                        <div className="flex items-center gap-2 mb-3">
-                          <span className="text-caption font-bold px-2 py-0.5 rounded-full bg-[#96EA7A]/25 text-[#2D6A2E] border border-[#96EA7A]/40 uppercase tracking-wider">
-                            {v.status === 'active' ? 'Live' : v.status}
-                          </span>
-                          <span className="text-caption text-[#9EB3A8] font-medium">
-                            {v.strategies.map((s) => s.label).join(' · ')}
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center gap-2">
+                            <span className="text-small font-bold px-3 py-1 rounded-full bg-[#0E0F0F]/10 text-[#0E0F0F] border border-[#0E0F0F]/15 uppercase tracking-widest">
+                              {v.status === 'active' ? 'Live' : v.status}
+                            </span>
+                            <span className="text-small text-[#0E0F0F] font-medium uppercase tracking-wide">
+                              {v.strategies.map((s) => s.label).join(' · ')}
+                            </span>
+                          </div>
+                          <span className="text-body font-mono font-bold text-[#0E0F0F]">
+                            {v.refNumber}
                           </span>
                         </div>
-                        <h3 className="text-xl sm:text-2xl font-black text-[#0E0F0F] mb-4">
+                        <h3 className="text-heading-sm sm:text-heading font-black text-[#0E0F0F] mb-5">
                           {v.name}
                         </h3>
-                        <div className="flex items-end gap-1">
-                          <span className="text-4xl sm:text-5xl font-black text-[#0E0F0F] tracking-tighter leading-none">
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-display sm:text-[3.5rem] font-black text-[#0E0F0F] tracking-tighter leading-none">
                             {v.compositeApy[0] === v.compositeApy[1]
                               ? v.compositeApy[0]
                               : `${v.compositeApy[0]}–${v.compositeApy[1]}`}
                           </span>
-                          <span className="text-lg font-black text-[#9EB3A8] mb-1">% APY</span>
+                          <span className="text-base font-bold text-[#0E0F0F]">% APY</span>
                         </div>
                       </div>
                     </div>
 
-                    {/* White body */}
-                    <div className="bg-white px-6 sm:px-8 py-5 flex-1">
+                    {/* Body */}
+                    <div className="bg-white px-6 sm:px-8 py-6 flex-1 flex flex-col">
+                      {/* Intro */}
+                      <p className="text-base text-[var(--foreground)]/80 leading-relaxed mb-5">
+                        {v.description}
+                      </p>
+
+                      {/* Features */}
+                      <div className="mb-6 grid grid-cols-2 gap-x-4 gap-y-4">
+                        {[
+                          {
+                            icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z',
+                            title: 'Multi-Strategy',
+                            desc: v.strategies.map((s: { label: string }) => s.label).join(', '),
+                          },
+                          {
+                            icon: 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6',
+                            title: 'Target Yield',
+                            desc: `${v.compositeApy[0]}–${v.compositeApy[1]}% APY, monthly`,
+                          },
+                          {
+                            icon: 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z',
+                            title: `${v.lockPeriodMonths / 12} Years Lock`,
+                            desc: 'Withdraw at 36% or maturity',
+                          },
+                          {
+                            icon: 'M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z',
+                            title: 'Audited',
+                            desc: 'Base network, institutional custody',
+                          },
+                        ].map((f) => (
+                          <div key={f.title} className="flex items-start gap-2.5">
+                            <div className="w-7 h-7 rounded-lg bg-[#96EA7A]/10 flex items-center justify-center shrink-0 mt-0.5">
+                              <svg
+                                className="w-3.5 h-3.5 text-[#96EA7A]"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d={f.icon}
+                                />
+                              </svg>
+                            </div>
+                            <div>
+                              <p className="text-body font-bold text-[var(--foreground)] leading-tight">
+                                {f.title}
+                              </p>
+                              <p className="text-small text-[var(--muted)] leading-snug mt-0.5">
+                                {f.desc}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Separator */}
+                      <div className="border-t border-[var(--card-border)] mb-5" />
+
                       {/* Strategy allocation bar */}
-                      <div className="flex w-full h-2 rounded-full overflow-hidden mb-4">
+                      <div className="flex w-full h-2.5 rounded-full overflow-hidden mb-2.5">
                         {v.strategies.map((s) => (
                           <div
                             key={s.type}
@@ -263,46 +367,45 @@ export default function ProductPage() {
                         ))}
                       </div>
 
-                      {/* Strategy labels */}
-                      <div className="flex flex-wrap gap-x-4 gap-y-1 mb-5">
+                      {/* Strategy pills */}
+                      <div className="flex flex-wrap gap-1.5 mb-5">
                         {v.strategies.map((s) => (
                           <div key={s.type} className="flex items-center gap-1.5">
                             <div
                               className="w-2 h-2 rounded-full shrink-0"
                               style={{ backgroundColor: s.color }}
                             />
-                            <span className="text-xs text-[#0E0F0F] font-medium">{s.label}</span>
-                            <span className="text-xs text-[#9EB3A8]">{s.allocation}%</span>
+                            <span className="text-small text-[var(--foreground)] font-semibold">
+                              {s.label}
+                            </span>
+                            <span className="text-small text-[var(--muted)]">{s.allocation}%</span>
                           </div>
                         ))}
                       </div>
 
                       {/* Key metrics */}
-                      <div className="grid grid-cols-3 gap-3 border-t border-[#F2F2F2] pt-4">
-                        <div>
-                          <p className="kpi-label">Lock</p>
-                          <p className="text-sm font-bold text-[#0E0F0F] mt-0.5">
-                            {v.lockPeriodMonths / 12} Years
-                          </p>
-                        </div>
-                        <div>
-                          <p className="kpi-label">Min Deposit</p>
-                          <p className="text-sm font-bold text-[#0E0F0F] mt-0.5">
-                            {fmtUsd(v.minDeposit)}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="kpi-label">Fees</p>
-                          <p className="text-sm font-bold text-[#0E0F0F] mt-0.5">
-                            {v.fees.management}% + {v.fees.performance}%
-                          </p>
-                        </div>
+                      <div className="grid grid-cols-3 gap-px bg-[var(--card-border)] rounded-xl overflow-hidden mt-auto">
+                        {[
+                          { label: 'Lock', value: `${v.lockPeriodMonths / 12} Years` },
+                          { label: 'Min Deposit', value: fmtUsd(v.minDeposit) },
+                          {
+                            label: 'Fees',
+                            value: `${v.fees.management}% + ${v.fees.performance}%`,
+                          },
+                        ].map((m) => (
+                          <div key={m.label} className="bg-white px-3 py-2.5 text-center">
+                            <p className="text-body font-black text-[var(--foreground)]">
+                              {m.value}
+                            </p>
+                            <p className="kpi-label mt-0.5">{m.label}</p>
+                          </div>
+                        ))}
                       </div>
                     </div>
 
                     {/* CTA */}
-                    <div className="bg-white px-6 sm:px-8 pb-6 sm:pb-8 pt-0 rounded-b-3xl">
-                      <div className="h-10 rounded-xl bg-[#F2F2F2] text-[#9EB3A8] font-semibold text-xs flex items-center justify-center gap-1.5 group-hover:bg-[#96EA7A] group-hover:text-[#0E0F0F] transition-all">
+                    <div className="bg-white px-6 sm:px-8 pb-5 sm:pb-6 pt-2 rounded-b-3xl flex justify-center">
+                      <div className="h-10 w-full max-w-[200px] rounded-full bg-[#96EA7A] text-[#0E0F0F] font-bold text-small flex items-center justify-center gap-1.5 group-hover:bg-[#7ED066] transition-all duration-200 group-hover:shadow-lg group-hover:shadow-[#96EA7A]/20">
                         Subscribe Now
                         <svg
                           className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform"
@@ -313,7 +416,7 @@ export default function ProductPage() {
                           <path
                             strokeLinecap="round"
                             strokeLinejoin="round"
-                            strokeWidth={2.5}
+                            strokeWidth={2}
                             d="M9 5l7 7-7 7"
                           />
                         </svg>
@@ -341,12 +444,11 @@ export default function ProductPage() {
                     }
                     alt=""
                     fill
-                    className="object-cover opacity-30 mix-blend-multiply"
+                    className="object-cover"
                     sizes="100vw"
                   />
                 </div>
-                <div className="absolute -top-32 -right-32 w-96 h-96 bg-gradient-to-br from-[#96EA7A]/6 to-transparent rounded-full blur-3xl pointer-events-none" />
-                <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-gradient-to-tr from-[#9EB3A8]/4 to-transparent rounded-full blur-2xl pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/30 to-white pointer-events-none" />
 
                 <div className="relative">
                   <div className="mb-4 sm:mb-6">
@@ -373,13 +475,16 @@ export default function ProductPage() {
                     </button>
                     <div className="flex items-center gap-2 sm:gap-3 mb-1 flex-wrap">
                       <h1 className="text-2xl sm:text-[2.75rem] md:text-[3.25rem] font-black text-[#0E0F0F] tracking-tight leading-none">
-                        {vault.name}
+                        {vault.name}{' '}
+                        <span className="text-base font-mono font-bold text-[#0E0F0F]">
+                          {vault.refNumber}
+                        </span>
                       </h1>
                       <span className="text-caption font-bold px-2 sm:px-3 py-0.5 sm:py-1 rounded-full bg-[#96EA7A]/20 text-[#96EA7A] border border-[#96EA7A]/30">
                         Active
                       </span>
                     </div>
-                    <p className="text-xs sm:text-sm text-[#9EB3A8] mt-1 max-w-lg">
+                    <p className="text-xs sm:text-sm text-[#0E0F0F] mt-1 max-w-lg">
                       {vault.description}
                     </p>
                   </div>
@@ -613,7 +718,12 @@ export default function ProductPage() {
                       />
                     </div>
                     <div>
-                      <p className="card-title">{vault.name}</p>
+                      <p className="card-title">
+                        {vault.name}{' '}
+                        <span className="text-xs font-mono font-bold text-[#9EB3A8]">
+                          {vault.refNumber}
+                        </span>
+                      </p>
                       <p className="text-xs text-[#9EB3A8] mt-0.5">Multi-strategy vault</p>
                     </div>
                   </div>
@@ -665,7 +775,7 @@ export default function ProductPage() {
               <div className="lg:col-span-7">
                 <div className={`${CARD} overflow-hidden`}>
                   {/* Header with vault bg */}
-                  <div className="bg-[#E6F1E7] px-4 sm:px-6 md:px-8 pt-4 sm:pt-6 pb-4 relative overflow-hidden">
+                  <div className="px-4 sm:px-6 md:px-8 pt-4 sm:pt-6 pb-4 relative overflow-hidden">
                     <div className="absolute inset-0 pointer-events-none">
                       <Image
                         src={
@@ -675,10 +785,11 @@ export default function ProductPage() {
                         }
                         alt=""
                         fill
-                        className="object-cover opacity-30 mix-blend-multiply"
+                        className="object-cover"
                         sizes="100vw"
                       />
                     </div>
+                    <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/30 to-white pointer-events-none" />
                     <div className="relative">
                       <button
                         onClick={() => setStep('overview')}
@@ -702,7 +813,10 @@ export default function ProductPage() {
                         Back
                       </button>
                       <h2 className="text-heading-sm font-bold text-[#0E0F0F]">
-                        Deposit into {vault.name}
+                        Deposit into {vault.name}{' '}
+                        <span className="text-sm font-mono font-bold text-[#9EB3A8]">
+                          {vault.refNumber}
+                        </span>
                       </h2>
                     </div>
                   </div>
@@ -719,7 +833,12 @@ export default function ProductPage() {
                         />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-[#0E0F0F] truncate">{vault.name}</p>
+                        <p className="text-sm font-bold text-[#0E0F0F] truncate">
+                          {vault.name}{' '}
+                          <span className="text-caption font-mono font-bold text-[#9EB3A8]">
+                            {vault.refNumber}
+                          </span>
+                        </p>
                         <p className="text-xs text-[#9EB3A8]">{fmtApy(vault.compositeApy)} APY</p>
                       </div>
                       <div className="flex items-center gap-1 sm:gap-1.5 flex-wrap">
@@ -955,7 +1074,7 @@ export default function ProductPage() {
             <div className="max-w-xl mx-auto">
               <div className={`${CARD} overflow-hidden text-center`}>
                 {/* Header with vault bg */}
-                <div className="bg-[#E6F1E7] px-5 sm:px-8 pt-8 pb-6 relative overflow-hidden">
+                <div className="px-5 sm:px-8 pt-8 pb-6 relative overflow-hidden">
                   <div className="absolute inset-0 pointer-events-none">
                     <Image
                       src={
@@ -965,10 +1084,11 @@ export default function ProductPage() {
                       }
                       alt=""
                       fill
-                      className="object-cover opacity-30 mix-blend-multiply"
+                      className="object-cover"
                       sizes="100vw"
                     />
                   </div>
+                  <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/30 to-white pointer-events-none" />
                   <div className="relative">
                     <div className="w-16 h-16 rounded-2xl bg-white/70 backdrop-blur-sm flex items-center justify-center mx-auto mb-4 shadow-lg">
                       <svg
@@ -990,7 +1110,7 @@ export default function ProductPage() {
                 </div>
                 <div className="p-5 sm:p-8 md:p-10">
                   <p className="text-xs sm:text-sm text-[#9EB3A8] mb-5 sm:mb-8">
-                    Your position in {vault.name} is now active
+                    Your position in {vault.name} {vault.refNumber} is now active
                   </p>
 
                   {/* Deposit recap */}
@@ -1006,7 +1126,12 @@ export default function ProductPage() {
                         />
                       </div>
                       <div className="flex-1">
-                        <p className="text-sm font-bold text-[#0E0F0F]">{vault.name}</p>
+                        <p className="text-sm font-bold text-[#0E0F0F]">
+                          {vault.name}{' '}
+                          <span className="text-caption font-mono font-bold text-[#9EB3A8]">
+                            {vault.refNumber}
+                          </span>
+                        </p>
                         <p className="text-xs text-[#9EB3A8]">{fmtApy(vault.compositeApy)} APY</p>
                       </div>
                       <p className="text-lg sm:text-xl font-black text-[#0E0F0F]">
@@ -1017,7 +1142,7 @@ export default function ProductPage() {
                       <div>
                         <p className="kpi-label mb-0.5">Lock</p>
                         <p className="text-sm font-bold text-[#0E0F0F]">
-                          {vault.lockPeriodMonths / 12}Y
+                          {vault.lockPeriodMonths / 12} Years
                         </p>
                       </div>
                       <div>

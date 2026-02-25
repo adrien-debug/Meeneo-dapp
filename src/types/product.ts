@@ -33,6 +33,8 @@ export interface UserDeposit {
 
 export interface VaultConfig {
   slug: string
+  /** Unique sequential reference e.g. "#01", "#02" */
+  refNumber: string
   name: string
   description: string
   contractAddress: `0x${string}`

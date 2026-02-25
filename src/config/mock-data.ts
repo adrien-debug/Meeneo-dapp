@@ -10,6 +10,7 @@ import type {
 
 export const HEARST_VAULT: VaultConfig = {
   slug: 'hearst-hedge',
+  refNumber: '#01',
   name: 'Hearst Hedge',
   description:
     'Multi-strategy balanced vault — RWA Mining, USDC Yield, BTC Hedged. ~8–15% annual yield distributed monthly. Withdraw at 36% target or 3 years.',
@@ -64,6 +65,7 @@ export const HEARST_VAULT: VaultConfig = {
 
 export const HEARST_BTC_LEVERAGE: VaultConfig = {
   slug: 'hearst-alpha',
+  refNumber: '#02',
   name: 'Hearst Alpha',
   description:
     '100% BTC spot acquisition with 30% collateral borrowing deployed to mining infrastructure. ~15% annual yield. Higher risk, higher reward.',
@@ -341,7 +343,133 @@ export const MOCK_VAULT_ACTIVITY: VaultActivity[] = [
 ]
 
 export function getActivityForVault(vaultSlug: string): VaultActivity[] {
-  return MOCK_VAULT_ACTIVITY.filter((a) => a.vaultSlug === vaultSlug)
+  const hardcoded = MOCK_VAULT_ACTIVITY.filter((a) => a.vaultSlug === vaultSlug)
+  if (hardcoded.length > 0) return hardcoded
+  return generateDemoActivity(vaultSlug)
+}
+
+function generateDemoActivity(vaultSlug: string): VaultActivity[] {
+  const actions: VaultActivity[] = []
+  const seed = hashCode(vaultSlug)
+  const baseTime = NOW
+
+  actions.push({
+    id: `da-${vaultSlug}-1`,
+    type: 'deposit',
+    timestamp: baseTime - 1 * DAY,
+    description: 'Initial deposit placed',
+    vaultSlug,
+  })
+  actions.push({
+    id: `da-${vaultSlug}-2`,
+    type: 'rebalance',
+    timestamp: baseTime - 3 * DAY,
+    description: 'Strategy weights normalized to target',
+    vaultSlug,
+  })
+  actions.push({
+    id: `da-${vaultSlug}-3`,
+    type: 'distribute',
+    timestamp: baseTime - 7 * DAY,
+    description: `Yield distributed: ${fmtUsd(800 + (seed % 4200))}`,
+    vaultSlug,
+  })
+  actions.push({
+    id: `da-${vaultSlug}-4`,
+    type: 'rebalance',
+    timestamp: baseTime - 18 * DAY,
+    description: 'Quarterly rebalance executed',
+    vaultSlug,
+  })
+
+  return actions.sort((a, b) => b.timestamp - a.timestamp)
+}
+
+function hashCode(s: string): number {
+  let h = 0
+  for (let i = 0; i < s.length; i++) {
+    h = (Math.imul(31, h) + s.charCodeAt(i)) | 0
+  }
+  return Math.abs(h)
+}
+
+/**
+ * Generate monthly performance data anchored to a vault's strategies.
+ * For demo vaults with no hardcoded perf, this produces realistic-looking data.
+ */
+export function generateVaultPerformance(vault: VaultConfig): MonthlyPerformance[] {
+  const seed = hashCode(vault.slug)
+  const months = [
+    'Mar 25',
+    'Apr 25',
+    'May 25',
+    'Jun 25',
+    'Jul 25',
+    'Aug 25',
+    'Sep 25',
+    'Oct 25',
+    'Nov 25',
+    'Dec 25',
+    'Jan 26',
+    'Feb 26',
+  ]
+
+  const apyByType: Record<string, [number, number]> = {}
+  for (const s of vault.strategies) {
+    apyByType[s.type] = s.apyRange
+  }
+
+  return months.map((month, i) => {
+    const noise = (idx: number, base: number) => {
+      const v = Math.sin(seed + idx * 13 + i * 7) * 0.4
+      return +(base + v).toFixed(2)
+    }
+
+    const rwa = apyByType['rwa_mining']
+      ? noise(0, (apyByType['rwa_mining'][0] + apyByType['rwa_mining'][1]) / 2 / 12)
+      : 0
+    const usdc = apyByType['usdc_yield']
+      ? noise(1, (apyByType['usdc_yield'][0] + apyByType['usdc_yield'][1]) / 2 / 12)
+      : 0
+    const btc = apyByType['btc_hedged']
+      ? noise(2, (apyByType['btc_hedged'][0] + apyByType['btc_hedged'][1]) / 2 / 12)
+      : 0
+    const spot = apyByType['btc_spot']
+      ? noise(3, (apyByType['btc_spot'][0] + apyByType['btc_spot'][1]) / 2 / 12)
+      : 0
+    const coll = apyByType['btc_collateral_mining']
+      ? noise(
+          4,
+          (apyByType['btc_collateral_mining'][0] + apyByType['btc_collateral_mining'][1]) / 2 / 12,
+        )
+      : 0
+
+    const weights = vault.strategies.reduce(
+      (acc, s) => {
+        acc[s.type] = s.allocation / 100
+        return acc
+      },
+      {} as Record<string, number>,
+    )
+
+    const composite = +(
+      (weights['rwa_mining'] ?? 0) * rwa +
+      (weights['usdc_yield'] ?? 0) * usdc +
+      (weights['btc_hedged'] ?? 0) * btc +
+      (weights['btc_spot'] ?? 0) * spot +
+      (weights['btc_collateral_mining'] ?? 0) * coll
+    ).toFixed(2)
+
+    return {
+      month,
+      rwa_mining: rwa,
+      usdc_yield: usdc,
+      btc_hedged: btc,
+      btc_spot: spot,
+      btc_collateral_mining: coll,
+      composite,
+    }
+  })
 }
 
 // ─── Utilities ───────────────────────────────────────────────────

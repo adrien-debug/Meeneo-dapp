@@ -30,7 +30,7 @@ export default function Login() {
 
   const handleDemoLogin = () => {
     enterDemoMode()
-    router.push('/dashboard')
+    window.location.href = '/dashboard'
   }
 
   const handleVideoTimeUpdate = useCallback(() => {
@@ -49,7 +49,7 @@ export default function Login() {
     <div className="min-h-screen bg-[#F2F2F2] flex flex-col lg:flex-row">
       {/* Left — Video */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-[#0E0F0F]">
-        { }
+        {}
         <video
           ref={videoRef}
           autoPlay
@@ -101,15 +101,6 @@ export default function Login() {
 
       {/* Right — Login */}
       <div className="w-full lg:w-1/2 flex flex-col items-center justify-center min-h-screen px-6 sm:px-10 lg:px-16 py-12 relative overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none">
-          <Image
-            src="/assets/backgrounds/login-wallets-bg.png"
-            alt=""
-            fill
-            className="object-cover opacity-50 mix-blend-multiply"
-            sizes="50vw"
-          />
-        </div>
         <div className="w-full max-w-[400px]">
           <div className="text-center mb-10">
             <div className="flex items-center justify-center mb-6">
@@ -129,9 +120,9 @@ export default function Login() {
 
           <button
             onClick={() => open()}
-            className="w-full h-14 bg-[#96EA7A] text-[#0E0F0F] font-bold text-base rounded-2xl hover:bg-[#7ED066] shadow-lg shadow-[#96EA7A]/20 hover:shadow-xl hover:shadow-[#96EA7A]/30 transition-all flex items-center justify-center gap-2.5 active:scale-[0.98]"
+            className="w-full h-11 bg-[#96EA7A] text-[#0E0F0F] font-semibold text-sm rounded-xl hover:bg-[#7ED066] shadow-md shadow-[#96EA7A]/15 hover:shadow-lg hover:shadow-[#96EA7A]/25 transition-all flex items-center justify-center gap-2 active:scale-[0.98]"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -142,15 +133,7 @@ export default function Login() {
             Connect Wallet
           </button>
 
-          <button
-            onClick={handleDemoLogin}
-            className="w-full h-12 mt-3 bg-[#0E0F0F] text-white font-semibold text-sm rounded-2xl hover:bg-[#1a1f1a] transition-all flex items-center justify-center gap-2 border border-[#9EB3A8]/20"
-          >
-            <span className="w-2 h-2 rounded-full bg-[#96EA7A] animate-pulse" />
-            Enter Demo Mode
-          </button>
-
-          <p className="text-center text-xs text-[#9EB3A8] mt-3">
+          <p className="text-center text-[10px] text-[#9EB3A8] mt-2">
             Secure connection via WalletConnect protocol
           </p>
 
@@ -196,14 +179,23 @@ export default function Login() {
             </div>
           </div>
 
-          <div className="flex items-center justify-center gap-4 text-xs text-[#0E0F0F]/40 font-medium mt-10">
-            <a href="/privacy" className="hover:text-[#0E0F0F] transition-colors">
-              Privacy
-            </a>
-            <span className="text-[#9EB3A8]/30">·</span>
-            <a href="/terms" className="hover:text-[#0E0F0F] transition-colors">
-              Terms
-            </a>
+          <div className="flex items-center justify-between text-xs text-[#0E0F0F]/40 font-medium mt-10">
+            <div className="flex items-center gap-3">
+              <a href="/privacy" className="hover:text-[#0E0F0F] transition-colors">
+                Privacy
+              </a>
+              <span className="text-[#9EB3A8]/30">·</span>
+              <a href="/terms" className="hover:text-[#0E0F0F] transition-colors">
+                Terms
+              </a>
+            </div>
+            <button
+              onClick={handleDemoLogin}
+              className="flex items-center gap-1.5 text-[11px] text-[#0E0F0F]/40 hover:text-[#0E0F0F] transition-colors"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-[#96EA7A]" />
+              Demo
+            </button>
           </div>
         </div>
       </div>

@@ -9,18 +9,26 @@ import {
   fmtApy,
   fmtPercent,
   fmtUsd,
+  generateVaultPerformance,
   getActivityForVault,
   getLockStatusColor,
   getLockStatusLabel,
   timeAgo,
 } from '@/config/mock-data'
+import { PerformanceChart } from '@/components/dashboard/PerformanceChart'
+import type {
+  ActiveStrategy,
+  ChartMode,
+  ChartStrategyFilter,
+  QuantMetrics,
+} from '@/components/dashboard/types'
 import { useDemo } from '@/context/demo-context'
 import { useAuthGuard } from '@/hooks/useAuthGuard'
 import { useClaimRewards, useWithdraw } from '@/hooks/useEpochVault'
 import type { StrategyType, VaultStrategy } from '@/types/product'
 import Image from 'next/image'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   Area,
   AreaChart,
@@ -116,7 +124,192 @@ export default function VaultDetail() {
     ? vault?.strategies.find((s) => s.type === selectedStrategy)
     : undefined
 
-  const chartData = MOCK_MONTHLY_PERFORMANCE
+  // ─── Chart state ───
+  const [chartStrategy, setChartStrategy] = useState<ChartStrategyFilter>('composite')
+  const [chartMode, setChartMode] = useState<ChartMode>('cumulative')
+  const [timeRange, setTimeRange] = useState('1Y')
+
+  const activeStrategies: ActiveStrategy[] = useMemo(() => {
+    if (!vault) return []
+    const totalAlloc = vault.strategies.reduce((s, st) => s + st.allocation, 0) || 100
+    return vault.strategies.map((s) => ({
+      type: s.type,
+      label: s.label,
+      weight: s.allocation / totalAlloc,
+      color: s.color,
+    }))
+  }, [vault])
+
+  const activeStrategyTypes = useMemo(
+    () => new Set(activeStrategies.map((s) => s.type)),
+    [activeStrategies],
+  )
+
+  const earliestDepositTs = useMemo(() => {
+    if (deposits.length === 0) return Math.floor(Date.now() / 1000)
+    return Math.min(...deposits.map((d) => d.depositTimestamp))
+  }, [deposits])
+
+  const chartData = useMemo(() => {
+    if (!vault) return []
+
+    const MONTH_NAMES = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ]
+    const toLabel = (d: Date) => `${MONTH_NAMES[d.getMonth()]} ${String(d.getFullYear()).slice(-2)}`
+
+    const isHardcoded = ALL_VAULTS.some((v) => v.slug === vault.slug)
+    const perfData = isHardcoded ? MOCK_MONTHLY_PERFORMANCE : generateVaultPerformance(vault)
+    const mockLookup = new Map(perfData.map((m) => [m.month, m]))
+
+    const mockAvg: Record<string, number> = {}
+    for (const s of activeStrategies) {
+      const vals = perfData.map((m) => m[s.type] as number)
+      mockAvg[s.type] = vals.reduce((a, b) => a + b, 0) / vals.length
+    }
+
+    const startDate = new Date(earliestDepositTs * 1000)
+    const start = new Date(startDate.getFullYear(), startDate.getMonth(), 1)
+    const endDate = new Date(demo.now * 1000)
+    const end = new Date(endDate.getFullYear(), endDate.getMonth(), 1)
+    const allMonths: string[] = []
+    const cur = new Date(start)
+    while (cur <= end) {
+      allMonths.push(toLabel(cur))
+      cur.setMonth(cur.getMonth() + 1)
+    }
+
+    const rangeMap: Record<string, number> = { '3M': 3, '6M': 6, '1Y': 12, ALL: 999 }
+    const months = allMonths.slice(-(rangeMap[timeRange] ?? 12))
+
+    return months.map((month, i) => {
+      const mock = mockLookup.get(month)
+      const point: Record<string, number | string> = { month }
+
+      for (const s of activeStrategies) {
+        if (mock) {
+          point[s.type] = mock[s.type] as number
+        } else {
+          const seed = month.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0)
+          const variance = 0.75 + 0.5 * Math.abs(Math.sin(seed * (i + 1) * 0.17))
+          point[s.type] = +(mockAvg[s.type] * variance).toFixed(2)
+        }
+      }
+
+      point.composite = +activeStrategies
+        .reduce((sum, s) => sum + (point[s.type] as number) * s.weight, 0)
+        .toFixed(2)
+      return point
+    })
+  }, [vault, timeRange, activeStrategies, earliestDepositTs, demo.now])
+
+  const cumulativeData = useMemo(() => {
+    const accum: Record<string, number> = { composite: 0 }
+    activeStrategies.forEach((s) => {
+      accum[s.type] = 0
+    })
+    return chartData.map((m) => {
+      const point: Record<string, number | string> = { month: m.month as string }
+      for (const s of activeStrategies) {
+        accum[s.type] += (m[s.type] as number) ?? 0
+        point[s.type] = +accum[s.type].toFixed(2)
+      }
+      accum.composite += (m.composite as number) ?? 0
+      point.composite = +accum.composite.toFixed(2)
+      return point
+    })
+  }, [chartData, activeStrategies])
+
+  const quantMetrics: QuantMetrics = useMemo(() => {
+    const composites = chartData.map((m) => (m.composite as number) ?? 0)
+    const zero: QuantMetrics = {
+      totalYield: 0,
+      bestMonth: 0,
+      worstMonth: 0,
+      avgMonthly: 0,
+      volatility: 0,
+      sharpe: 0,
+      winRate: 0,
+      maxDrawdown: 0,
+      sortino: 0,
+      calmar: 0,
+      downsideDev: 0,
+      annualizedReturn: 0,
+    }
+    if (composites.length === 0) return zero
+
+    const mean = composites.reduce((s, v) => s + v, 0) / composites.length
+    const variance = composites.reduce((s, v) => s + Math.pow(v - mean, 2), 0) / composites.length
+    const stdDev = Math.sqrt(variance)
+    const riskFreeMonthly = 0.42
+    const sharpe = stdDev > 0 ? (mean - riskFreeMonthly) / stdDev : 0
+    const maxVal = Math.max(...composites)
+    const minVal = Math.min(...composites)
+    const winRate = (composites.filter((v) => v > mean).length / composites.length) * 100
+    const totalCumulative = composites.reduce((s, v) => s + v, 0)
+
+    let peak = 0,
+      maxDd = 0,
+      cumul = 0
+    for (const v of composites) {
+      cumul += v
+      if (cumul > peak) peak = cumul
+      const dd = peak - cumul
+      if (dd > maxDd) maxDd = dd
+    }
+
+    const downsideReturns = composites.filter((v) => v < riskFreeMonthly)
+    const downsideVariance =
+      downsideReturns.length > 0
+        ? downsideReturns.reduce((s, v) => s + Math.pow(v - riskFreeMonthly, 2), 0) /
+          downsideReturns.length
+        : 0
+    const downsideDev = Math.sqrt(downsideVariance)
+    const sortino = downsideDev > 0 ? (mean - riskFreeMonthly) / downsideDev : 0
+    const annualizedReturn = mean * 12
+    const calmar = maxDd > 0 ? annualizedReturn / maxDd : 0
+
+    return {
+      totalYield: totalCumulative,
+      bestMonth: maxVal,
+      worstMonth: minVal,
+      avgMonthly: mean,
+      volatility: stdDev,
+      sharpe,
+      winRate,
+      maxDrawdown: maxDd,
+      sortino,
+      calmar,
+      downsideDev,
+      annualizedReturn,
+    }
+  }, [chartData])
+
+  useEffect(() => {
+    if (chartStrategy !== 'composite' && !activeStrategyTypes.has(chartStrategy)) {
+      setChartStrategy('composite')
+    }
+  }, [chartStrategy, activeStrategyTypes])
+
+  const activeChartData = chartMode === 'cumulative' ? cumulativeData : chartData
+
+  const composedChartData = useMemo(() => {
+    return chartData.map((m, i) => ({
+      ...m,
+      _cumComposite: cumulativeData[i]?.composite ?? 0,
+    }))
+  }, [chartData, cumulativeData])
 
   const protocolBreakdown = useMemo(() => {
     if (!strategy) return []
@@ -198,7 +391,7 @@ export default function VaultDetail() {
         <div className="page-container">
           {/* ─── Hero ─── */}
           <div className="rounded-3xl overflow-hidden shadow-md mt-6 mb-5">
-            <div className="bg-[#E6F1E7] p-6 sm:p-8 relative overflow-hidden">
+            <div className="p-6 sm:p-8 relative overflow-hidden">
               <div className="absolute inset-0 pointer-events-none">
                 <Image
                   src={
@@ -208,26 +401,21 @@ export default function VaultDetail() {
                   }
                   alt=""
                   fill
-                  className="object-cover opacity-30 mix-blend-multiply"
+                  className="object-cover"
                   sizes="100vw"
                 />
               </div>
-              <div
-                className="absolute inset-0 opacity-30"
-                style={{
-                  background: `radial-gradient(circle at 80% 20%, ${vault.strategies[0]?.color ?? '#96EA7A'}33, transparent 60%)`,
-                }}
-              />
+              <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/30 to-white pointer-events-none" />
 
               <div className="relative">
                 <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
                   <button
                     onClick={() => router.back()}
-                    className="w-8 h-8 rounded-xl bg-[#F2F2F2] flex items-center justify-center hover:bg-[#E6F1E7] transition-colors shrink-0 self-start"
+                    className="w-8 h-8 rounded-xl bg-[#0E0F0F]/10 flex items-center justify-center hover:bg-[#0E0F0F]/20 transition-colors shrink-0 self-start"
                     aria-label="Go back"
                   >
                     <svg
-                      className="w-4 h-4 text-[#9EB3A8]"
+                      className="w-4 h-4 text-[#0E0F0F]"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -253,13 +441,16 @@ export default function VaultDetail() {
                     </div>
                     <div>
                       <h1 className="text-[2rem] sm:text-[2.5rem] font-black text-[#0E0F0F] tracking-tight leading-none">
-                        {vault.name}
+                        {vault.name}{' '}
+                        <span className="text-lg font-mono font-bold text-[#0E0F0F]">
+                          {vault.refNumber}
+                        </span>
                       </h1>
                       <div className="flex items-center gap-2 mt-0.5">
                         {vault.strategies.map((s) => (
                           <div
                             key={s.type}
-                            className="flex items-center gap-1 bg-[#F2F2F2] rounded-full px-2 py-0.5"
+                            className="flex items-center gap-1 bg-[#0E0F0F]/10 rounded-full px-2 py-0.5"
                           >
                             <Image
                               src={STRATEGY_ICONS[s.type] ?? ''}
@@ -268,7 +459,7 @@ export default function VaultDetail() {
                               height={10}
                               className="rounded-full"
                             />
-                            <span className="text-caption text-[#9EB3A8] font-medium">
+                            <span className="text-caption text-[#0E0F0F] font-medium">
                               {s.allocation}%
                             </span>
                           </div>
@@ -300,7 +491,7 @@ export default function VaultDetail() {
                         </svg>
                       </div>
                       <div className="text-left">
-                        <p className="text-xs text-[#9EB3A8] font-medium">
+                        <p className="text-xs text-[#0E0F0F] font-medium">
                           {isClaimConfirmed ? 'Claimed!' : 'Pending Yield'}
                         </p>
                         <p className="text-lg font-black text-[#96EA7A]">
@@ -328,7 +519,7 @@ export default function VaultDetail() {
 
             {/* Body — white */}
             <div className="bg-white p-6 sm:p-8 rounded-b-3xl">
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-px bg-[#9EB3A8]/10 rounded-xl overflow-hidden">
+              <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-px bg-[#9EB3A8]/10 rounded-xl overflow-hidden">
                 {[
                   {
                     label: 'Your Deposit',
@@ -346,7 +537,7 @@ export default function VaultDetail() {
                         ? fmtUsd(userPosition.totalClaimed + userPosition.totalPending)
                         : '—',
                   },
-                  { label: 'Lock Period', value: `${vault.lockPeriodMonths / 12} Years` },
+                  { label: 'Lock Period', value: `${vault.lockPeriodMonths / 12}Y` },
                   {
                     label: 'ROI',
                     value:
@@ -354,6 +545,14 @@ export default function VaultDetail() {
                         ? `+${fmtPercent(((userPosition.totalClaimed + userPosition.totalPending) / userPosition.totalAmount) * 100)}`
                         : '—',
                     accent: userPosition.totalAmount > 0,
+                  },
+                  {
+                    label: 'Vault TVL',
+                    value: vault.currentTvl > 0 ? fmtUsd(vault.currentTvl) : '—',
+                  },
+                  {
+                    label: 'Min Deposit',
+                    value: fmtUsd(vault.minDeposit),
                   },
                 ].map((kpi) => (
                   <div key={kpi.label} className="bg-white px-5 py-4">
@@ -543,75 +742,18 @@ export default function VaultDetail() {
                 {/* Section: Performance & Activity */}
                 <h2 className="section-title mt-2">Performance & Activity</h2>
                 <div className="grid grid-cols-12 gap-4">
-                  <div className={`col-span-12 lg:col-span-8 ${CARD} overflow-hidden`}>
-                    <div className="px-6 py-4 border-b border-[#9EB3A8]/10">
-                      <h3 className="card-title">Monthly Performance</h3>
-                    </div>
-                    <div className="p-6 pb-3 bg-gradient-to-b from-white to-[#FAFBFA]">
-                      <div className="h-56 lg:h-64">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <AreaChart
-                            data={chartData}
-                            margin={{ top: 5, right: 5, bottom: 0, left: -15 }}
-                          >
-                            <defs>
-                              {vault.strategies.map((s) => (
-                                <linearGradient
-                                  key={s.type}
-                                  id={`vgrad-ov-${s.type}`}
-                                  x1="0"
-                                  y1="0"
-                                  x2="0"
-                                  y2="1"
-                                >
-                                  <stop offset="0%" stopColor={s.color} stopOpacity={0.25} />
-                                  <stop offset="100%" stopColor={s.color} stopOpacity={0.02} />
-                                </linearGradient>
-                              ))}
-                            </defs>
-                            <XAxis
-                              dataKey="month"
-                              axisLine={false}
-                              tickLine={false}
-                              tick={{ fontSize: 10, fill: '#9EB3A8' }}
-                              dy={6}
-                            />
-                            <YAxis
-                              axisLine={false}
-                              tickLine={false}
-                              tick={{ fontSize: 10, fill: '#9EB3A8' }}
-                              tickFormatter={(v: number) => `${v}%`}
-                            />
-                            <Tooltip content={<ChartTooltip />} />
-                            {vault.strategies.map((s) => (
-                              <Area
-                                key={s.type}
-                                type="monotone"
-                                dataKey={s.type}
-                                stroke={s.color}
-                                strokeWidth={2}
-                                fill={`url(#vgrad-ov-${s.type})`}
-                                dot={false}
-                                activeDot={{ r: 4, fill: s.color, stroke: '#fff', strokeWidth: 2 }}
-                                name={s.label}
-                              />
-                            ))}
-                          </AreaChart>
-                        </ResponsiveContainer>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-center gap-6 px-6 py-3 border-t border-[#9EB3A8]/10">
-                      {vault.strategies.map((s) => (
-                        <div key={s.type} className="flex items-center gap-1.5">
-                          <div
-                            className="w-2.5 h-2.5 rounded-full"
-                            style={{ backgroundColor: s.color }}
-                          />
-                          <span className="text-xs text-[#9EB3A8] font-medium">{s.label}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                  <PerformanceChart
+                    activeChartData={activeChartData}
+                    composedChartData={composedChartData}
+                    activeStrategies={activeStrategies}
+                    chartStrategy={chartStrategy}
+                    chartMode={chartMode}
+                    timeRange={timeRange}
+                    quantMetrics={quantMetrics}
+                    onChartStrategyChange={setChartStrategy}
+                    onChartModeChange={setChartMode}
+                    onTimeRangeChange={setTimeRange}
+                  />
 
                   <div
                     className={`col-span-12 lg:col-span-4 ${CARD} overflow-hidden flex flex-col`}
@@ -619,7 +761,7 @@ export default function VaultDetail() {
                     <div className="px-6 py-4 border-b border-[#9EB3A8]/10">
                       <h3 className="card-title">Activity</h3>
                     </div>
-                    <div className="flex-1 overflow-y-auto max-h-[320px]">
+                    <div className="flex-1 overflow-y-auto max-h-[420px]">
                       {vaultActivity.map((a, i) => (
                         <div
                           key={a.id}
@@ -1088,7 +1230,7 @@ export default function VaultDetail() {
                     <div className="h-56 lg:h-64">
                       <ResponsiveContainer width="100%" height="100%">
                         <AreaChart
-                          data={chartData}
+                          data={activeChartData}
                           margin={{ top: 5, right: 5, bottom: 0, left: -15 }}
                         >
                           <defs>

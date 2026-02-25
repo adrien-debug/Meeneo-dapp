@@ -1,7 +1,9 @@
 'use client'
 
 import { Header } from '@/components/Header'
+import { CARD } from '@/components/ui/constants'
 import SimStepper from '@/components/simulation/SimStepper'
+import Image from 'next/image'
 import StepBtcCurve from '@/components/simulation/steps/StepBtcCurve'
 import StepNetworkCurve from '@/components/simulation/steps/StepNetworkCurve'
 import StepMinersHosting from '@/components/simulation/steps/StepMinersHosting'
@@ -61,10 +63,57 @@ export default function SimulationWizard() {
   return (
     <div className="min-h-screen bg-[#F2F2F2]">
       <Header />
-      <div className="pt-16">
-        <SimStepper current={step} completed={completed} onStepClick={handleStepClick} />
+      <main className="pt-20 pb-10">
+        <div className="page-container">
+          <div className={`${CARD} p-6 sm:p-8 relative overflow-hidden mt-6 mb-6`}>
+            <div className="absolute inset-0 pointer-events-none">
+              <Image
+                src="/assets/backgrounds/dashboard-hero-bg.png"
+                alt=""
+                fill
+                className="object-cover opacity-20 mix-blend-multiply"
+                sizes="100vw"
+              />
+            </div>
+            <div className="absolute -top-32 -right-32 w-96 h-96 bg-gradient-to-br from-[#96EA7A]/6 to-transparent rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-gradient-to-tr from-[#9EB3A8]/4 to-transparent rounded-full blur-2xl pointer-events-none" />
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+            <div className="relative">
+              <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6 lg:min-h-[74px] mb-8">
+                <div>
+                  <p className="kpi-label mb-2">Advanced Analytics</p>
+                  <h1 className="text-display font-black text-[var(--foreground)] tracking-tight">
+                    Simulation Engine
+                  </h1>
+                  <p className="text-sm text-[#9EB3A8] mt-2 max-w-xl">
+                    Model your investment across bear, base & bull scenarios with our multi-factor
+                    engine.
+                  </p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-[#9EB3A8]/10 rounded-xl overflow-hidden">
+                {[
+                  { label: 'BTC Curves', value: '3' },
+                  { label: 'Network Models', value: '2' },
+                  { label: 'Scenarios', value: 'Bear · Base · Bull' },
+                  { label: 'Horizon', value: '36 months' },
+                ].map((kpi) => (
+                  <div
+                    key={kpi.label}
+                    className="bg-white px-5 py-4 hover:bg-[#F2F2F2]/60 transition-colors"
+                  >
+                    <p className="kpi-label mb-1">{kpi.label}</p>
+                    <p className="text-base font-black text-[#0E0F0F] truncate">{kpi.value}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <SimStepper current={step} completed={completed} onStepClick={handleStepClick} />
+        </div>
+
+        <div className="page-container py-6">
           {step === 0 && (
             <StepBtcCurve onComplete={(id) => setBtcCurveId(id)} completedCurveId={btcCurveId} />
           )}
@@ -135,7 +184,7 @@ export default function SimulationWizard() {
             </div>
           )}
         </div>
-      </div>
+      </main>
     </div>
   )
 }

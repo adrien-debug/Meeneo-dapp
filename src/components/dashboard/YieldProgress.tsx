@@ -37,7 +37,12 @@ export function YieldProgress({ vaultStats, deposits, demoNow }: YieldProgressPr
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-[#0E0F0F]">{vs.vault.name}</span>
+                    <span className="text-sm font-semibold text-[#0E0F0F]">
+                      {vs.vault.name}{' '}
+                      <span className="text-caption font-mono font-bold text-[#9EB3A8]">
+                        {vs.vault.refNumber}
+                      </span>
+                    </span>
                     {deposit?.pendingYield && deposit.pendingYield > 0 && (
                       <span className="text-caption font-semibold text-[#96EA7A] bg-[#96EA7A]/10 px-2 py-0.5 rounded-full">
                         {fmtUsd(deposit.pendingYield)} pending

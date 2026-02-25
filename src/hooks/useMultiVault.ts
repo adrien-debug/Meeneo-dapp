@@ -1,12 +1,12 @@
 import { PRODUCTS } from '@/config/products'
 import EpochVaultABI from '@/contracts/EpochVault.json'
+import { useVaultReads } from '@/hooks/useVaultReads'
 import { useMemo } from 'react'
-import { formatUnits, parseUnits } from 'viem'
-import { useContractRead, useWaitForTransactionReceipt, useWriteContract } from 'wagmi'
+import { parseUnits } from 'viem'
+import { useWaitForTransactionReceipt, useWriteContract } from 'wagmi'
 
 const abi = EpochVaultABI.abi
 
-// Get all active vaults from products
 export function useVaultsList() {
   const vaults = useMemo(
     () =>
@@ -30,90 +30,20 @@ export function useVaultsList() {
   return { vaults }
 }
 
-// Hook for reading a specific vault's info
 export function useVaultInfoByAddress(vaultAddress: `0x${string}` | undefined) {
-  const { data: totalDeposits, refetch: refetchDeposits } = useContractRead({
-    address: vaultAddress,
-    abi,
-    functionName: 'totalDeposits',
-    query: { enabled: !!vaultAddress },
-  })
+  const reads = useVaultReads(vaultAddress)
 
-  const { data: currentEpoch, refetch: refetchEpoch } = useContractRead({
-    address: vaultAddress,
-    abi,
-    functionName: 'currentEpoch',
-    query: { enabled: !!vaultAddress },
-  })
-
-  const { data: monthlyAPR } = useContractRead({
-    address: vaultAddress,
-    abi,
-    functionName: 'monthlyAPR',
-    query: { enabled: !!vaultAddress },
-  })
-
-  const { data: annualAPR } = useContractRead({
-    address: vaultAddress,
-    abi,
-    functionName: 'getAnnualAPR',
-    query: { enabled: !!vaultAddress },
-  })
-
-  const { data: whitelistEnabled } = useContractRead({
-    address: vaultAddress,
-    abi,
-    functionName: 'whitelistEnabled',
-    query: { enabled: !!vaultAddress },
-  })
-
-  const { data: epochStartTime } = useContractRead({
-    address: vaultAddress,
-    abi,
-    functionName: 'epochStartTime',
-    query: { enabled: !!vaultAddress },
-  })
-
-  const { data: shouldAdvanceEpoch, refetch: refetchShouldAdvance } = useContractRead({
-    address: vaultAddress,
-    abi,
-    functionName: 'shouldAdvanceEpoch',
-    query: { enabled: !!vaultAddress },
-  })
-
-  const { data: epochDuration } = useContractRead({
-    address: vaultAddress,
-    abi,
-    functionName: 'EPOCH_DURATION',
-    query: { enabled: !!vaultAddress },
-  })
-
-  // Calculate time until next epoch
   const getTimeUntilNextEpoch = () => {
-    if (!epochStartTime || !epochDuration) return null
+    if (!reads.epochStartTime || !reads.epochDuration) return null
     const now = Math.floor(Date.now() / 1000)
-    const epochEndTime = Number(epochStartTime) + Number(epochDuration)
+    const epochEndTime = reads.epochStartTime + reads.epochDuration
     const timeRemaining = epochEndTime - now
     return timeRemaining > 0 ? timeRemaining : 0
   }
 
-  const refetchAll = () => {
-    refetchDeposits()
-    refetchEpoch()
-    refetchShouldAdvance()
-  }
-
   return {
-    totalDeposits: totalDeposits ? formatUnits(totalDeposits as bigint, 6) : '0',
-    currentEpoch: currentEpoch ? Number(currentEpoch) : 0,
-    monthlyAPR: monthlyAPR ? Number(monthlyAPR) / 100 : 0,
-    annualAPR: annualAPR ? Number(annualAPR) / 100 : 0,
-    whitelistEnabled: whitelistEnabled || false,
-    epochStartTime: epochStartTime ? Number(epochStartTime) : 0,
-    shouldAdvanceEpoch: shouldAdvanceEpoch || false,
-    epochDuration: epochDuration ? Number(epochDuration) : 0,
+    ...reads,
     timeUntilNextEpoch: getTimeUntilNextEpoch(),
-    refetchAll,
   }
 }
 
