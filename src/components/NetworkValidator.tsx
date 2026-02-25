@@ -1,8 +1,10 @@
 'use client'
 
-import { base } from '@reown/appkit/networks'
+import { base, baseSepolia } from '@reown/appkit/networks'
 import { useEffect, useState } from 'react'
 import { useAccount, useSwitchChain } from 'wagmi'
+
+const ALLOWED_CHAINS = new Set<number>([base.id, baseSepolia.id])
 
 export function NetworkValidator() {
   const { chain } = useAccount()
@@ -10,7 +12,7 @@ export function NetworkValidator() {
   const [showNetworkPrompt, setShowNetworkPrompt] = useState(false)
 
   useEffect(() => {
-    if (chain && chain.id !== base.id) {
+    if (chain && !ALLOWED_CHAINS.has(chain.id)) {
       setShowNetworkPrompt(true)
     } else {
       setShowNetworkPrompt(false)
@@ -51,7 +53,8 @@ export function NetworkValidator() {
 
         <p className="text-xs text-[#9EB3A8] mb-4">
           Connected to <strong className="text-[#0E0F0F]">{chain?.name}</strong>. HearstVault
-          requires <strong className="text-[#0E0F0F]">Base</strong>.
+          requires <strong className="text-[#0E0F0F]">Base</strong> or{' '}
+          <strong className="text-[#0E0F0F]">Base Sepolia</strong>.
         </p>
 
         <div className="space-y-2">

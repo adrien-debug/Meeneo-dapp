@@ -1,10 +1,10 @@
 'use client'
 
-import { useAppKit } from '@reown/appkit/react'
 import { useDemo } from '@/context/demo-context'
+import { useAppKitSafe } from '@/hooks/useAppKitSafe'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { useAccount } from 'wagmi'
 
 const WALLETS = [
@@ -14,44 +14,63 @@ const WALLETS = [
   { name: 'Ledger', icon: '/assets/wallets/ledger.svg' },
 ] as const
 
-const FEATURES = [
-  { title: 'RWA Mining', desc: 'Institutional-grade Bitcoin mining backed by real-world assets' },
-  { title: 'USDC Yield', desc: 'Stable returns through optimized DeFi yield strategies' },
-  { title: 'BTC Hedged', desc: 'Delta-neutral positions with downside protection' },
-] as const
-
 export default function Login() {
   const { isConnected } = useAccount()
-  const { open } = useAppKit()
+  const { open } = useAppKitSafe()
   const { isDemoMode, enterDemoMode } = useDemo()
   const router = useRouter()
 
+  const videoRef = useRef<HTMLVideoElement>(null)
+
   useEffect(() => {
-    if (isConnected || isDemoMode) {
+    if (isConnected) {
       router.push('/dashboard')
     }
-  }, [isConnected, isDemoMode, router])
+  }, [isConnected, router])
 
   const handleDemoLogin = () => {
     enterDemoMode()
     router.push('/dashboard')
   }
 
+  const handleVideoTimeUpdate = useCallback(() => {
+    const vid = videoRef.current
+    if (!vid) return
+    if (vid.currentTime >= 9.5) {
+      vid.playbackRate = Math.max(0.1, 1 - (vid.currentTime - 9.5) * 2)
+    }
+    if (vid.currentTime >= 10) {
+      vid.pause()
+      vid.playbackRate = 1
+    }
+  }, [])
+
   return (
     <div className="min-h-screen bg-[#F2F2F2] flex flex-col lg:flex-row">
-      {/* Left — Visual */}
+      {/* Left — Video */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-[#0E0F0F]">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#0E0F0F] via-[#1a1f1a] to-[#0E0F0F]" />
+        { }
+        <video
+          ref={videoRef}
+          autoPlay
+          muted
+          playsInline
+          preload="auto"
+          onTimeUpdate={handleVideoTimeUpdate}
+          className="absolute inset-0 w-full h-full object-cover"
+          style={{ imageRendering: 'auto' }}
+        >
+          <source src="/vault-hero.mp4" type="video/mp4" />
+        </video>
 
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#96EA7A]/5 rounded-full blur-3xl -translate-y-1/3 translate-x-1/3" />
-        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-[#96EA7A]/3 rounded-full blur-3xl translate-y-1/3 -translate-x-1/3" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-[#96EA7A]/[0.02] rounded-full blur-2xl" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0E0F0F] via-[#0E0F0F]/30 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent to-[#0E0F0F]/40" />
 
-        <div className="relative z-10 flex flex-col justify-center h-full w-full px-12 xl:px-20">
-          <div className="mb-12">
-            <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-4 py-1.5 mb-8">
+        <div className="relative z-10 flex flex-col justify-end h-full w-full px-12 xl:px-20 pb-16">
+          <div className="mb-10">
+            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/10 rounded-full px-4 py-1.5 mb-6">
               <div className="w-2 h-2 rounded-full bg-[#96EA7A] animate-pulse" />
-              <span className="text-xs text-white/60 font-medium">Live on Base</span>
+              <span className="text-xs text-white/80 font-medium">Live on Base</span>
             </div>
             <h2 className="text-[2.5rem] xl:text-[3rem] font-black text-white leading-[1.1] tracking-tight mb-4">
               Institutional
@@ -60,26 +79,12 @@ export default function Login() {
               <br />
               to everyone.
             </h2>
-            <p className="text-base text-white/40 max-w-sm leading-relaxed">
+            <p className="text-sm text-white/50 max-w-sm leading-relaxed">
               Access curated RWA-backed strategies with transparent on-chain performance.
             </p>
           </div>
 
-          <div className="space-y-4">
-            {FEATURES.map((f, i) => (
-              <div key={f.title} className="flex items-start gap-4 group">
-                <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0 mt-0.5">
-                  <span className="text-sm font-bold text-[#96EA7A]">{i + 1}</span>
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-white mb-0.5">{f.title}</p>
-                  <p className="text-xs text-white/35 leading-relaxed">{f.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-16 flex items-center gap-6">
+          <div className="flex items-center gap-8">
             {[
               { label: 'TVL', value: '$26.3M+' },
               { label: 'Avg APY', value: '8–15%' },
@@ -87,7 +92,7 @@ export default function Login() {
             ].map((stat) => (
               <div key={stat.label}>
                 <p className="text-lg font-black text-white">{stat.value}</p>
-                <p className="text-xs text-white/30 font-medium">{stat.label}</p>
+                <p className="text-xs text-white/40 font-medium">{stat.label}</p>
               </div>
             ))}
           </div>
@@ -95,7 +100,16 @@ export default function Login() {
       </div>
 
       {/* Right — Login */}
-      <div className="w-full lg:w-1/2 flex flex-col items-center justify-center min-h-screen px-6 sm:px-10 lg:px-16 py-12">
+      <div className="w-full lg:w-1/2 flex flex-col items-center justify-center min-h-screen px-6 sm:px-10 lg:px-16 py-12 relative overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none">
+          <Image
+            src="/assets/backgrounds/login-wallets-bg.png"
+            alt=""
+            fill
+            className="object-cover opacity-50 mix-blend-multiply"
+            sizes="50vw"
+          />
+        </div>
         <div className="w-full max-w-[400px]">
           <div className="text-center mb-10">
             <div className="flex items-center justify-center mb-6">

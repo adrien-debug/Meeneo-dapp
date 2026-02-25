@@ -9,6 +9,7 @@ import {
   fmtPercent,
   fmtUsd,
 } from '@/config/mock-data'
+import { useAuthGuard } from '@/hooks/useAuthGuard'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
@@ -25,7 +26,6 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import { useAuthGuard } from '@/hooks/useAuthGuard'
 
 import { AdminTooltip, ChartTooltip } from '@/components/ui/ChartTooltip'
 import { CARD, STRATEGY_ICONS } from '@/components/ui/constants'
@@ -321,7 +321,12 @@ export default function Admin() {
                     </PieChart>
                   </ResponsiveContainer>
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <Image src="/assets/tokens/hearst-logo.svg" alt="H" width={16} height={16} />
+                    <Image
+                      src="/assets/tokens/hearst-logo.svg"
+                      alt="Hearst logo"
+                      width={16}
+                      height={16}
+                    />
                   </div>
                 </div>
                 <div className="flex-1 space-y-3">
@@ -383,12 +388,12 @@ export default function Admin() {
                         dataKey="month"
                         axisLine={false}
                         tickLine={false}
-                        tick={{ fontSize: 9, fill: '#9EB3A8' }}
+                        tick={{ fontSize: 10, fill: '#9EB3A8' }}
                       />
                       <YAxis
                         axisLine={false}
                         tickLine={false}
-                        tick={{ fontSize: 9, fill: '#9EB3A8' }}
+                        tick={{ fontSize: 10, fill: '#9EB3A8' }}
                         tickFormatter={(v: number) => `${v}%`}
                       />
                       <Tooltip content={<ChartTooltip />} />
@@ -467,7 +472,16 @@ export default function Admin() {
           <div className="grid grid-cols-12 gap-4">
             <div className="col-span-12 xl:col-span-4 space-y-4">
               {/* System Health */}
-              <div className={`${CARD} p-6`}>
+              <div className={`${CARD} p-6 relative overflow-hidden`}>
+                <div className="absolute inset-0 pointer-events-none">
+                  <Image
+                    src="/assets/backgrounds/admin-health-bg.png"
+                    alt=""
+                    fill
+                    className="object-cover opacity-50 mix-blend-multiply"
+                    sizes="33vw"
+                  />
+                </div>
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="card-title">System Health</h3>
                   <div className="flex items-center gap-1.5 px-2.5 py-1 bg-[#96EA7A]/10 rounded-full">

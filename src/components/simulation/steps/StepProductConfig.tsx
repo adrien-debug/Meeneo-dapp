@@ -1,11 +1,22 @@
 'use client'
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react'
-import SimInput from '@/components/simulation/SimInput'
-import SimSelect from '@/components/simulation/SimSelect'
-import SimToggle from '@/components/simulation/SimToggle'
-import { CARD } from '@/components/ui/constants'
-import { formatUSD } from '@/lib/sim-utils'
+import type { HostingSite, Miner, SavedCurve } from '@/types/simulation'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import type {
+  AprScheduleEntry,
+  CurveFamily,
+  ExtraYieldStrikeEntry,
+  TakeProfitEntry,
+} from './product-config'
+import {
+  CapitalAllocationSection,
+  CommercialForm,
+  HoldingBucketForm,
+  MiningBucketForm,
+  ProductStructureSection,
+  ScenarioCurveSelectors,
+  YieldBucketForm,
+} from './product-config'
 
 const API = '/api/simulation'
 async function api<T>(path: string, opts?: RequestInit): Promise<T> {
@@ -20,130 +31,12 @@ async function api<T>(path: string, opts?: RequestInit): Promise<T> {
   return res.json()
 }
 
-interface AprScheduleEntry {
-  from_month: number
-  to_month: number
-  apr: number
-}
-
-interface TakeProfitEntry {
-  price_trigger: number
-  sell_pct: number
-}
-
-interface ExtraYieldStrikeEntry {
-  strike_price: number
-  btc_share_pct: number
-}
-
 interface StepProductConfigProps {
   btcCurveId: string
   networkCurveId: string
   minerIds: string[]
   siteIds: string[]
   onComplete: (runId: string) => void
-}
-
-function Tooltip({ text }: { text: string }) {
-  return (
-    <span className="group relative ml-1 cursor-help inline-flex items-center">
-      <svg
-        className="w-3.5 h-3.5 text-[#9EB3A8] hover:text-[#0E0F0F] transition-colors"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-        strokeWidth={2}
-      >
-        <circle cx="12" cy="12" r="10" />
-        <path d="M12 16v-4M12 8h.01" />
-      </svg>
-      <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 rounded-xl bg-white border border-[#9EB3A8]/20 px-3 py-2 text-[10px] text-[#0E0F0F] leading-relaxed opacity-0 group-hover:opacity-100 transition-opacity z-50 shadow-xl">
-        {text}
-      </span>
-    </span>
-  )
-}
-
-function AllocationSlider({
-  label,
-  pct,
-  onPctChange,
-  amountUsd,
-  color,
-  trackColor,
-  locked,
-  onToggleLock,
-}: {
-  label: string
-  pct: number
-  onPctChange: (newPct: number) => void
-  amountUsd: number
-  color: string
-  trackColor: string
-  locked: boolean
-  onToggleLock: () => void
-}) {
-  return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className={`text-xs font-semibold ${color}`}>{label}</span>
-          <button
-            onClick={onToggleLock}
-            className={`flex items-center justify-center w-5 h-5 rounded transition-all ${
-              locked
-                ? 'bg-[#0E0F0F] text-white shadow-inner'
-                : 'bg-[#F2F2F2] text-[#9EB3A8] hover:text-[#0E0F0F] hover:bg-[#E6F1E7]'
-            }`}
-            title={locked ? 'Unlock — allow this value to change' : 'Lock — freeze this value'}
-          >
-            {locked ? (
-              <svg
-                className="w-3 h-3"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2.5}
-              >
-                <rect x="3" y="11" width="18" height="11" rx="2" />
-                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-              </svg>
-            ) : (
-              <svg
-                className="w-3 h-3"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2.5}
-              >
-                <rect x="3" y="11" width="18" height="11" rx="2" />
-                <path d="M7 11V7a5 5 0 0 1 9.9-1" />
-              </svg>
-            )}
-          </button>
-        </div>
-        <div className="flex items-center gap-3">
-          <span className="text-xs text-[#9EB3A8] tabular-nums">{formatUSD(amountUsd)}</span>
-          <span className={`text-sm font-bold tabular-nums ${color}`}>{pct.toFixed(1)}%</span>
-        </div>
-      </div>
-      <div className="relative">
-        <input
-          type="range"
-          min={0}
-          max={100}
-          step={0.5}
-          value={pct}
-          onChange={(e) => onPctChange(Number(e.target.value))}
-          disabled={locked}
-          className={`w-full h-2 rounded-full appearance-none ${locked ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'} ${trackColor}`}
-          style={{
-            background: `linear-gradient(to right, var(--slider-fill) ${pct}%, #E5E7EB ${pct}%)`,
-          }}
-        />
-      </div>
-    </div>
-  )
 }
 
 export default function StepProductConfig({
@@ -154,10 +47,10 @@ export default function StepProductConfig({
   onComplete,
 }: StepProductConfigProps) {
   // ── Dependencies ──
-  const [btcCurves, setBtcCurves] = useState<any[]>([])
-  const [netCurves, setNetCurves] = useState<any[]>([])
-  const [miners, setMiners] = useState<any[]>([])
-  const [sites, setSites] = useState<any[]>([])
+  const [btcCurves, setBtcCurves] = useState<SavedCurve[]>([])
+  const [netCurves, setNetCurves] = useState<SavedCurve[]>([])
+  const [miners, setMiners] = useState<Miner[]>([])
+  const [sites, setSites] = useState<HostingSite[]>([])
 
   // ── Product Structure ──
   const [capitalRaised, setCapitalRaised] = useState(1_000_000)
@@ -236,7 +129,7 @@ export default function StepProductConfig({
   const [runId, setRunId] = useState('')
 
   const groupCurvesByFamily = useCallback((curves: any[]) => {
-    const families: Record<string, { bear?: any; base?: any; bull?: any; name: string }> = {}
+    const families: Record<string, CurveFamily> = {}
     for (const c of curves) {
       const familyName =
         c.name
@@ -297,10 +190,7 @@ export default function StepProductConfig({
   }, [])
 
   const findFamilyKeyForCurveId = useCallback(
-    (
-      families: Record<string, { bear?: any; base?: any; bull?: any; name: string }>,
-      curveId: string,
-    ): string => {
+    (families: Record<string, CurveFamily>, curveId: string): string => {
       for (const [key, family] of Object.entries(families)) {
         if (
           family.bear?.id === curveId ||
@@ -546,8 +436,8 @@ export default function StepProductConfig({
       })
       setRunId(res.id)
       onComplete(res.id)
-    } catch (e: any) {
-      setError(e.message)
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Simulation failed')
     }
     setRunning(false)
   }
@@ -695,801 +585,111 @@ export default function StepProductConfig({
       `}</style>
 
       <div className="space-y-6">
-        {/* ═══════════ SECTION A: Product Structure ═══════════ */}
-        <div className={`${CARD} p-4`}>
-          <h3 className="text-xs font-semibold text-[#9EB3A8] uppercase tracking-wider mb-3">
-            Product Structure
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <SimInput
-              label="Capital Raised (USD)"
-              value={capitalRaised}
-              onChange={(v) => setCapitalRaised(Number(v))}
-              type="number"
-            />
-            <div className="space-y-1">
-              <div className="flex items-center min-h-[20px]">
-                <label className="text-[11px] font-semibold text-[#9EB3A8] uppercase tracking-wider">
-                  Tenor
-                </label>
-                <Tooltip text="Auto-set from the selected miner's depreciation lifespan. Change the miner in the Mining bucket to adjust." />
-              </div>
-              <div className="w-full h-9 px-3 flex items-center rounded-xl bg-[#F2F2F2] border border-[#9EB3A8]/20 text-sm text-[#0E0F0F] tabular-nums">
-                {tenor} months{' '}
-                <span className="text-[#9EB3A8] ml-1">
-                  ({tenorYears} yr{Number(tenorYears) !== 1 ? 's' : ''})
-                </span>
-              </div>
-              <p className="text-[10px] text-[#9EB3A8]">
-                Linked to {selectedMinerObj?.name ?? 'miner'} lifespan
-              </p>
-            </div>
-            <div className="space-y-1">
-              <div className="flex items-center min-h-[20px]">
-                <span className="text-[11px] font-semibold text-[#9EB3A8] uppercase tracking-wider">
-                  Exit Windows
-                </span>
-                <Tooltip text="How often investors can redeem their position. Quarterly = every 3 months, Semi-Annual = every 6 months, Annual = once per year. Used for liquidity coverage ratio (LCR) calculations in the mining waterfall." />
-              </div>
-              <SimToggle
-                label=""
-                value={exitFreq}
-                onChange={setExitFreq}
-                options={[
-                  { value: 'quarterly', label: 'Quarterly' },
-                  { value: 'semi-annual', label: 'Semi-Annual' },
-                  { value: 'annual', label: 'Annual' },
-                ]}
-              />
-            </div>
-          </div>
+        {/* Product Structure */}
+        <ProductStructureSection
+          capitalRaised={capitalRaised}
+          onCapitalRaisedChange={setCapitalRaised}
+          tenor={tenor}
+          tenorYears={tenorYears}
+          selectedMinerName={selectedMinerObj?.name}
+          exitFreq={exitFreq}
+          onExitFreqChange={setExitFreq}
+          miningBaseYield={miningBaseYield}
+          onMiningBaseYieldChange={setMiningBaseYield}
+          miningBonusYield={miningBonusYield}
+          onMiningBonusYieldChange={setMiningBonusYield}
+        />
 
-          {/* Yield Structure */}
-          <div className="mt-4 pt-4 border-t border-[#9EB3A8]/20">
-            <h4 className="text-xs font-semibold text-[#9EB3A8] uppercase tracking-wider mb-3">
-              Yield Structure
-            </h4>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <SimInput
-                label="Base Yield APR"
-                value={miningBaseYield}
-                onChange={(v) => setMiningBaseYield(Number(v))}
-                type="number"
-                step={0.01}
-                hint="8% base yield from mining"
-              />
-              <SimInput
-                label="Bonus Yield APR"
-                value={miningBonusYield}
-                onChange={(v) => setMiningBonusYield(Number(v))}
-                type="number"
-                step={0.01}
-                hint="+4% when BTC target hit"
-              />
-              <div className="space-y-1">
-                <label className="text-[11px] font-semibold text-[#9EB3A8] uppercase tracking-wider">
-                  Combined APR
-                </label>
-                <div className="w-full h-9 px-3 flex items-center rounded-xl bg-[#F2F2F2] border border-[#9EB3A8]/20 text-sm text-[#96EA7A] tabular-nums font-semibold">
-                  {((miningBaseYield + miningBonusYield) * 100).toFixed(0)}%{' '}
-                  <span className="text-[#9EB3A8] font-normal ml-1">when target hit</span>
-                </div>
-                <p className="text-[10px] text-[#9EB3A8]">
-                  Mining yield cap bumps to combined rate
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* Capital Allocation + Bucket Forms */}
+        <CapitalAllocationSection
+          yieldPct={yieldPct}
+          holdingPct={holdingPct}
+          miningPct={miningPct}
+          yieldAllocated={yieldAllocated}
+          holdingAllocated={holdingAllocated}
+          miningAllocated={miningAllocated}
+          yieldLocked={yieldLocked}
+          holdingLocked={holdingLocked}
+          miningLocked={miningLocked}
+          allocationValid={allocationValid}
+          totalPct={totalPct}
+          onSliderChange={handleSliderChange}
+          onToggleYieldLock={() => setYieldLocked((v) => !v)}
+          onToggleHoldingLock={() => setHoldingLocked((v) => !v)}
+          onToggleMiningLock={() => setMiningLocked((v) => !v)}
+        >
+          <YieldBucketForm
+            yieldAllocated={yieldAllocated}
+            yieldBaseApr={yieldBaseApr}
+            onYieldBaseAprChange={setYieldBaseApr}
+            useAprSchedule={useAprSchedule}
+            onUseAprScheduleChange={setUseAprSchedule}
+            aprSchedule={aprSchedule}
+            onUpdateAprEntry={updateAprEntry}
+            onAddAprEntry={addAprEntry}
+            onRemoveAprEntry={removeAprEntry}
+          />
 
-        {/* ═══════════ SECTION B: Capital Allocation with Sliders ═══════════ */}
-        <div className={`${CARD} p-4`}>
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-xs font-semibold text-[#9EB3A8] uppercase tracking-wider">
-              Capital Allocation
-            </h3>
-            <div className="text-xs">
-              {allocationValid ? (
-                <span className="text-green-600">Allocations balanced</span>
-              ) : (
-                <span className="text-[#96EA7A]">Total: {totalPct.toFixed(1)}% — adjusting...</span>
-              )}
-            </div>
-          </div>
+          <HoldingBucketForm
+            holdingAllocated={holdingAllocated}
+            miningAllocated={miningAllocated}
+            buyingPrice={buyingPrice}
+            onBuyingPriceChange={setBuyingPrice}
+            liveBtcPrice={liveBtcPrice}
+            btcPriceLoading={btcPriceLoading}
+            btcPriceUpdatedAt={btcPriceUpdatedAt}
+            onFetchLiveBtcPrice={fetchLiveBtcPrice}
+            onUseLivePrice={() => liveBtcPrice !== null && setBuyingPrice(liveBtcPrice)}
+            btcQuantity={btcQuantity}
+            capitalReconPct={capitalReconPct}
+            onCapitalReconPctChange={setCapitalReconPct}
+            capitalReconBtc={capitalReconBtc}
+            extraYieldBtc={extraYieldBtc}
+            targetSellPrice={targetSellPrice}
+            extraYieldStrikes={extraYieldStrikes}
+            onExtraYieldStrikesChange={setExtraYieldStrikes}
+          />
 
-          {/* Visual Allocation Bar */}
-          <div className="h-6 rounded-full overflow-hidden flex mb-2 bg-[#F2F2F2]">
-            <div
-              className="bg-green-400 transition-all duration-150"
-              style={{ width: `${yieldPct}%` }}
-            />
-            <div
-              className="bg-cyan-400 transition-all duration-150"
-              style={{ width: `${holdingPct}%` }}
-            />
-            <div
-              className="bg-lime-400 transition-all duration-150"
-              style={{ width: `${miningPct}%` }}
-            />
-          </div>
-          <div className="flex gap-4 text-[10px] text-[#9EB3A8] mb-6">
-            <div className="flex items-center gap-1.5">
-              <div className="w-2.5 h-2.5 rounded bg-green-400" />
-              Yield Liquidity ({yieldPct.toFixed(1)}%)
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-2.5 h-2.5 rounded bg-cyan-400" />
-              BTC Holding ({holdingPct.toFixed(1)}%)
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-2.5 h-2.5 rounded bg-lime-400" />
-              BTC Mining ({miningPct.toFixed(1)}%)
-            </div>
-          </div>
+          <MiningBucketForm
+            miningAllocated={miningAllocated}
+            selectedMiner={selectedMiner}
+            onSelectedMinerChange={setSelectedMiner}
+            miners={miners}
+            selectedSite={selectedSite}
+            onSelectedSiteChange={setSelectedSite}
+            sites={sites}
+            minerCount={minerCount}
+            onMinerCountChange={setMinerCount}
+            takeProfitLadder={takeProfitLadder}
+            onAddTakeProfitEntry={addTakeProfitEntry}
+            onUpdateTakeProfitEntry={updateTakeProfitEntry}
+            onRemoveTakeProfitEntry={removeTakeProfitEntry}
+          />
+        </CapitalAllocationSection>
 
-          {/* ── Allocation Sliders ── */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div className="slider-yield">
-              <AllocationSlider
-                label="Yield Liquidity"
-                pct={yieldPct}
-                onPctChange={(v) => handleSliderChange('yield', v)}
-                amountUsd={yieldAllocated}
-                color="text-[#96EA7A]"
-                trackColor="slider-yield"
-                locked={yieldLocked}
-                onToggleLock={() => setYieldLocked((v) => !v)}
-              />
-            </div>
-            <div className="slider-holding">
-              <AllocationSlider
-                label="BTC Holding"
-                pct={holdingPct}
-                onPctChange={(v) => handleSliderChange('holding', v)}
-                amountUsd={holdingAllocated}
-                color="text-cyan-500"
-                trackColor="slider-holding"
-                locked={holdingLocked}
-                onToggleLock={() => setHoldingLocked((v) => !v)}
-              />
-            </div>
-            <div className="slider-mining">
-              <AllocationSlider
-                label="BTC Mining"
-                pct={miningPct}
-                onPctChange={(v) => handleSliderChange('mining', v)}
-                amountUsd={miningAllocated}
-                color="text-lime-600"
-                trackColor="slider-mining"
-                locked={miningLocked}
-                onToggleLock={() => setMiningLocked((v) => !v)}
-              />
-            </div>
-          </div>
+        {/* Commercial Fees */}
+        <CommercialForm
+          capitalRaised={capitalRaised}
+          miningAllocated={miningAllocated}
+          upfrontCommercialPct={upfrontCommercialPct}
+          onUpfrontCommercialPctChange={setUpfrontCommercialPct}
+          managementFeesPct={managementFeesPct}
+          onManagementFeesPctChange={setManagementFeesPct}
+          performanceFeesPct={performanceFeesPct}
+          onPerformanceFeesPctChange={setPerformanceFeesPct}
+        />
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* ── Bucket A: Yield Liquidity ── */}
-            <div className="border border-[#96EA7A]/20 rounded-xl p-4 space-y-3 bg-[#96EA7A]/5">
-              <h4 className="text-xs font-semibold text-[#96EA7A] uppercase">
-                a. Yield Liquidity Product
-              </h4>
-              <div className="px-3 py-2 rounded-xl bg-[#F2F2F2] text-sm text-[#0E0F0F] tabular-nums">
-                {formatUSD(yieldAllocated)}
-              </div>
-              <SimInput
-                label="Base Annual APR"
-                value={yieldBaseApr}
-                onChange={(v) => setYieldBaseApr(Number(v))}
-                type="number"
-                step={0.01}
-                hint="e.g. 0.04 = 4%"
-              />
-
-              <div className="flex items-center gap-2 text-xs">
-                <input
-                  type="checkbox"
-                  checked={useAprSchedule}
-                  onChange={(e) => setUseAprSchedule(e.target.checked)}
-                  className="rounded"
-                />
-                <span className="text-[#9EB3A8]">Custom APR schedule</span>
-              </div>
-
-              {useAprSchedule && (
-                <div className="space-y-2">
-                  {aprSchedule.map((entry, idx) => (
-                    <div key={idx} className="flex items-center gap-2 text-xs">
-                      <span className="text-[#9EB3A8] w-8">Mo</span>
-                      <input
-                        type="number"
-                        value={entry.from_month}
-                        onChange={(e) => updateAprEntry(idx, 'from_month', Number(e.target.value))}
-                        className="w-14 h-7 px-2 rounded-lg border border-[#9EB3A8]/20 bg-[#F2F2F2] text-[#0E0F0F] text-xs"
-                        min={0}
-                      />
-                      <span className="text-[#9EB3A8]">-</span>
-                      <input
-                        type="number"
-                        value={entry.to_month}
-                        onChange={(e) => updateAprEntry(idx, 'to_month', Number(e.target.value))}
-                        className="w-14 h-7 px-2 rounded-lg border border-[#9EB3A8]/20 bg-[#F2F2F2] text-[#0E0F0F] text-xs"
-                        min={0}
-                      />
-                      <span className="text-[#9EB3A8] w-8">APR</span>
-                      <input
-                        type="number"
-                        value={entry.apr}
-                        onChange={(e) => updateAprEntry(idx, 'apr', Number(e.target.value))}
-                        className="w-16 h-7 px-2 rounded-lg border border-[#9EB3A8]/20 bg-[#F2F2F2] text-[#0E0F0F] text-xs"
-                        step={0.01}
-                      />
-                      <button
-                        className="text-red-400/60 hover:text-red-500"
-                        onClick={() => removeAprEntry(idx)}
-                      >
-                        x
-                      </button>
-                    </div>
-                  ))}
-                  <button
-                    className="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#F2F2F2] text-[#9EB3A8] hover:bg-[#E6F1E7]"
-                    onClick={addAprEntry}
-                  >
-                    + Add Period
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* ── Bucket B: BTC Holding ── */}
-            <div className="border border-cyan-500/20 rounded-xl p-4 space-y-3 bg-cyan-50/50">
-              <h4 className="text-xs font-semibold text-cyan-600 uppercase">b. BTC Holding</h4>
-              <div className="px-3 py-2 rounded-xl bg-[#F2F2F2] text-sm text-[#0E0F0F] tabular-nums">
-                {formatUSD(holdingAllocated)}
-              </div>
-
-              {/* Buying Price with live BTC price fetch */}
-              <div className="space-y-1">
-                <div className="flex items-center justify-between">
-                  <label className="text-[11px] font-semibold text-[#9EB3A8] uppercase tracking-wider">
-                    Buying Price (USD)
-                  </label>
-                  <div className="flex items-center gap-2">
-                    {liveBtcPrice !== null && (
-                      <button
-                        onClick={() => setBuyingPrice(liveBtcPrice)}
-                        className="text-[10px] text-[#96EA7A] hover:text-[#7ED066] transition-colors"
-                        title="Set to current BTC price"
-                      >
-                        Use live: {formatUSD(liveBtcPrice)}
-                      </button>
-                    )}
-                    <button
-                      onClick={() => fetchLiveBtcPrice(false)}
-                      disabled={btcPriceLoading}
-                      className={`flex items-center gap-1 px-1.5 py-0.5 rounded-lg text-[10px] transition-all ${
-                        btcPriceLoading
-                          ? 'text-[#9EB3A8] cursor-wait'
-                          : 'text-[#96EA7A] hover:bg-[#96EA7A]/10 hover:text-[#7ED066]'
-                      }`}
-                      title="Refresh live BTC price"
-                    >
-                      <svg
-                        className={`w-3 h-3 ${btcPriceLoading ? 'animate-spin' : ''}`}
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth={2}
-                      >
-                        <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-                <input
-                  type="number"
-                  value={buyingPrice}
-                  onChange={(e) => setBuyingPrice(Number(e.target.value))}
-                  className="w-full h-9 px-3 rounded-xl border border-[#9EB3A8]/20 bg-[#F2F2F2] text-[#0E0F0F] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#96EA7A] focus:border-transparent transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                />
-                <div className="flex items-center justify-between">
-                  <p className="text-[10px] text-[#9EB3A8]">
-                    BTC qty: {btcQuantity > 0 ? btcQuantity.toFixed(4) : '—'}
-                  </p>
-                  {btcPriceUpdatedAt && (
-                    <p className="text-[10px] text-[#9EB3A8] flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#96EA7A] animate-pulse" />
-                      Live {btcPriceUpdatedAt.toLocaleTimeString()}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* BTC Allocation Split */}
-              <div className="space-y-2 pt-2 border-t border-cyan-500/20">
-                <div className="flex items-center gap-2">
-                  <label className="text-[11px] font-semibold text-[#9EB3A8] uppercase tracking-wider">
-                    BTC Allocation Strategy
-                  </label>
-                  <Tooltip text="Split the BTC between capital reconstitution (sell at target to recover investment) and extra yield (sell at strike prices for additional returns)." />
-                </div>
-
-                {/* Visual Split Bar */}
-                <div className="h-4 rounded-full overflow-hidden flex bg-[#F2F2F2]">
-                  <div
-                    className="bg-cyan-500 transition-all duration-150"
-                    style={{ width: `${capitalReconPct}%` }}
-                  />
-                  <div
-                    className="bg-amber-500 transition-all duration-150"
-                    style={{ width: `${100 - capitalReconPct}%` }}
-                  />
-                </div>
-
-                <div className="flex justify-between text-[10px]">
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-2 h-2 rounded bg-cyan-500" />
-                    <span className="text-cyan-600">
-                      Capital Recon: {capitalReconPct.toFixed(0)}%
-                    </span>
-                    <span className="text-[#9EB3A8]">({capitalReconBtc.toFixed(4)} BTC)</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-2 h-2 rounded bg-amber-500" />
-                    <span className="text-amber-600">
-                      Extra Yield: {(100 - capitalReconPct).toFixed(0)}%
-                    </span>
-                    <span className="text-[#9EB3A8]">({extraYieldBtc.toFixed(4)} BTC)</span>
-                  </div>
-                </div>
-
-                {/* Slider */}
-                <div className="slider-holding">
-                  <input
-                    type="range"
-                    min={0}
-                    max={100}
-                    step={1}
-                    value={capitalReconPct}
-                    onChange={(e) => setCapitalReconPct(Number(e.target.value))}
-                    className="w-full h-2 rounded-full appearance-none cursor-pointer"
-                    style={{
-                      background: `linear-gradient(to right, #06b6d4 ${capitalReconPct}%, #f59e0b ${capitalReconPct}%)`,
-                    }}
-                  />
-                </div>
-              </div>
-
-              {/* Capital Reconstitution Section */}
-              {capitalReconPct > 0 && (
-                <div className="space-y-2 p-3 rounded-xl border border-cyan-200 bg-cyan-50">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-cyan-600 uppercase">
-                      Capital Reconstitution
-                    </span>
-                    <span className="text-[10px] text-[#9EB3A8]">
-                      {capitalReconBtc.toFixed(4)} BTC
-                    </span>
-                  </div>
-                  <div className="space-y-1">
-                    <div className="flex items-center">
-                      <label className="text-[11px] font-semibold text-[#9EB3A8] uppercase tracking-wider">
-                        Target Sell Price (USD)
-                      </label>
-                      <Tooltip text="Auto-computed: the BTC price at which selling the capital reconstitution BTC covers both the Holding and Mining initial investments." />
-                    </div>
-                    <div className="w-full px-3 py-[7px] rounded-xl bg-[#F2F2F2] border border-cyan-200 text-sm text-cyan-600 tabular-nums font-semibold">
-                      {formatUSD(targetSellPrice)}
-                    </div>
-                    <p className="text-[10px] text-[#9EB3A8]">
-                      Covers: {formatUSD(holdingAllocated)} (holding) + {formatUSD(miningAllocated)}{' '}
-                      (mining) = {formatUSD(holdingAllocated + miningAllocated)}
-                    </p>
-                  </div>
-                  {buyingPrice > 0 && targetSellPrice > buyingPrice && (
-                    <div className="text-[10px] text-[#9EB3A8]">
-                      Required BTC appreciation:{' '}
-                      {(((targetSellPrice - buyingPrice) / buyingPrice) * 100).toFixed(1)}% from
-                      buying price
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Extra Yield Strike Ladder Section */}
-              {capitalReconPct < 100 && (
-                <div className="space-y-2 p-3 rounded-xl border border-amber-200 bg-amber-50">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-amber-600 uppercase">
-                      Extra Yield Strikes
-                    </span>
-                    <span className="text-[10px] text-[#9EB3A8]">
-                      {extraYieldBtc.toFixed(4)} BTC total
-                    </span>
-                  </div>
-                  <p className="text-[10px] text-[#9EB3A8]">
-                    Sell BTC at strike prices to generate additional yield
-                  </p>
-
-                  <div className="space-y-2">
-                    {extraYieldStrikes.map((strike, idx) => {
-                      const strikeBtcAmount = extraYieldBtc * (strike.btc_share_pct / 100)
-                      const strikeUsdValue = strikeBtcAmount * strike.strike_price
-                      return (
-                        <div key={idx} className="flex items-center gap-2 text-xs">
-                          <span className="text-amber-600 font-medium w-4">{idx + 1}.</span>
-                          <div className="flex-1 space-y-1">
-                            <div className="flex items-center gap-2">
-                              <span className="text-[#9EB3A8] w-16">Strike $</span>
-                              <input
-                                type="number"
-                                value={strike.strike_price}
-                                onChange={(e) => {
-                                  const updated = [...extraYieldStrikes]
-                                  updated[idx] = {
-                                    ...updated[idx],
-                                    strike_price: Number(e.target.value),
-                                  }
-                                  setExtraYieldStrikes(updated)
-                                }}
-                                className="flex-1 h-7 px-2 rounded-lg border border-[#9EB3A8]/20 bg-white text-[#0E0F0F] text-xs"
-                                step={1000}
-                              />
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-[#9EB3A8] w-16">Share %</span>
-                              <input
-                                type="number"
-                                value={strike.btc_share_pct}
-                                onChange={(e) => {
-                                  const updated = [...extraYieldStrikes]
-                                  updated[idx] = {
-                                    ...updated[idx],
-                                    btc_share_pct: Number(e.target.value),
-                                  }
-                                  setExtraYieldStrikes(updated)
-                                }}
-                                className="w-20 h-7 px-2 rounded-lg border border-[#9EB3A8]/20 bg-white text-[#0E0F0F] text-xs"
-                                step={1}
-                                min={0}
-                                max={100}
-                              />
-                              <span className="text-[#9EB3A8] text-[10px]">
-                                = {strikeBtcAmount.toFixed(4)} BTC → {formatUSD(strikeUsdValue)}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-
-                  {(() => {
-                    const totalShare = extraYieldStrikes.reduce(
-                      (sum, s) => sum + s.btc_share_pct,
-                      0,
-                    )
-                    const isValid = Math.abs(totalShare - 100) < 0.1
-                    return (
-                      <div
-                        className={`text-[10px] ${isValid ? 'text-green-600' : 'text-amber-600'}`}
-                      >
-                        Total share: {totalShare.toFixed(1)}% {!isValid && '(should equal 100%)'}
-                      </div>
-                    )
-                  })()}
-                </div>
-              )}
-            </div>
-
-            {/* ── Bucket C: BTC Mining ── */}
-            <div className="border border-lime-500/20 rounded-xl p-4 space-y-3 bg-lime-50/50">
-              <h4 className="text-xs font-semibold text-lime-600 uppercase">c. BTC Mining</h4>
-              <div className="px-3 py-2 rounded-xl bg-[#F2F2F2] text-sm text-[#0E0F0F] tabular-nums">
-                {formatUSD(miningAllocated)}
-              </div>
-              <SimSelect
-                label="Miner"
-                value={selectedMiner}
-                onChange={setSelectedMiner}
-                options={miners.map((m: any) => ({
-                  value: m.id,
-                  label: `${m.name} (${m.hashrate_th} TH/s, ${formatUSD(m.price_usd)})`,
-                }))}
-              />
-              <SimSelect
-                label="Hosting Site"
-                value={selectedSite}
-                onChange={setSelectedSite}
-                options={sites.map((s: any) => ({
-                  value: s.id,
-                  label: `${s.name} ($${s.electricity_price_usd_per_kwh}/kWh)`,
-                }))}
-              />
-              <SimInput
-                label="Miner Count"
-                value={minerCount}
-                onChange={(v) => setMinerCount(Number(v))}
-                type="number"
-                min={1}
-                hint="Auto-calculated from allocation / miner price"
-              />
-
-              {/* Take-Profit Ladder */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] text-[#9EB3A8] uppercase">Take-Profit Ladder</span>
-                  <button
-                    className="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#F2F2F2] text-[#9EB3A8] hover:bg-[#E6F1E7]"
-                    onClick={addTakeProfitEntry}
-                  >
-                    + Add
-                  </button>
-                </div>
-                {takeProfitLadder.map((tp, idx) => (
-                  <div key={idx} className="flex items-center gap-2 text-xs">
-                    <span className="text-[#9EB3A8] w-16">Trigger $</span>
-                    <input
-                      type="number"
-                      value={tp.price_trigger}
-                      onChange={(e) =>
-                        updateTakeProfitEntry(idx, 'price_trigger', Number(e.target.value))
-                      }
-                      className="w-24 h-7 px-2 rounded-lg border border-[#9EB3A8]/20 bg-[#F2F2F2] text-[#0E0F0F] text-xs"
-                    />
-                    <span className="text-[#9EB3A8] w-12">Sell %</span>
-                    <input
-                      type="number"
-                      value={tp.sell_pct}
-                      onChange={(e) =>
-                        updateTakeProfitEntry(idx, 'sell_pct', Number(e.target.value))
-                      }
-                      className="w-16 h-7 px-2 rounded-lg border border-[#9EB3A8]/20 bg-[#F2F2F2] text-[#0E0F0F] text-xs"
-                      step={0.05}
-                    />
-                    <button
-                      className="text-red-400/60 hover:text-red-500"
-                      onClick={() => removeTakeProfitEntry(idx)}
-                    >
-                      x
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* ═══════════ SECTION C: Commercial Fees ═══════════ */}
-        <div className={`${CARD} p-4`}>
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-xs font-semibold text-[#9EB3A8] uppercase tracking-wider">
-                Commercial
-              </h3>
-              <p className="text-[10px] text-[#9EB3A8] mt-1">
-                Configure fee structure for the product
-              </p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Upfront Commercial */}
-            <div className="border border-amber-300/30 rounded-xl p-4 space-y-3 bg-amber-50/50">
-              <div className="flex items-center gap-2">
-                <h4 className="text-xs font-semibold text-amber-600 uppercase">
-                  1. Upfront Commercial
-                </h4>
-                <Tooltip text="Percentage of total investment deducted upfront. This amount is removed proportionally from all three buckets at inception and is not invested." />
-              </div>
-              <div className="space-y-1">
-                <label className="text-[11px] font-semibold text-[#9EB3A8] uppercase tracking-wider">
-                  Fee (%)
-                </label>
-                <input
-                  type="number"
-                  value={upfrontCommercialPct}
-                  onChange={(e) =>
-                    setUpfrontCommercialPct(Math.max(0, Math.min(100, Number(e.target.value))))
-                  }
-                  className="w-full h-9 px-3 rounded-xl border border-[#9EB3A8]/20 bg-[#F2F2F2] text-[#0E0F0F] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#96EA7A] focus:border-transparent transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                  step={0.1}
-                  min={0}
-                  max={100}
-                />
-                <p className="text-[10px] text-[#9EB3A8]">
-                  {upfrontCommercialPct > 0
-                    ? `${formatUSD((capitalRaised * upfrontCommercialPct) / 100)} deducted at start`
-                    : 'No upfront deduction'}
-                </p>
-              </div>
-            </div>
-
-            {/* Management Fees */}
-            <div className="border border-amber-300/30 rounded-xl p-4 space-y-3 bg-amber-50/50">
-              <div className="flex items-center gap-2">
-                <h4 className="text-xs font-semibold text-amber-600 uppercase">
-                  2. Management Fees
-                </h4>
-                <Tooltip text="Annual percentage fee based on the dollar value investment. Captured monthly from the capitalization bucket (reduces investor returns)." />
-              </div>
-              <div className="space-y-1">
-                <label className="text-[11px] font-semibold text-[#9EB3A8] uppercase tracking-wider">
-                  Annual Fee (%)
-                </label>
-                <input
-                  type="number"
-                  value={managementFeesPct}
-                  onChange={(e) =>
-                    setManagementFeesPct(Math.max(0, Math.min(10, Number(e.target.value))))
-                  }
-                  className="w-full h-9 px-3 rounded-xl border border-[#9EB3A8]/20 bg-[#F2F2F2] text-[#0E0F0F] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#96EA7A] focus:border-transparent transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                  step={0.1}
-                  min={0}
-                  max={10}
-                />
-                <p className="text-[10px] text-[#9EB3A8]">
-                  {managementFeesPct > 0
-                    ? `~${formatUSD((capitalRaised * managementFeesPct) / 100 / 12)}/mo from capitalization`
-                    : 'No management fee'}
-                </p>
-              </div>
-            </div>
-
-            {/* Performance Fees */}
-            <div className="border border-amber-300/30 rounded-xl p-4 space-y-3 bg-amber-50/50">
-              <div className="flex items-center gap-2">
-                <h4 className="text-xs font-semibold text-amber-600 uppercase">
-                  3. Performance Fees
-                </h4>
-                <Tooltip text="Percentage captured from the capitalization overhead (value above initial mining investment). Only charged if positive returns are delivered." />
-              </div>
-              <div className="space-y-1">
-                <label className="text-[11px] font-semibold text-[#9EB3A8] uppercase tracking-wider">
-                  Fee on Overhead (%)
-                </label>
-                <input
-                  type="number"
-                  value={performanceFeesPct}
-                  onChange={(e) =>
-                    setPerformanceFeesPct(Math.max(0, Math.min(50, Number(e.target.value))))
-                  }
-                  className="w-full h-9 px-3 rounded-xl border border-[#9EB3A8]/20 bg-[#F2F2F2] text-[#0E0F0F] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#96EA7A] focus:border-transparent transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                  step={1}
-                  min={0}
-                  max={50}
-                />
-                <p className="text-[10px] text-[#9EB3A8]">
-                  {performanceFeesPct > 0
-                    ? `${performanceFeesPct}% of capitalization above ${formatUSD(miningAllocated)}`
-                    : 'No performance fee'}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {(upfrontCommercialPct > 0 || managementFeesPct > 0 || performanceFeesPct > 0) && (
-            <div className="mt-4 px-3 py-2 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-700">
-              <span className="font-semibold">Commercial fees configured:</span>{' '}
-              {upfrontCommercialPct > 0 && <span>{upfrontCommercialPct}% upfront</span>}
-              {upfrontCommercialPct > 0 && (managementFeesPct > 0 || performanceFeesPct > 0) && (
-                <span> + </span>
-              )}
-              {managementFeesPct > 0 && <span>{managementFeesPct}% annual management</span>}
-              {managementFeesPct > 0 && performanceFeesPct > 0 && <span> + </span>}
-              {performanceFeesPct > 0 && <span>{performanceFeesPct}% performance</span>}
-              <span className="text-amber-500 ml-2">
-                — Fees will be deducted from product returns
-              </span>
-            </div>
-          )}
-        </div>
-
-        {/* ═══════════ SECTION D: Simplified Scenario Selectors ═══════════ */}
-        <div className={`${CARD} p-4`}>
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-xs font-semibold text-[#9EB3A8] uppercase tracking-wider">
-                Scenario Curves
-              </h3>
-              <p className="text-[10px] text-[#9EB3A8] mt-1">
-                Select a curve set — bear, base, and bull scenarios are automatically mapped
-              </p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* BTC Price Selector */}
-            <div className="space-y-3">
-              <div className="space-y-1">
-                <label className="text-[11px] font-semibold text-[#9EB3A8] uppercase tracking-wider">
-                  BTC Price Curve
-                </label>
-                <select
-                  value={selectedBtcFamily}
-                  onChange={(e) => setSelectedBtcFamily(e.target.value)}
-                  className="w-full h-9 px-3 rounded-xl border border-[#9EB3A8]/20 bg-[#F2F2F2] text-[#0E0F0F] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#96EA7A] focus:border-transparent transition-all appearance-none"
-                >
-                  <option value="" disabled>
-                    — Select BTC Curve Set —
-                  </option>
-                  {Object.entries(btcFamilies).map(([key, family]) => (
-                    <option key={key} value={key}>
-                      {family.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              {btcFamily && (
-                <div className="flex flex-wrap gap-2">
-                  <span
-                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] ${btcFamily.bear ? 'bg-red-50 text-red-600 border border-red-200' : 'bg-[#F2F2F2] text-[#9EB3A8] border border-[#9EB3A8]/20'}`}
-                  >
-                    <span className="w-1.5 h-1.5 rounded-full bg-current" />
-                    Bear {btcFamily.bear ? `— ${btcFamily.bear.name}` : '(fallback)'}
-                  </span>
-                  <span
-                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] ${btcFamily.base ? 'bg-[#F2F2F2] text-[#0E0F0F] border border-[#9EB3A8]/20' : 'bg-[#F2F2F2] text-[#9EB3A8] border border-[#9EB3A8]/20'}`}
-                  >
-                    <span className="w-1.5 h-1.5 rounded-full bg-current" />
-                    Base {btcFamily.base ? `— ${btcFamily.base.name}` : '(fallback)'}
-                  </span>
-                  <span
-                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] ${btcFamily.bull ? 'bg-green-50 text-green-600 border border-green-200' : 'bg-[#F2F2F2] text-[#9EB3A8] border border-[#9EB3A8]/20'}`}
-                  >
-                    <span className="w-1.5 h-1.5 rounded-full bg-current" />
-                    Bull {btcFamily.bull ? `— ${btcFamily.bull.name}` : '(fallback)'}
-                  </span>
-                </div>
-              )}
-            </div>
-
-            {/* Network Selector */}
-            <div className="space-y-3">
-              <div className="space-y-1">
-                <label className="text-[11px] font-semibold text-[#9EB3A8] uppercase tracking-wider">
-                  Network Curve
-                </label>
-                <select
-                  value={selectedNetFamily}
-                  onChange={(e) => setSelectedNetFamily(e.target.value)}
-                  className="w-full h-9 px-3 rounded-xl border border-[#9EB3A8]/20 bg-[#F2F2F2] text-[#0E0F0F] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#96EA7A] focus:border-transparent transition-all appearance-none"
-                >
-                  <option value="" disabled>
-                    — Select Network Curve Set —
-                  </option>
-                  {Object.entries(netFamilies).map(([key, family]) => (
-                    <option key={key} value={key}>
-                      {family.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              {netFamily && (
-                <div className="flex flex-wrap gap-2">
-                  <span
-                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] ${netFamily.bear ? 'bg-red-50 text-red-600 border border-red-200' : 'bg-[#F2F2F2] text-[#9EB3A8] border border-[#9EB3A8]/20'}`}
-                  >
-                    <span className="w-1.5 h-1.5 rounded-full bg-current" />
-                    Bear {netFamily.bear ? `— ${netFamily.bear.name}` : '(fallback)'}
-                  </span>
-                  <span
-                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] ${netFamily.base ? 'bg-[#F2F2F2] text-[#0E0F0F] border border-[#9EB3A8]/20' : 'bg-[#F2F2F2] text-[#9EB3A8] border border-[#9EB3A8]/20'}`}
-                  >
-                    <span className="w-1.5 h-1.5 rounded-full bg-current" />
-                    Base {netFamily.base ? `— ${netFamily.base.name}` : '(fallback)'}
-                  </span>
-                  <span
-                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] ${netFamily.bull ? 'bg-green-50 text-green-600 border border-green-200' : 'bg-[#F2F2F2] text-[#9EB3A8] border border-[#9EB3A8]/20'}`}
-                  >
-                    <span className="w-1.5 h-1.5 rounded-full bg-current" />
-                    Bull {netFamily.bull ? `— ${netFamily.bull.name}` : '(fallback)'}
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+        {/* Scenario Curves */}
+        <ScenarioCurveSelectors
+          btcFamilies={btcFamilies}
+          netFamilies={netFamilies}
+          selectedBtcFamily={selectedBtcFamily}
+          onSelectedBtcFamilyChange={setSelectedBtcFamily}
+          selectedNetFamily={selectedNetFamily}
+          onSelectedNetFamilyChange={setSelectedNetFamily}
+          btcFamily={btcFamily}
+          netFamily={netFamily}
+        />
       </div>
     </div>
   )

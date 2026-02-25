@@ -1,10 +1,10 @@
 import { PRODUCTS } from '@/config/products'
-import TestEpochVault24hABI from '@/contracts/TestEpochVault24h.json'
-import { formatUnits, parseUnits } from 'viem'
-import { useContractRead, useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
+import EpochVaultABI from '@/contracts/EpochVault.json'
 import { useMemo } from 'react'
+import { formatUnits, parseUnits } from 'viem'
+import { useContractRead, useWaitForTransactionReceipt, useWriteContract } from 'wagmi'
 
-const abi = TestEpochVault24hABI.abi
+const abi = EpochVaultABI.abi
 
 // Get all active vaults from products
 export function useVaultsList() {

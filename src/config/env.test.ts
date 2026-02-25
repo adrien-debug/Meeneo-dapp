@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { ENV_CONFIG, validateEnvConfig } from './env'
 
 describe('ENV_CONFIG', () => {

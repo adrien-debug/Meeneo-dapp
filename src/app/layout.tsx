@@ -1,3 +1,4 @@
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { Footer } from '@/components/Footer'
 import { NetworkValidator } from '@/components/NetworkValidator'
 import { DemoWrapper } from '@/components/demo/DemoWrapper'
@@ -32,13 +33,15 @@ export default async function RootLayout({
       <body
         className={`${inter.variable} font-[family-name:var(--font-inter)] antialiased bg-[var(--background)]`}
       >
-        <ContextProvider cookies={cookies}>
-          <DemoWrapper>
-            <div className="pb-20">{children}</div>
-            <Footer />
-            <NetworkValidator />
-          </DemoWrapper>
-        </ContextProvider>
+        <ErrorBoundary>
+          <ContextProvider cookies={cookies}>
+            <DemoWrapper>
+              <div className="pb-20">{children}</div>
+              <Footer />
+              <NetworkValidator />
+            </DemoWrapper>
+          </ContextProvider>
+        </ErrorBoundary>
       </body>
     </html>
   )

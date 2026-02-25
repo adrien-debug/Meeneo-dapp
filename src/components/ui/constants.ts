@@ -4,6 +4,8 @@ export const STRATEGY_ICONS: Record<string, string> = {
   rwa_mining: '/assets/tokens/hearst.svg',
   usdc_yield: '/assets/tokens/usdc.svg',
   btc_hedged: '/assets/tokens/btc.svg',
+  btc_spot: '/assets/tokens/btc.svg',
+  btc_collateral_mining: '/assets/tokens/hearst.svg',
 }
 
 export const RISK_BG: Record<string, string> = {

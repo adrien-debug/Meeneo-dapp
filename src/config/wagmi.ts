@@ -7,7 +7,7 @@ import { ENV_CONFIG } from './env'
 export const projectId = ENV_CONFIG.WALLETCONNECT_PROJECT_ID
 
 if (!projectId) {
-  throw new Error('Project ID is not defined')
+  console.warn('[wagmi] NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID is not set — wallet connect disabled')
 }
 
 export const networks = [base, baseSepolia]

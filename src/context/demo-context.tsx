@@ -1,22 +1,23 @@
 'use client'
 
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
 import {
-  type DemoState,
-  loadDemo,
-  saveDemo,
-  resetDemo,
-  addVault,
-  removeVault,
   addDeposit,
-  removeDeposit,
-  claimYield,
+  addVault,
   advanceTime,
+  claimYield,
   demoNow,
   isDemoModeActive,
+  loadDemo,
+  removeDeposit,
+  removeVault,
+  resetDemo,
+  saveDemo,
   setDemoModeActive,
+  subscribeToProduct,
+  type DemoState,
 } from '@/lib/demo-store'
-import type { VaultConfig, UserDeposit } from '@/types/product'
+import type { UserDeposit, VaultConfig } from '@/types/product'
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
 
 interface DemoContextValue {
   state: DemoState
@@ -28,6 +29,7 @@ interface DemoContextValue {
   exitDemoMode: () => void
   createVault: (params: Parameters<typeof addVault>[1]) => void
   deleteVault: (slug: string) => void
+  subscribe: (product: VaultConfig, amount: number) => string | null
   deposit: (vaultSlug: string, amount: number) => void
   withdraw: (depositId: number) => void
   claim: (depositId: number) => void
@@ -75,6 +77,16 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     (slug: string) => {
       if (!state) return
       persist(removeVault(state, slug))
+    },
+    [state, persist],
+  )
+
+  const subscribeFn = useCallback(
+    (product: VaultConfig, amount: number): string | null => {
+      if (!state) return null
+      const result = subscribeToProduct(state, product, amount)
+      persist(result.state)
+      return result.vaultSlug
     },
     [state, persist],
   )
@@ -138,6 +150,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     exitDemoMode,
     createVault: createVaultFn,
     deleteVault: deleteVaultFn,
+    subscribe: subscribeFn,
     deposit: depositFn,
     withdraw: withdrawFn,
     claim: claimFn,

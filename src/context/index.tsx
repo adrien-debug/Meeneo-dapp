@@ -9,10 +9,6 @@ import { cookieToInitialState, WagmiProvider, type Config } from 'wagmi'
 
 const queryClient = new QueryClient()
 
-if (!projectId) {
-  throw new Error('Project ID is not defined')
-}
-
 const metadata = {
   name: 'HearstVault',
   description: 'Multi-strategy USDC vault on Base — RWA Mining, USDC Yield, BTC Hedged',
@@ -20,16 +16,20 @@ const metadata = {
   icons: ['https://hearstvault.com/icon.png'],
 }
 
-createAppKit({
-  adapters: [wagmiAdapter],
-  projectId,
-  networks: [base, baseSepolia],
-  defaultNetwork: base,
-  metadata,
-  features: {
-    analytics: true,
-  },
-})
+if (projectId) {
+  createAppKit({
+    adapters: [wagmiAdapter],
+    projectId,
+    networks: [base, baseSepolia],
+    defaultNetwork: base,
+    metadata,
+    features: {
+      analytics: true,
+    },
+  })
+} else {
+  console.warn('[AppKit] NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID not set — WalletConnect disabled')
+}
 
 function ContextProvider({ children, cookies }: { children: ReactNode; cookies: string | null }) {
   const initialState = cookieToInitialState(wagmiAdapter.wagmiConfig as Config, cookies)

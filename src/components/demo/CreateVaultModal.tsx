@@ -53,7 +53,7 @@ export function CreateVaultModal({ onClose }: CreateVaultModalProps) {
         </div>
 
         <div className="px-6 py-5 space-y-4">
-          <Field label="Name" value={name} onChange={setName} placeholder="Hearst 04" />
+          <Field label="Name" value={name} onChange={setName} placeholder="Hearst Hedge Growth" />
           <Field
             label="Description"
             value={description}

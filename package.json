@@ -4,7 +4,7 @@
   "description": "Hearst - RWA yield from Bitcoin mining. Tokenized hashrate backed by green mining farms.",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack -p 3110",
+    "dev": "next dev --turbopack -p 3000",
     "build": "next build --turbopack",
     "start": "next start -p 3110",
     "lint": "eslint",

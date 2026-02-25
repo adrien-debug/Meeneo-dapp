@@ -1,4 +1,9 @@
-export type StrategyType = 'rwa_mining' | 'usdc_yield' | 'btc_hedged'
+export type StrategyType =
+  | 'rwa_mining'
+  | 'usdc_yield'
+  | 'btc_hedged'
+  | 'btc_spot'
+  | 'btc_collateral_mining'
 export type LockStatus = 'active' | 'target_reached' | 'matured'
 export type ProductStatus = 'active' | 'coming_soon' | 'paused' | 'closed'
 
@@ -50,6 +55,8 @@ export interface MonthlyPerformance {
   rwa_mining: number
   usdc_yield: number
   btc_hedged: number
+  btc_spot: number
+  btc_collateral_mining: number
   composite: number
 }
 

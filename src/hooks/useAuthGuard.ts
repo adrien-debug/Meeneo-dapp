@@ -1,9 +1,9 @@
 'use client'
 
-import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { useAccount } from 'wagmi'
 import { useDemo } from '@/context/demo-context'
+import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
+import { useAccount } from 'wagmi'
 
 /**
  * Returns `true` when the user is either wallet-connected or in demo mode.

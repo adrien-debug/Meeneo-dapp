@@ -1,18 +1,17 @@
 import type { UserDeposit, VaultConfig } from '@/types/product'
-import { ALL_VAULTS } from '@/config/mock-data'
 
 const STORAGE_KEY = 'meeneo-demo'
 const DEMO_MODE_KEY = 'meeneo-demo-mode'
 
 export function isDemoModeActive(): boolean {
   if (typeof window === 'undefined') return false
-  return localStorage.getItem(DEMO_MODE_KEY) === '1'
+  return sessionStorage.getItem(DEMO_MODE_KEY) === '1'
 }
 
 export function setDemoModeActive(active: boolean): void {
   if (typeof window === 'undefined') return
-  if (active) localStorage.setItem(DEMO_MODE_KEY, '1')
-  else localStorage.removeItem(DEMO_MODE_KEY)
+  if (active) sessionStorage.setItem(DEMO_MODE_KEY, '1')
+  else sessionStorage.removeItem(DEMO_MODE_KEY)
 }
 
 export interface DemoState {
@@ -25,11 +24,11 @@ export interface DemoState {
 
 function defaultState(): DemoState {
   return {
-    vaults: [...ALL_VAULTS],
+    vaults: [],
     deposits: [],
     timeOffsetSeconds: 0,
     nextDepositId: 10_000,
-    nextVaultIndex: ALL_VAULTS.length + 1,
+    nextVaultIndex: 1,
   }
 }
 
@@ -42,13 +41,6 @@ export function loadDemo(): DemoState {
     if (parsed.nextDepositId < 10_000) {
       parsed.nextDepositId = 10_000
       parsed.deposits = parsed.deposits.map((d, i) => ({ ...d, id: 10_000 + i }))
-    }
-    const existingSlugs = new Set(parsed.vaults.map((v) => v.slug))
-    for (const v of ALL_VAULTS) {
-      if (!existingSlugs.has(v.slug)) parsed.vaults.push(v)
-    }
-    if (parsed.nextVaultIndex < ALL_VAULTS.length + 1) {
-      parsed.nextVaultIndex = ALL_VAULTS.length + 1
     }
     return parsed
   } catch {
@@ -151,6 +143,47 @@ export function addVault(
   }
 }
 
+export function subscribeToProduct(
+  state: DemoState,
+  product: VaultConfig,
+  amount: number,
+): { state: DemoState; vaultSlug: string } {
+  const idx = state.nextVaultIndex
+  const slug = `vault-${idx}`
+  const now = demoNow(state)
+
+  const vault: VaultConfig = {
+    ...product,
+    slug,
+    currentTvl: amount,
+    totalShares: amount,
+  }
+
+  const deposit: UserDeposit = {
+    id: state.nextDepositId,
+    vaultSlug: slug,
+    amount,
+    depositTimestamp: now,
+    maturityTimestamp: now + product.lockPeriodMonths * MONTH,
+    yieldCliffTimestamp: now + product.yieldCliffMonths * MONTH,
+    claimedYield: 0,
+    pendingYield: 0,
+    lockStatus: 'active',
+    progressPercent: 0,
+  }
+
+  return {
+    state: {
+      ...state,
+      vaults: [...state.vaults, vault],
+      deposits: [...state.deposits, deposit],
+      nextVaultIndex: idx + 1,
+      nextDepositId: state.nextDepositId + 1,
+    },
+    vaultSlug: slug,
+  }
+}
+
 export function removeVault(state: DemoState, slug: string): DemoState {
   return {
     ...state,
@@ -161,8 +194,7 @@ export function removeVault(state: DemoState, slug: string): DemoState {
 
 export function addDeposit(state: DemoState, vaultSlug: string, amount: number): DemoState {
   const now = demoNow(state)
-  const vault =
-    state.vaults.find((v) => v.slug === vaultSlug) ?? ALL_VAULTS.find((v) => v.slug === vaultSlug)
+  const vault = state.vaults.find((v) => v.slug === vaultSlug)
   if (!vault) return state
   const id = state.nextDepositId
   const deposit: UserDeposit = {

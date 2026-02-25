@@ -1,8 +1,8 @@
 'use client'
 
-import { base } from '@reown/appkit/networks'
-import { useAppKit } from '@reown/appkit/react'
 import { useDemo } from '@/context/demo-context'
+import { base } from '@reown/appkit/networks'
+import { useAppKitSafe } from '@/hooks/useAppKitSafe'
 import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -19,7 +19,7 @@ export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const { address, isConnected, chain } = useAccount()
   const { disconnect } = useDisconnect()
-  const { open } = useAppKit()
+  const { open } = useAppKitSafe()
   const { isDemoMode } = useDemo()
   const pathname = usePathname()
 

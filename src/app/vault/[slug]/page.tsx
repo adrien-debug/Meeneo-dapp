@@ -6,21 +6,21 @@ import {
   MOCK_MONTHLY_PERFORMANCE,
   MOCK_PROTOCOL_STATS,
   fmt,
+  fmtApy,
   fmtPercent,
   fmtUsd,
   getActivityForVault,
-  getDepositsForVault,
   getLockStatusColor,
   getLockStatusLabel,
-  getVaultUserStats,
   timeAgo,
 } from '@/config/mock-data'
+import { useDemo } from '@/context/demo-context'
 import { useAuthGuard } from '@/hooks/useAuthGuard'
 import { useClaimRewards, useWithdraw } from '@/hooks/useEpochVault'
 import type { StrategyType, VaultStrategy } from '@/types/product'
 import Image from 'next/image'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import {
   Area,
   AreaChart,
@@ -32,11 +32,14 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
+import { useAccount } from 'wagmi'
 
 import { ChartTooltip } from '@/components/ui/ChartTooltip'
 import { CARD, RISK_BG, STRATEGY_ICONS } from '@/components/ui/constants'
 import { LoadingScreen } from '@/components/ui/LoadingScreen'
 import { ProgressRing } from '@/components/ui/ProgressRing'
+import { TransactionProgress } from '@/components/ui/TransactionProgress'
+import { useSimulatedTransaction } from '@/hooks/useSimulatedTransaction'
 
 export default function VaultDetail() {
   const authed = useAuthGuard()
@@ -57,16 +60,60 @@ export default function VaultDetail() {
   } = useWithdraw()
 
   const slug = params.slug as string
-  const vault = ALL_VAULTS.find((v) => v.slug === slug) ?? ALL_VAULTS[0]
-  const deposits = getDepositsForVault(vault.slug)
-  const vaultUserStats = getVaultUserStats(vault.slug)
-  const vaultActivity = getActivityForVault(vault.slug)
+  const demo = useDemo()
+
+  const vault =
+    demo.vaults.find((v) => v.slug === slug) ?? ALL_VAULTS.find((v) => v.slug === slug) ?? null
+  const deposits = demo.deposits.filter((d) => d.vaultSlug === slug)
+  const vaultUserStats = useMemo(() => {
+    const deps = deposits
+    return {
+      deposited: deps.reduce((s, d) => s + d.amount, 0),
+      yieldEarned: deps.reduce((s, d) => s + d.claimedYield + d.pendingYield, 0),
+      pending: deps.reduce((s, d) => s + d.pendingYield, 0),
+      activeCount: deps.filter((d) => d.lockStatus !== 'matured').length,
+      count: deps.length,
+    }
+  }, [deposits])
+  const { isConnected } = useAccount()
+  const vaultActivity = getActivityForVault(slug)
+  const txSim = useSimulatedTransaction()
+
+  const handleClaim = useCallback(
+    (depositId: number) => {
+      if (isConnected) {
+        claimRewards()
+        demo.claim(depositId)
+        return
+      }
+      txSim.execute(['claim'], () => {
+        demo.claim(depositId)
+        setTimeout(() => txSim.reset(), 1200)
+      })
+    },
+    [isConnected, claimRewards, demo, txSim],
+  )
+
+  const handleWithdraw = useCallback(
+    (depositId: number, amount: number) => {
+      if (isConnected) {
+        withdraw(String(amount))
+        demo.withdraw(depositId)
+        return
+      }
+      txSim.execute(['withdraw'], () => {
+        demo.withdraw(depositId)
+        setTimeout(() => txSim.reset(), 1200)
+      })
+    },
+    [isConnected, withdraw, demo, txSim],
+  )
 
   const highlightedStrategy = searchParams.get('strategy') as StrategyType | null
   const [selectedStrategy, setSelectedStrategy] = useState<StrategyType | null>(highlightedStrategy)
 
   const strategy: VaultStrategy | undefined = selectedStrategy
-    ? vault.strategies.find((s) => s.type === selectedStrategy)
+    ? vault?.strategies.find((s) => s.type === selectedStrategy)
     : undefined
 
   const chartData = MOCK_MONTHLY_PERFORMANCE
@@ -89,6 +136,15 @@ export default function VaultDetail() {
         { name: 'Morpho', pct: 35, color: '#9EB3A8' },
         { name: 'Ethena', pct: 25, color: '#E6F1E7' },
       ],
+      btc_spot: [
+        { name: 'Coinbase Prime', pct: 60, color: '#F7931A' },
+        { name: 'Fireblocks', pct: 40, color: '#E8A838' },
+      ],
+      btc_collateral_mining: [
+        { name: 'Hearst Mining', pct: 40, color: '#D4A017' },
+        { name: 'Aave', pct: 35, color: '#B07A1A' },
+        { name: 'Morpho', pct: 25, color: '#9EB3A8' },
+      ],
     }
     return breakdowns[strategy.type] ?? []
   }, [strategy])
@@ -103,89 +159,156 @@ export default function VaultDetail() {
     [vaultUserStats],
   )
 
+  if (!authed) return <LoadingScreen />
+
+  if (!vault) {
+    return (
+      <div className="min-h-screen bg-[#F2F2F2]">
+        <Header />
+        <main className="pt-20 pb-10">
+          <div className="page-container">
+            <div className="mt-10 text-center">
+              <p className="text-lg font-bold text-[#0E0F0F] mb-2">Vault not found</p>
+              <p className="text-sm text-[#9EB3A8] mb-6">No vault matches &quot;{slug}&quot;</p>
+              <button
+                onClick={() => router.push('/dashboard')}
+                className="px-6 py-3 rounded-2xl text-sm font-bold bg-[#96EA7A] text-[#0E0F0F] hover:bg-[#7ED066] transition-all"
+              >
+                Back to Dashboard
+              </button>
+            </div>
+          </div>
+        </main>
+      </div>
+    )
+  }
+
   const allocationData = vault.strategies.map((s) => ({
     name: s.label,
     value: s.allocation,
     color: s.color,
   }))
 
-  if (!authed) return <LoadingScreen />
-
   return (
     <div className="min-h-screen bg-[#F2F2F2]">
       <Header />
+      <TransactionProgress state={txSim.state} />
 
       <main className="pt-20 pb-10">
         <div className="page-container">
           {/* ─── Hero ─── */}
-          <div className={`${CARD} p-6 sm:p-8 relative overflow-hidden mt-6 mb-5`}>
-            <div className="absolute -top-32 -right-32 w-96 h-96 bg-gradient-to-br from-[#96EA7A]/6 to-transparent rounded-full blur-3xl pointer-events-none" />
-            <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-gradient-to-tr from-[#9EB3A8]/4 to-transparent rounded-full blur-2xl pointer-events-none" />
+          <div className="rounded-3xl overflow-hidden shadow-md mt-6 mb-5">
+            <div className="bg-[#E6F1E7] p-6 sm:p-8 relative overflow-hidden">
+              <div className="absolute inset-0 pointer-events-none">
+                <Image
+                  src={
+                    vault?.name === 'Hearst Hedge'
+                      ? '/assets/backgrounds/vault-card-1-bg.png'
+                      : '/assets/backgrounds/vault-card-2-bg.png'
+                  }
+                  alt=""
+                  fill
+                  className="object-cover opacity-30 mix-blend-multiply"
+                  sizes="100vw"
+                />
+              </div>
+              <div
+                className="absolute inset-0 opacity-30"
+                style={{
+                  background: `radial-gradient(circle at 80% 20%, ${vault.strategies[0]?.color ?? '#96EA7A'}33, transparent 60%)`,
+                }}
+              />
 
-            <div className="relative">
-              <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
-                <button
-                  onClick={() => router.back()}
-                  className="w-8 h-8 rounded-xl bg-[#F2F2F2] flex items-center justify-center hover:bg-[#E6F1E7] transition-colors shrink-0 self-start"
-                >
-                  <svg
-                    className="w-4 h-4 text-[#9EB3A8]"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+              <div className="relative">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
+                  <button
+                    onClick={() => router.back()}
+                    className="w-8 h-8 rounded-xl bg-[#F2F2F2] flex items-center justify-center hover:bg-[#E6F1E7] transition-colors shrink-0 self-start"
+                    aria-label="Go back"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M15 19l-7-7 7-7"
-                    />
-                  </svg>
-                </button>
-                <div className="flex items-center gap-3 flex-1">
-                  <div className="w-12 h-12 rounded-2xl bg-[#96EA7A]/10 flex items-center justify-center shrink-0">
-                    <Image
-                      src="/assets/tokens/hearst.svg"
-                      alt={vault.name}
-                      width={28}
-                      height={28}
-                      className="rounded-full"
-                    />
-                  </div>
-                  <div>
-                    <h1 className="text-[2rem] sm:text-[2.5rem] font-black text-[#0E0F0F] tracking-tight leading-none">
-                      {vault.name}
-                    </h1>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      {vault.strategies.map((s) => (
-                        <div
-                          key={s.type}
-                          className="flex items-center gap-1 bg-[#F2F2F2] rounded-full px-2 py-0.5"
-                        >
-                          <Image
-                            src={STRATEGY_ICONS[s.type] ?? ''}
-                            alt={s.label}
-                            width={10}
-                            height={10}
-                            className="rounded-full"
-                          />
-                          <span className="text-caption text-[#9EB3A8] font-medium">
-                            {s.allocation}%
-                          </span>
-                        </div>
-                      ))}
+                    <svg
+                      className="w-4 h-4 text-[#9EB3A8]"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 19l-7-7 7-7"
+                      />
+                    </svg>
+                  </button>
+                  <div className="flex items-center gap-3 flex-1">
+                    <div className="w-12 h-12 rounded-2xl bg-[#96EA7A]/10 flex items-center justify-center shrink-0">
+                      <Image
+                        src="/assets/tokens/hearst.svg"
+                        alt={vault.name}
+                        width={28}
+                        height={28}
+                        className="rounded-full"
+                      />
+                    </div>
+                    <div>
+                      <h1 className="text-[2rem] sm:text-[2.5rem] font-black text-[#0E0F0F] tracking-tight leading-none">
+                        {vault.name}
+                      </h1>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        {vault.strategies.map((s) => (
+                          <div
+                            key={s.type}
+                            className="flex items-center gap-1 bg-[#F2F2F2] rounded-full px-2 py-0.5"
+                          >
+                            <Image
+                              src={STRATEGY_ICONS[s.type] ?? ''}
+                              alt={s.label}
+                              width={10}
+                              height={10}
+                              className="rounded-full"
+                            />
+                            <span className="text-caption text-[#9EB3A8] font-medium">
+                              {s.allocation}%
+                            </span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
-                </div>
-                {userPosition.totalPending > 0 && (
-                  <button
-                    onClick={() => claimRewards()}
-                    disabled={isClaimPending || isClaimConfirming}
-                    className="flex items-center gap-3 px-5 py-3.5 rounded-2xl bg-[#96EA7A]/5 border border-[#96EA7A]/20 hover:border-[#96EA7A]/50 hover:bg-[#96EA7A]/10 transition-all group self-start sm:self-auto disabled:opacity-50"
-                  >
-                    <div className="w-10 h-10 rounded-xl bg-[#96EA7A]/15 flex items-center justify-center">
+                  {userPosition.totalPending > 0 && (
+                    <button
+                      onClick={() =>
+                        deposits.filter((d) => d.pendingYield > 0).forEach((d) => handleClaim(d.id))
+                      }
+                      disabled={isClaimPending || isClaimConfirming}
+                      className="flex items-center gap-3 px-5 py-3.5 rounded-2xl bg-[#96EA7A]/5 border border-[#96EA7A]/20 hover:border-[#96EA7A]/50 hover:bg-[#96EA7A]/10 transition-all group self-start sm:self-auto disabled:opacity-50"
+                    >
+                      <div className="w-10 h-10 rounded-xl bg-[#96EA7A]/15 flex items-center justify-center">
+                        <svg
+                          className="w-5 h-5 text-[#96EA7A]"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                          />
+                        </svg>
+                      </div>
+                      <div className="text-left">
+                        <p className="text-xs text-[#9EB3A8] font-medium">
+                          {isClaimConfirmed ? 'Claimed!' : 'Pending Yield'}
+                        </p>
+                        <p className="text-lg font-black text-[#96EA7A]">
+                          {fmtUsd(userPosition.totalPending)}
+                        </p>
+                      </div>
                       <svg
-                        className="w-5 h-5 text-[#96EA7A]"
+                        className="w-4 h-4 text-[#9EB3A8] group-hover:text-[#96EA7A] group-hover:translate-x-0.5 transition-all ml-1"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -194,35 +317,17 @@ export default function VaultDetail() {
                           strokeLinecap="round"
                           strokeLinejoin="round"
                           strokeWidth={2}
-                          d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                          d="M9 5l7 7-7 7"
                         />
                       </svg>
-                    </div>
-                    <div className="text-left">
-                      <p className="text-xs text-[#9EB3A8] font-medium">
-                        {isClaimConfirmed ? 'Claimed!' : 'Pending Yield'}
-                      </p>
-                      <p className="text-lg font-black text-[#96EA7A]">
-                        {fmtUsd(userPosition.totalPending)}
-                      </p>
-                    </div>
-                    <svg
-                      className="w-4 h-4 text-[#9EB3A8] group-hover:text-[#96EA7A] group-hover:translate-x-0.5 transition-all ml-1"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 5l7 7-7 7"
-                      />
-                    </svg>
-                  </button>
-                )}
+                    </button>
+                  )}
+                </div>
               </div>
+            </div>
 
+            {/* Body — white */}
+            <div className="bg-white p-6 sm:p-8 rounded-b-3xl">
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-px bg-[#9EB3A8]/10 rounded-xl overflow-hidden">
                 {[
                   {
@@ -231,7 +336,7 @@ export default function VaultDetail() {
                   },
                   {
                     label: 'Composite APY',
-                    value: `${vault.compositeApy[0]}–${vault.compositeApy[1]}%`,
+                    value: fmtApy(vault.compositeApy),
                     accent: true,
                   },
                   {
@@ -326,7 +431,7 @@ export default function VaultDetail() {
                         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                           <Image
                             src="/assets/tokens/hearst-logo.svg"
-                            alt="H"
+                            alt="Hearst logo"
                             width={20}
                             height={20}
                           />
@@ -468,13 +573,13 @@ export default function VaultDetail() {
                               dataKey="month"
                               axisLine={false}
                               tickLine={false}
-                              tick={{ fontSize: 11, fill: '#9EB3A8' }}
+                              tick={{ fontSize: 10, fill: '#9EB3A8' }}
                               dy={6}
                             />
                             <YAxis
                               axisLine={false}
                               tickLine={false}
-                              tick={{ fontSize: 11, fill: '#9EB3A8' }}
+                              tick={{ fontSize: 10, fill: '#9EB3A8' }}
                               tickFormatter={(v: number) => `${v}%`}
                             />
                             <Tooltip content={<ChartTooltip />} />
@@ -733,7 +838,7 @@ export default function VaultDetail() {
                                       </div>
 
                                       <button
-                                        onClick={() => withdraw(String(dep.amount))}
+                                        onClick={() => handleWithdraw(dep.id, dep.amount)}
                                         disabled={isWithdrawPending || isWithdrawConfirming}
                                         className="w-full h-12 rounded-full text-sm font-bold bg-[#96EA7A] text-[#0E0F0F] hover:bg-[#7ED066] shadow-lg shadow-[#96EA7A]/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.97]"
                                       >
@@ -778,7 +883,7 @@ export default function VaultDetail() {
                                     </div>
                                   </div>
                                   <button
-                                    onClick={() => claimRewards()}
+                                    onClick={() => handleClaim(dep.id)}
                                     disabled={isClaimPending || isClaimConfirming}
                                     className="px-5 py-2.5 rounded-full text-sm font-bold bg-[#96EA7A] text-[#0E0F0F] hover:bg-[#7ED066] transition-colors disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.97]"
                                   >
@@ -1002,13 +1107,13 @@ export default function VaultDetail() {
                             dataKey="month"
                             axisLine={false}
                             tickLine={false}
-                            tick={{ fontSize: 11, fill: '#9EB3A8' }}
+                            tick={{ fontSize: 10, fill: '#9EB3A8' }}
                             dy={6}
                           />
                           <YAxis
                             axisLine={false}
                             tickLine={false}
-                            tick={{ fontSize: 11, fill: '#9EB3A8' }}
+                            tick={{ fontSize: 10, fill: '#9EB3A8' }}
                             tickFormatter={(v: number) => `${v}%`}
                           />
                           <Tooltip content={<ChartTooltip />} />

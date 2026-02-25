@@ -1,24 +1,25 @@
 'use client'
 
-import React, { useState, useEffect, useRef, useCallback } from 'react'
-import {
-  ComposedChart,
-  Line,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Legend,
-} from 'recharts'
 import SimInput from '@/components/simulation/SimInput'
-import SimSelect from '@/components/simulation/SimSelect'
-import SimToggle from '@/components/simulation/SimToggle'
 import SimMetric from '@/components/simulation/SimMetric'
+import SimSelect from '@/components/simulation/SimSelect'
 import SimTable from '@/components/simulation/SimTable'
+import SimToggle from '@/components/simulation/SimToggle'
 import { CARD } from '@/components/ui/constants'
 import { formatNumber } from '@/lib/sim-utils'
+import type { NetworkCurvePayload, NetworkCurveResult, SavedCurve } from '@/types/simulation'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import {
+  Area,
+  CartesianGrid,
+  ComposedChart,
+  Legend,
+  Line,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts'
 
 interface StepNetworkCurveProps {
   onComplete: (curveId: string) => void
@@ -45,14 +46,14 @@ export default function StepNetworkCurve({ onComplete, completedCurveId }: StepN
   const nextNumber = useRef(1)
 
   // ── Saved simulations state ──
-  const [savedCurves, setSavedCurves] = useState<any[]>([])
+  const [savedCurves, setSavedCurves] = useState<SavedCurve[]>([])
   const [selectedCurveId, setSelectedCurveId] = useState(completedCurveId || '')
   const [loadingCurve, setLoadingCurve] = useState(false)
 
   // Fetch existing curves list
   const fetchSavedCurves = useCallback(async () => {
     try {
-      const curves = await api<any[]>('/network-curve/list')
+      const curves = await api<SavedCurve[]>('/network-curve/list')
       setSavedCurves(curves)
       return curves
     } catch {
@@ -65,7 +66,7 @@ export default function StepNetworkCurve({ onComplete, completedCurveId }: StepN
     fetchSavedCurves()
       .then((curves) => {
         let maxNum = 0
-        curves.forEach((c: any) => {
+        curves.forEach((c: SavedCurve) => {
           const match = c.name?.match(/^Network Curve #(\d+)$/)
           if (match) maxNum = Math.max(maxNum, parseInt(match[1], 10))
         })
@@ -90,11 +91,11 @@ export default function StepNetworkCurve({ onComplete, completedCurveId }: StepN
       setLoadingCurve(true)
       setError('')
       try {
-        const curve = await api<any>(`/network-curve/${id}`)
+        const curve = await api<NetworkCurveResult>(`/network-curve/${id}`)
         setResult(curve)
         onComplete(id)
-      } catch (e: any) {
-        setError(`Failed to load curve: ${e.message}`)
+      } catch (e: unknown) {
+        setError(`Failed to load curve: ${e instanceof Error ? e.message : 'Unknown error'}`)
       }
       setLoadingCurve(false)
     },
@@ -119,8 +120,8 @@ export default function StepNetworkCurve({ onComplete, completedCurveId }: StepN
         }
         // Refresh the list
         await fetchSavedCurves()
-      } catch (e: any) {
-        setError(`Failed to delete curve: ${e.message}`)
+      } catch (e: unknown) {
+        setError(`Failed to delete curve: ${e instanceof Error ? e.message : 'Unknown error'}`)
       }
       setDeleting(false)
     },
@@ -144,7 +145,7 @@ export default function StepNetworkCurve({ onComplete, completedCurveId }: StepN
   const [confidenceInterval, setConfidenceInterval] = useState(0.95)
 
   // ── Result state ──
-  const [result, setResult] = useState<any>(null)
+  const [result, setResult] = useState<NetworkCurveResult | null>(null)
   const [running, setRunning] = useState(false)
   const [error, setError] = useState('')
 
@@ -156,7 +157,7 @@ export default function StepNetworkCurve({ onComplete, completedCurveId }: StepN
     setRunning(true)
     setError('')
     try {
-      const payload: any = {
+      const payload: NetworkCurvePayload = {
         name: name.trim(),
         scenario,
         months: 120,
@@ -176,7 +177,7 @@ export default function StepNetworkCurve({ onComplete, completedCurveId }: StepN
         payload.confidence_band_pct = confidenceBandPct
       }
 
-      const res = await api<any>('/network-curve/generate', {
+      const res = await api<NetworkCurveResult>('/network-curve/generate', {
         method: 'POST',
         body: JSON.stringify(payload),
       })
@@ -190,8 +191,8 @@ export default function StepNetworkCurve({ onComplete, completedCurveId }: StepN
 
       // Refresh saved curves list
       fetchSavedCurves()
-    } catch (e: any) {
-      setError(e.message)
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Operation failed')
     }
     setRunning(false)
   }
@@ -202,7 +203,10 @@ export default function StepNetworkCurve({ onComplete, completedCurveId }: StepN
   // ── Hashprice chart data ──
   const hashpriceChartData = result
     ? result.hashprice_btc_per_ph_day.map((hp: number, i: number) => {
-        const point: any = { month: i, hashprice: hp }
+        const point: { month: number; hashprice: number; hp_band?: [number, number] } = {
+          month: i,
+          hashprice: hp,
+        }
         if (bands?.hashprice) {
           point.hp_band = [bands.hashprice.lower[i], bands.hashprice.upper[i]]
         }
@@ -213,7 +217,10 @@ export default function StepNetworkCurve({ onComplete, completedCurveId }: StepN
   // ── Hashrate chart data ──
   const hashrateChartData = result
     ? result.network_hashrate_eh.map((hr: number, i: number) => {
-        const point: any = { month: i, hashrate_eh: hr }
+        const point: { month: number; hashrate_eh: number; hr_band?: [number, number] } = {
+          month: i,
+          hashrate_eh: hr,
+        }
         if (bands?.hashrate) {
           point.hr_band = [bands.hashrate.lower[i], bands.hashrate.upper[i]]
         }
@@ -224,7 +231,10 @@ export default function StepNetworkCurve({ onComplete, completedCurveId }: StepN
   // ── Fees chart data ──
   const feesChartData = result
     ? result.fees_per_block_btc.map((fee: number, i: number) => {
-        const point: any = { month: i, fees: fee }
+        const point: { month: number; fees: number; fee_band?: [number, number] } = {
+          month: i,
+          fees: fee,
+        }
         if (bands?.fees) {
           point.fee_band = [bands.fees.lower[i], bands.fees.upper[i]]
         }
@@ -306,7 +316,7 @@ export default function StepNetworkCurve({ onComplete, completedCurveId }: StepN
                 label="Load Curve"
                 value={selectedCurveId}
                 onChange={loadSavedCurve}
-                options={savedCurves.map((c: any) => ({
+                options={savedCurves.map((c: SavedCurve) => ({
                   value: c.id,
                   label: `${c.name || c.id} — ${c.scenario || ''}`,
                 }))}

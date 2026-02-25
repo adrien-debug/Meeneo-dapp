@@ -2,12 +2,12 @@
 
 import { Header } from '@/components/Header'
 import { fmtUsd, getLockStatusColor, getLockStatusLabel } from '@/config/mock-data'
+import { useDemo } from '@/context/demo-context'
+import { useAuthGuard } from '@/hooks/useAuthGuard'
 import type { UserDeposit } from '@/types/product'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useMemo } from 'react'
-import { useAuthGuard } from '@/hooks/useAuthGuard'
-import { useDemo } from '@/context/demo-context'
 
 import { CARD, STRATEGY_ICONS } from '@/components/ui/constants'
 import { LoadingScreen } from '@/components/ui/LoadingScreen'
@@ -39,75 +39,99 @@ function VaultPositionCard({
   const depositDate = new Date(deposit.depositTimestamp * 1000)
   const statusColor = '#96EA7A'
 
+  const bgImage =
+    vault.name === 'Hearst Hedge'
+      ? '/assets/backgrounds/vault-card-1-bg.png'
+      : '/assets/backgrounds/vault-card-2-bg.png'
+
   return (
     <div
-      className={`${CARD} overflow-hidden cursor-pointer hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group`}
+      className="overflow-hidden cursor-pointer hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group rounded-3xl shadow-md flex flex-col"
       onClick={() => onNavigate(vault.slug)}
     >
-      <div
-        className="h-1 w-full"
-        style={{
-          background: `linear-gradient(90deg, ${vault.strategies.map((s) => s.color).join(', ')})`,
-        }}
-      />
-
-      <div className="p-6">
-        {/* Header */}
-        <div className="flex items-start justify-between mb-5">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-[#96EA7A]/10 flex items-center justify-center shrink-0">
-              <Image
-                src="/assets/tokens/hearst.svg"
-                alt={vault.name}
-                width={24}
-                height={24}
-                className="rounded-full"
-              />
+      {/* Header — same style as product cards */}
+      <div className="bg-[#E6F1E7] px-6 pt-6 pb-5 rounded-t-3xl relative overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none">
+          <Image
+            src={bgImage}
+            alt=""
+            fill
+            className="object-cover opacity-30 mix-blend-multiply"
+            sizes="(max-width: 768px) 100vw, 50vw"
+          />
+        </div>
+        <div
+          className="absolute inset-0 opacity-30"
+          style={{
+            background: `radial-gradient(circle at 80% 20%, ${vault.strategies[0]?.color ?? '#96EA7A'}33, transparent 60%)`,
+          }}
+        />
+        <div className="relative">
+          <div className="flex items-start justify-between mb-3">
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-xl bg-white/60 backdrop-blur-sm flex items-center justify-center shrink-0">
+                <Image
+                  src="/assets/tokens/hearst.svg"
+                  alt={vault.name}
+                  width={24}
+                  height={24}
+                  className="rounded-full"
+                />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-[#0E0F0F]">{vault.name}</p>
+                <p className="text-xs text-[#0E0F0F]/50 mt-0.5">
+                  Since{' '}
+                  {depositDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm font-bold text-[#0E0F0F]">{vault.name}</p>
-              <p className="text-xs text-[#9EB3A8] mt-0.5">
-                Since {depositDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
-              </p>
+            <div className="flex items-center gap-2">
+              <span
+                className={`text-caption font-bold px-3 py-1 rounded-full ${STATUS_BG[deposit.lockStatus]} ${getLockStatusColor(deposit.lockStatus)}`}
+              >
+                {getLockStatusLabel(deposit.lockStatus)}
+              </span>
+              <svg
+                className="w-4 h-4 text-[#9EB3A8] group-hover:text-[#96EA7A] group-hover:translate-x-0.5 transition-all"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5l7 7-7 7"
+                />
+              </svg>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <span
-              className={`text-caption font-bold px-3 py-1 rounded-full ${STATUS_BG[deposit.lockStatus]} ${getLockStatusColor(deposit.lockStatus)}`}
-            >
-              {getLockStatusLabel(deposit.lockStatus)}
-            </span>
-            <svg
-              className="w-4 h-4 text-[#9EB3A8] group-hover:text-[#96EA7A] group-hover:translate-x-0.5 transition-all"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
+
+          {/* Strategy pockets */}
+          <div className="flex items-center gap-1.5">
+            {vault.strategies.map((s) => (
+              <div
+                key={s.type}
+                className="flex items-center gap-1 bg-white/50 rounded-full px-2 py-0.5"
+              >
+                <Image
+                  src={STRATEGY_ICONS[s.type] ?? ''}
+                  alt={s.label}
+                  width={10}
+                  height={10}
+                  className="rounded-full"
+                />
+                <span className="text-caption text-[#0E0F0F]/60 font-medium">{s.allocation}%</span>
+              </div>
+            ))}
           </div>
         </div>
+      </div>
 
-        {/* Strategy pockets */}
-        <div className="flex items-center gap-1.5 mb-5">
-          {vault.strategies.map((s) => (
-            <div
-              key={s.type}
-              className="flex items-center gap-1 bg-[#F2F2F2] rounded-full px-2 py-0.5"
-            >
-              <Image
-                src={STRATEGY_ICONS[s.type] ?? ''}
-                alt={s.label}
-                width={10}
-                height={10}
-                className="rounded-full"
-              />
-              <span className="text-caption text-[#9EB3A8] font-medium">{s.allocation}%</span>
-            </div>
-          ))}
-        </div>
-
-        {/* Metrics left + Ring right (larger) */}
+      {/* Body — white */}
+      <div className="bg-white px-6 py-5 flex-1">
+        {/* Metrics left + Ring right */}
         <div className="flex items-center gap-5 mb-5">
           <div className="flex-1 grid grid-cols-2 gap-x-4 gap-y-3">
             <div>
@@ -140,7 +164,7 @@ function VaultPositionCard({
         </div>
 
         {/* Progress bar */}
-        <div className="mb-4">
+        <div>
           <div className="flex items-center justify-between mb-1.5">
             <span className="kpi-label">Maturity Progress</span>
             <span className="text-xs font-bold text-[#0E0F0F]">{deposit.progressPercent}%</span>
@@ -155,7 +179,7 @@ function VaultPositionCard({
 
         {/* Pending yield CTA */}
         {deposit.pendingYield > 0 && (
-          <div className="flex items-center justify-between p-4 bg-[#96EA7A]/5 rounded-xl border border-[#96EA7A]/15">
+          <div className="flex items-center justify-between p-4 bg-[#96EA7A]/5 rounded-xl border border-[#96EA7A]/15 mt-5">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg bg-[#96EA7A]/15 flex items-center justify-center">
                 <svg
@@ -231,10 +255,7 @@ export default function MyVaults() {
           <div className="mt-6 mb-6 space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
               <div>
-                <p className="kpi-label mb-2">My Vaults</p>
-                <h1 className="text-[2.75rem] sm:text-[3.25rem] font-black text-[#0E0F0F] tracking-tight leading-none">
-                  {fmtUsd(totalDeposited + totalYield)}
-                </h1>
+                <h1 className="section-title">My Vaults</h1>
               </div>
               {totalPending > 0 && (
                 <div className="flex items-center gap-3 px-5 py-3.5 rounded-2xl bg-[#96EA7A]/5 border border-[#96EA7A]/15 self-start sm:self-auto">

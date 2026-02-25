@@ -113,7 +113,7 @@ export default function SimulationWizard() {
 
               <div className="flex items-center gap-3">
                 {!canGoNext && (
-                  <span className="text-[11px] text-[#9EB3A8] font-medium">
+                  <span className="text-xs text-[#9EB3A8] font-medium">
                     {step === 0 && 'Run or load a BTC curve to continue'}
                     {step === 1 && 'Run or load a network curve to continue'}
                     {step === 2 && 'Need at least 1 miner and 1 site'}

@@ -1,24 +1,25 @@
 'use client'
 
-import { useState, useCallback, useEffect, useRef } from 'react'
+import SimInput from '@/components/simulation/SimInput'
+import SimMetric from '@/components/simulation/SimMetric'
+import SimSelect from '@/components/simulation/SimSelect'
+import SimTable from '@/components/simulation/SimTable'
+import SimToggle from '@/components/simulation/SimToggle'
+import { CARD } from '@/components/ui/constants'
+import { exportAsJSON, formatUSD } from '@/lib/sim-utils'
+import type { BtcPriceCurvePayload, BtcPriceCurveResult, SavedCurve } from '@/types/simulation'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
-  ComposedChart,
-  Line,
   Area,
+  CartesianGrid,
+  ComposedChart,
+  Legend,
+  Line,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Legend,
 } from 'recharts'
-import SimInput from '@/components/simulation/SimInput'
-import SimSelect from '@/components/simulation/SimSelect'
-import SimToggle from '@/components/simulation/SimToggle'
-import SimMetric from '@/components/simulation/SimMetric'
-import SimTable from '@/components/simulation/SimTable'
-import { CARD } from '@/components/ui/constants'
-import { formatUSD, exportAsJSON } from '@/lib/sim-utils'
 
 const API = '/api/simulation'
 const DEFAULT_ANCHORS: Record<number, number> = {
@@ -55,14 +56,14 @@ interface StepBtcCurveProps {
 export default function StepBtcCurve({ onComplete, completedCurveId }: StepBtcCurveProps) {
   const [name, setName] = useState('')
   const nextNumber = useRef(1)
-  const [savedCurves, setSavedCurves] = useState<any[]>([])
+  const [savedCurves, setSavedCurves] = useState<SavedCurve[]>([])
   const [selectedCurveId, setSelectedCurveId] = useState(completedCurveId || '')
   const [loadingCurve, setLoadingCurve] = useState(false)
   const [deleting, setDeleting] = useState(false)
 
   const fetchSaved = useCallback(async () => {
     try {
-      const c = await api<any[]>('/btc-price-curve/list')
+      const c = await api<SavedCurve[]>('/btc-price-curve/list')
       setSavedCurves(c)
       return c
     } catch {
@@ -74,7 +75,7 @@ export default function StepBtcCurve({ onComplete, completedCurveId }: StepBtcCu
     fetchSaved()
       .then((curves) => {
         let maxNum = 0
-        curves.forEach((c: any) => {
+        curves.forEach((c: SavedCurve) => {
           const m = c.name?.match(/^BTC Curve #(\d+)$/)
           if (m) maxNum = Math.max(maxNum, parseInt(m[1]))
         })
@@ -95,11 +96,11 @@ export default function StepBtcCurve({ onComplete, completedCurveId }: StepBtcCu
       setLoadingCurve(true)
       setError('')
       try {
-        const data = await api<any>(`/btc-price-curve/${id}`)
+        const data = await api<BtcPriceCurveResult>(`/btc-price-curve/${id}`)
         setResult(data)
         onComplete(id)
-      } catch (e: any) {
-        setError(e.message)
+      } catch (e: unknown) {
+        setError(e instanceof Error ? e.message : 'Operation failed')
       }
       setLoadingCurve(false)
     },
@@ -117,8 +118,8 @@ export default function StepBtcCurve({ onComplete, completedCurveId }: StepBtcCu
           setResult(null)
         }
         await fetchSaved()
-      } catch (e: any) {
-        setError(e.message)
+      } catch (e: unknown) {
+        setError(e instanceof Error ? e.message : 'Operation failed')
       }
       setDeleting(false)
     },
@@ -137,7 +138,7 @@ export default function StepBtcCurve({ onComplete, completedCurveId }: StepBtcCu
   const [anchors, setAnchors] = useState<Record<number, number>>({ ...DEFAULT_ANCHORS })
   const [modelType, setModelType] = useState('auto_arima')
   const [confidenceInterval, setConfidenceInterval] = useState(0.95)
-  const [result, setResult] = useState<any>(null)
+  const [result, setResult] = useState<BtcPriceCurveResult | null>(null)
   const [running, setRunning] = useState(false)
   const [error, setError] = useState('')
 
@@ -169,7 +170,7 @@ export default function StepBtcCurve({ onComplete, completedCurveId }: StepBtcCu
     setRunning(true)
     setError('')
     try {
-      const payload: any = { name: name.trim(), scenario, months: 120, mode }
+      const payload: BtcPriceCurvePayload = { name: name.trim(), scenario, months: 120, mode }
       if (mode === 'ml_forecast') {
         payload.model_type = modelType
         payload.confidence_interval = confidenceInterval
@@ -181,7 +182,7 @@ export default function StepBtcCurve({ onComplete, completedCurveId }: StepBtcCu
         payload.volatility_seed = volatilitySeed
         payload.confidence_band_pct = confidenceBandPct
       }
-      const res = await api<any>('/btc-price-curve/generate', {
+      const res = await api<BtcPriceCurveResult>('/btc-price-curve/generate', {
         method: 'POST',
         body: JSON.stringify(payload),
       })
@@ -190,9 +191,9 @@ export default function StepBtcCurve({ onComplete, completedCurveId }: StepBtcCu
       nextNumber.current += 1
       setName(`BTC Curve #${nextNumber.current}`)
       fetchSaved()
-      onComplete(res.id)
-    } catch (e: any) {
-      setError(e.message)
+      if (res.id) onComplete(res.id)
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Operation failed')
     }
     setRunning(false)
   }
@@ -201,17 +202,20 @@ export default function StepBtcCurve({ onComplete, completedCurveId }: StepBtcCu
   const hasBands = result?.upper_bound && result?.lower_bound
   const chartData =
     result?.monthly_prices?.map((price: number, i: number) => {
-      const pt: any = { month: i, price }
-      if (hasBands) {
+      const pt: { month: number; price: number; confidence?: [number, number] } = {
+        month: i,
+        price,
+      }
+      if (hasBands && result.lower_bound && result.upper_bound) {
         pt.confidence = [result.lower_bound[i], result.upper_bound[i]]
       }
       return pt
     }) || []
 
-  const tableRows: Record<string, any>[] = []
+  const tableRows: Record<string, string>[] = []
   if (result?.monthly_prices) {
     for (let y = 0; y < 10; y++) {
-      const row: Record<string, any> = { year: `Y${y}` }
+      const row: Record<string, string> = { year: `Y${y}` }
       for (let m = 0; m < 12; m++) {
         const idx = y * 12 + m
         row[`m${m}`] =
@@ -278,7 +282,7 @@ export default function StepBtcCurve({ onComplete, completedCurveId }: StepBtcCu
                 onChange={loadCurve}
                 options={[
                   { value: '', label: '-- Select --' },
-                  ...savedCurves.map((c: any) => ({
+                  ...savedCurves.map((c: SavedCurve) => ({
                     value: c.id,
                     label: `${c.name} — ${c.scenario}`,
                   })),

@@ -1,21 +1,22 @@
 'use client'
 
-import React, { useState, useEffect, useRef } from 'react'
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from 'recharts'
 import SimInput from '@/components/simulation/SimInput'
+import SimMetric from '@/components/simulation/SimMetric'
 import SimSelect from '@/components/simulation/SimSelect'
 import SimTable from '@/components/simulation/SimTable'
-import SimMetric from '@/components/simulation/SimMetric'
-import { formatUSD, formatBTC, formatPercent } from '@/lib/sim-utils'
 import { CARD } from '@/components/ui/constants'
+import { formatBTC, formatPercent, formatUSD } from '@/lib/sim-utils'
+import type { HostingSite, Miner, MinerSimResult, SavedCurve } from '@/types/simulation'
+import { useEffect, useRef, useState } from 'react'
+import {
+  CartesianGrid,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts'
 
 interface StepMinersHostingProps {
   onComplete: (data: { minerIds: string[]; siteIds: string[] }) => void
@@ -27,8 +28,8 @@ export default function StepMinersHosting({ onComplete }: StepMinersHostingProps
   const [activeTab, setActiveTab] = useState<TabKey>('miners')
 
   // ── Shared State ──
-  const [miners, setMiners] = useState<any[]>([])
-  const [sites, setSites] = useState<any[]>([])
+  const [miners, setMiners] = useState<Miner[]>([])
+  const [sites, setSites] = useState<HostingSite[]>([])
   const [error, setError] = useState('')
 
   // ── Miner Tab State ──
@@ -43,14 +44,14 @@ export default function StepMinersHosting({ onComplete }: StepMinersHostingProps
   const [formMaintenance, setFormMaintenance] = useState(0.02)
 
   // Miner simulation
-  const [curves, setCurves] = useState<any[]>([])
-  const [networkCurves, setNetworkCurves] = useState<any[]>([])
+  const [curves, setCurves] = useState<SavedCurve[]>([])
+  const [networkCurves, setNetworkCurves] = useState<SavedCurve[]>([])
   const [selectedBTCCurve, setSelectedBTCCurve] = useState('')
   const [selectedNetCurve, setSelectedNetCurve] = useState('')
   const [elecRate, setElecRate] = useState(0.065)
   const [uptime, setUptime] = useState(0.95)
   const [simMonths, setSimMonths] = useState(36)
-  const [simResult, setSimResult] = useState<any>(null)
+  const [simResult, setSimResult] = useState<MinerSimResult | null>(null)
   const [minerRunning, setMinerRunning] = useState(false)
 
   // ── Hosting Tab State ──
@@ -142,8 +143,8 @@ export default function StepMinersHosting({ onComplete }: StepMinersHostingProps
       setShowMinerForm(false)
       resetMinerForm()
       loadAll()
-    } catch (e: any) {
-      setError(e.message)
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Operation failed')
     }
   }
 
@@ -151,8 +152,8 @@ export default function StepMinersHosting({ onComplete }: StepMinersHostingProps
     try {
       await fetch(`/api/simulation/miners/${id}`, { method: 'DELETE' })
       loadAll()
-    } catch (e: any) {
-      setError(e.message)
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Operation failed')
     }
   }
 
@@ -177,8 +178,8 @@ export default function StepMinersHosting({ onComplete }: StepMinersHostingProps
         }),
       }).then((r) => r.json())
       setSimResult(res)
-    } catch (e: any) {
-      setError(e.message)
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Operation failed')
     }
     setMinerRunning(false)
   }
@@ -203,8 +204,8 @@ export default function StepMinersHosting({ onComplete }: StepMinersHostingProps
       setShowSiteForm(false)
       setSiteFormName('')
       loadAll()
-    } catch (e: any) {
-      setError(e.message)
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Operation failed')
     }
   }
 
@@ -212,8 +213,8 @@ export default function StepMinersHosting({ onComplete }: StepMinersHostingProps
     try {
       await fetch(`/api/simulation/hosting/${id}`, { method: 'DELETE' })
       loadAll()
-    } catch (e: any) {
-      setError(e.message)
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Operation failed')
     }
   }
 
