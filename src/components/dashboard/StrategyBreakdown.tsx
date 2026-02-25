@@ -1,7 +1,6 @@
 'use client'
 
 import { CARD } from '@/components/ui/constants'
-import { fmtUsd } from '@/config/mock-data'
 import { Cell, Pie, PieChart, ResponsiveContainer } from 'recharts'
 import type { StrategyAllocationEntry } from './types'
 

@@ -136,12 +136,12 @@ export default function Admin() {
                 src="/assets/backgrounds/dashboard-hero-bg.png"
                 alt=""
                 fill
-                className="object-cover opacity-20 mix-blend-multiply"
+                unoptimized
+                className="object-cover"
                 sizes="100vw"
               />
             </div>
-            <div className="absolute -top-32 -right-32 w-96 h-96 bg-gradient-to-br from-[#96EA7A]/6 to-transparent rounded-full blur-3xl pointer-events-none" />
-            <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-gradient-to-tr from-[#9EB3A8]/4 to-transparent rounded-full blur-2xl pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-b from-white/40 via-white/80 to-white pointer-events-none" />
 
             <div className="relative">
               <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6 mb-8">
@@ -545,7 +545,8 @@ export default function Admin() {
                     src="/assets/backgrounds/admin-health-bg.png"
                     alt=""
                     fill
-                    className="object-cover opacity-50 mix-blend-multiply"
+                    unoptimized
+                    className="object-cover"
                     sizes="33vw"
                   />
                 </div>

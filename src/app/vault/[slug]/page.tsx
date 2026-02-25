@@ -401,11 +401,12 @@ export default function VaultDetail() {
                   }
                   alt=""
                   fill
+                  unoptimized
                   className="object-cover"
                   sizes="100vw"
                 />
               </div>
-              <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/30 to-white pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-b from-white/40 via-white/80 to-white pointer-events-none" />
 
               <div className="relative">
                 <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">

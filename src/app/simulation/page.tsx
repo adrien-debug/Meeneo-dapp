@@ -1,14 +1,14 @@
 'use client'
 
 import { Header } from '@/components/Header'
-import { CARD } from '@/components/ui/constants'
 import SimStepper from '@/components/simulation/SimStepper'
-import Image from 'next/image'
 import StepBtcCurve from '@/components/simulation/steps/StepBtcCurve'
-import StepNetworkCurve from '@/components/simulation/steps/StepNetworkCurve'
 import StepMinersHosting from '@/components/simulation/steps/StepMinersHosting'
+import StepNetworkCurve from '@/components/simulation/steps/StepNetworkCurve'
 import StepProductConfig from '@/components/simulation/steps/StepProductConfig'
 import StepResults from '@/components/simulation/steps/StepResults'
+import { CARD } from '@/components/ui/constants'
+import Image from 'next/image'
 import { useCallback, useMemo, useState } from 'react'
 
 type WizardStep = 0 | 1 | 2 | 3 | 4
@@ -71,12 +71,12 @@ export default function SimulationWizard() {
                 src="/assets/backgrounds/dashboard-hero-bg.png"
                 alt=""
                 fill
-                className="object-cover opacity-20 mix-blend-multiply"
+                unoptimized
+                className="object-cover"
                 sizes="100vw"
               />
             </div>
-            <div className="absolute -top-32 -right-32 w-96 h-96 bg-gradient-to-br from-[#96EA7A]/6 to-transparent rounded-full blur-3xl pointer-events-none" />
-            <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-gradient-to-tr from-[#9EB3A8]/4 to-transparent rounded-full blur-2xl pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-b from-white/40 via-white/80 to-white pointer-events-none" />
 
             <div className="relative">
               <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6 lg:min-h-[74px] mb-8">

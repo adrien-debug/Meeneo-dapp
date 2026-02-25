@@ -56,11 +56,12 @@ function VaultPositionCard({
             src={bgImage}
             alt=""
             fill
+            unoptimized
             className="object-cover"
             sizes="(max-width: 768px) 100vw, 50vw"
           />
         </div>
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/30 to-white pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-b from-white/40 via-white/80 to-white pointer-events-none" />
         <div className="relative">
           <div className="flex items-start justify-between mb-3">
             <div className="flex items-center gap-3">
@@ -258,12 +259,12 @@ export default function MyVaults() {
                 src="/assets/backgrounds/dashboard-hero-bg.png"
                 alt=""
                 fill
-                className="object-cover opacity-20 mix-blend-multiply"
+                unoptimized
+                className="object-cover"
                 sizes="100vw"
               />
             </div>
-            <div className="absolute -top-32 -right-32 w-96 h-96 bg-gradient-to-br from-[#96EA7A]/6 to-transparent rounded-full blur-3xl pointer-events-none" />
-            <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-gradient-to-tr from-[#9EB3A8]/4 to-transparent rounded-full blur-2xl pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-b from-white/40 via-white/80 to-white pointer-events-none" />
 
             <div className="relative">
               <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6 mb-8">
