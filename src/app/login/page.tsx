@@ -72,7 +72,7 @@ export default function Login() {
               <div className="w-2 h-2 rounded-full bg-[#96EA7A] animate-pulse" />
               <span className="text-xs text-white/80 font-medium">Live on Base</span>
             </div>
-            <h2 className="text-[2.5rem] xl:text-[3rem] font-black text-white leading-[1.1] tracking-tight mb-4">
+            <h2 className="text-display xl:text-[2.5rem] font-black text-white leading-[1.1] tracking-tight mb-4">
               Institutional
               <br />
               <span className="text-[#96EA7A]">yield</span>, accessible
@@ -91,7 +91,7 @@ export default function Login() {
               { label: 'Strategies', value: '3' },
             ].map((stat) => (
               <div key={stat.label}>
-                <p className="text-lg font-black text-white">{stat.value}</p>
+                <p className="text-heading-sm font-black text-white">{stat.value}</p>
                 <p className="text-xs text-white/40 font-medium">{stat.label}</p>
               </div>
             ))}
@@ -133,7 +133,7 @@ export default function Login() {
             Connect Wallet
           </button>
 
-          <p className="text-center text-[10px] text-[#9EB3A8] mt-2">
+          <p className="text-center text-caption text-[#9EB3A8] mt-2">
             Secure connection via WalletConnect protocol
           </p>
 
@@ -191,7 +191,7 @@ export default function Login() {
             </div>
             <button
               onClick={handleDemoLogin}
-              className="flex items-center gap-1.5 text-[11px] text-[#0E0F0F]/40 hover:text-[#0E0F0F] transition-colors"
+              className="flex items-center gap-1.5 text-caption text-[#0E0F0F]/40 hover:text-[#0E0F0F] transition-colors"
             >
               <span className="w-1.5 h-1.5 rounded-full bg-[#96EA7A]" />
               Demo

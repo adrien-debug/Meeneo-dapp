@@ -61,7 +61,7 @@ export function VaultCards({
               />
             </svg>
           </div>
-          <p className="text-lg font-bold text-[#0E0F0F] mb-2">No active position</p>
+          <p className="text-heading-sm font-bold text-[#0E0F0F] mb-2">No active position</p>
           <p className="text-sm text-[var(--muted)] mb-6 max-w-xs mx-auto">
             Subscribe to start earning yield on your assets
           </p>

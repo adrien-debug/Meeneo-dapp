@@ -27,7 +27,7 @@ const STRATEGY_COLORS: Record<string, string> = {
   usdc_yield: '#9EB3A8',
   btc_hedged: '#5B7A6E',
   btc_spot: '#F7931A',
-  btc_collateral_mining: '#D4A017',
+  btc_collateral_mining: '#96EA7A',
 }
 
 export default function Dashboard() {
@@ -37,6 +37,7 @@ export default function Dashboard() {
   const [chartStrategy, setChartStrategy] = useState<ChartStrategyFilter>('composite')
   const [chartMode, setChartMode] = useState<ChartMode>('cumulative')
   const [timeRange, setTimeRange] = useState('1Y')
+  const [allocationVaultFilter, setAllocationVaultFilter] = useState('all')
 
   const TOTAL_USER_DEPOSITED = useMemo(() => deposits.reduce((s, d) => s + d.amount, 0), [deposits])
   const TOTAL_USER_YIELD = useMemo(
@@ -127,6 +128,34 @@ export default function Dashboard() {
     [activeStrategies, TOTAL_USER_DEPOSITED],
   )
 
+  const subscribedVaultOptions = useMemo(() => {
+    const depositedSlugs = new Set(deposits.map((d) => d.vaultSlug))
+    return vaults
+      .filter((v) => depositedSlugs.has(v.slug))
+      .map((v) => ({ slug: v.slug, name: v.name, refNumber: v.refNumber }))
+  }, [vaults, deposits])
+
+  const filteredAllocationData = useMemo(() => {
+    if (allocationVaultFilter === 'all') return strategyAllocationData
+
+    const targetVault = vaults.find((v) => v.slug === allocationVaultFilter)
+    if (!targetVault) return strategyAllocationData
+
+    const vaultDeposited = deposits
+      .filter((d) => d.vaultSlug === allocationVaultFilter)
+      .reduce((s, d) => s + d.amount, 0)
+
+    if (vaultDeposited === 0) return []
+
+    return targetVault.strategies.map((s) => ({
+      name: s.label,
+      type: s.type,
+      value: +((s.allocation / 100) * vaultDeposited).toFixed(2),
+      pct: s.allocation,
+      color: s.color,
+    }))
+  }, [allocationVaultFilter, strategyAllocationData, vaults, deposits])
+
   const earliestDepositTs = useMemo(
     () => (deposits.length > 0 ? Math.min(...deposits.map((d) => d.depositTimestamp)) : null),
     [deposits],
@@ -170,7 +199,15 @@ export default function Dashboard() {
       cur.setMonth(cur.getMonth() + 1)
     }
 
-    const rangeMap: Record<string, number> = { '3M': 3, '6M': 6, '1Y': 12, ALL: 999 }
+    const rangeMap: Record<string, number> = {
+      '1M': 1,
+      '3M': 3,
+      '6M': 6,
+      '1Y': 12,
+      '2Y': 24,
+      '3Y': 36,
+      ALL: 999,
+    }
     const months = allMonths.slice(-(rangeMap[timeRange] ?? 12))
 
     return months.map((month, i) => {
@@ -322,7 +359,12 @@ export default function Dashboard() {
           {hasSubscriptions && (
             <>
               <div className="grid grid-cols-12 gap-4 section-gap">
-                <StrategyAllocation data={strategyAllocationData} />
+                <StrategyAllocation
+                  data={filteredAllocationData}
+                  vaultFilter={allocationVaultFilter}
+                  vaultOptions={subscribedVaultOptions}
+                  onVaultFilterChange={setAllocationVaultFilter}
+                />
                 <div className="col-span-12 lg:col-span-7">
                   <PositionsTable
                     deposits={deposits}

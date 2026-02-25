@@ -33,7 +33,7 @@ export function DashboardHero({
           sizes="100vw"
         />
       </div>
-      <div className="absolute inset-0 bg-gradient-to-b from-white/40 via-white/80 to-white pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-r from-white via-white/60 to-transparent pointer-events-none" />
 
       <div className="relative">
         <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6 mb-8">
@@ -73,7 +73,7 @@ export function DashboardHero({
               </div>
               <div className="text-left">
                 <p className="text-xs text-[var(--muted)] font-medium">Pending Yield</p>
-                <p className="text-lg font-black text-[#96EA7A]">{fmtUsd(totalPending)}</p>
+                <p className="text-heading-sm font-black text-[#96EA7A]">{fmtUsd(totalPending)}</p>
               </div>
               <svg
                 className="w-4 h-4 text-[#9EB3A8] group-hover:text-[#96EA7A] group-hover:translate-x-0.5 transition-all ml-1"
@@ -101,11 +101,11 @@ export function DashboardHero({
           ].map((kpi) => (
             <div
               key={kpi.label}
-              className="bg-white px-5 py-4 hover:bg-[#F2F2F2]/60 transition-colors"
+              className="bg-white py-6 sm:py-9 flex flex-col items-center justify-center hover:bg-[#F2F2F2]/60 transition-colors"
             >
-              <p className="kpi-label mb-1">{kpi.label}</p>
+              <p className="kpi-label mb-2">{kpi.label}</p>
               <p
-                className={`text-base font-black truncate ${'accent' in kpi && kpi.accent ? 'text-[#96EA7A]' : 'text-[#0E0F0F]'}`}
+                className={`text-[0.625rem] sm:text-[1.275rem] font-black leading-none truncate ${'accent' in kpi && kpi.accent ? 'text-[#96EA7A]' : 'text-[#0E0F0F]'}`}
               >
                 {kpi.value}
               </p>

@@ -190,7 +190,15 @@ export default function VaultDetail() {
       cur.setMonth(cur.getMonth() + 1)
     }
 
-    const rangeMap: Record<string, number> = { '3M': 3, '6M': 6, '1Y': 12, ALL: 999 }
+    const rangeMap: Record<string, number> = {
+      '1M': 1,
+      '3M': 3,
+      '6M': 6,
+      '1Y': 12,
+      '2Y': 24,
+      '3Y': 36,
+      ALL: 999,
+    }
     const months = allMonths.slice(-(rangeMap[timeRange] ?? 12))
 
     return months.map((month, i) => {
@@ -395,7 +403,7 @@ export default function VaultDetail() {
               <div className="absolute inset-0 pointer-events-none">
                 <Image
                   src={
-                    vault?.name === 'Hearst Hedge'
+                    vault?.name === 'Hearst Prime Yield'
                       ? '/assets/backgrounds/vault-card-1-bg.png'
                       : '/assets/backgrounds/vault-card-2-bg.png'
                   }
@@ -404,9 +412,10 @@ export default function VaultDetail() {
                   unoptimized
                   className="object-cover"
                   sizes="100vw"
+                  priority
                 />
               </div>
-              <div className="absolute inset-0 bg-gradient-to-b from-white/40 via-white/80 to-white pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-r from-white via-white/60 to-transparent pointer-events-none" />
 
               <div className="relative">
                 <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
@@ -431,41 +440,13 @@ export default function VaultDetail() {
                     </svg>
                   </button>
                   <div className="flex items-center gap-3 flex-1">
-                    <div className="w-12 h-12 rounded-2xl bg-[#96EA7A]/10 flex items-center justify-center shrink-0">
-                      <Image
-                        src="/assets/tokens/hearst.svg"
-                        alt={vault.name}
-                        width={28}
-                        height={28}
-                        className="rounded-full"
-                      />
-                    </div>
                     <div>
-                      <h1 className="text-[2rem] sm:text-[2.5rem] font-black text-[#0E0F0F] tracking-tight leading-none">
+                      <h1 className="text-display font-black text-[#0E0F0F] tracking-tight leading-none">
                         {vault.name}{' '}
-                        <span className="text-lg font-mono font-bold text-[#0E0F0F]">
+                        <span className="text-base font-mono font-bold text-[#0E0F0F]">
                           {vault.refNumber}
                         </span>
                       </h1>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        {vault.strategies.map((s) => (
-                          <div
-                            key={s.type}
-                            className="flex items-center gap-1 bg-[#0E0F0F]/10 rounded-full px-2 py-0.5"
-                          >
-                            <Image
-                              src={STRATEGY_ICONS[s.type] ?? ''}
-                              alt={s.label}
-                              width={10}
-                              height={10}
-                              className="rounded-full"
-                            />
-                            <span className="text-caption text-[#0E0F0F] font-medium">
-                              {s.allocation}%
-                            </span>
-                          </div>
-                        ))}
-                      </div>
                     </div>
                   </div>
                   {userPosition.totalPending > 0 && (
@@ -495,7 +476,7 @@ export default function VaultDetail() {
                         <p className="text-xs text-[#0E0F0F] font-medium">
                           {isClaimConfirmed ? 'Claimed!' : 'Pending Yield'}
                         </p>
-                        <p className="text-lg font-black text-[#96EA7A]">
+                        <p className="text-heading-sm font-black text-[#96EA7A]">
                           {fmtUsd(userPosition.totalPending)}
                         </p>
                       </div>
@@ -520,8 +501,8 @@ export default function VaultDetail() {
 
             {/* Body — white */}
             <div className="bg-white p-6 sm:p-8 rounded-b-3xl">
-              <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-px bg-[#9EB3A8]/10 rounded-xl overflow-hidden">
-                {[
+              {(() => {
+                const kpis: Array<{ label: string; value: string; accent?: boolean }> = [
                   {
                     label: 'Your Deposit',
                     value: userPosition.totalAmount > 0 ? fmtUsd(userPosition.totalAmount) : '—',
@@ -547,58 +528,35 @@ export default function VaultDetail() {
                         : '—',
                     accent: userPosition.totalAmount > 0,
                   },
-                  {
-                    label: 'Vault TVL',
-                    value: vault.currentTvl > 0 ? fmtUsd(vault.currentTvl) : '—',
-                  },
+                  ...(vault.currentTvl > 0
+                    ? [{ label: 'Vault TVL', value: fmtUsd(vault.currentTvl) }]
+                    : []),
                   {
                     label: 'Min Deposit',
                     value: fmtUsd(vault.minDeposit),
                   },
-                ].map((kpi) => (
-                  <div key={kpi.label} className="bg-white px-5 py-4">
-                    <p className="kpi-label mb-1">{kpi.label}</p>
-                    <p
-                      className={`text-lg font-black ${'accent' in kpi && kpi.accent ? 'text-[#96EA7A]' : 'text-[#0E0F0F]'}`}
-                    >
-                      {kpi.value}
-                    </p>
+                ]
+                return (
+                  <div
+                    className={`grid grid-cols-2 sm:grid-cols-3 ${kpis.length >= 7 ? 'lg:grid-cols-7' : 'lg:grid-cols-6'} gap-px bg-[#9EB3A8]/10 rounded-xl overflow-hidden`}
+                  >
+                    {kpis.map((kpi) => (
+                      <div
+                        key={kpi.label}
+                        className="bg-white py-6 sm:py-9 flex flex-col items-center justify-center"
+                      >
+                        <p className="kpi-label mb-2">{kpi.label}</p>
+                        <p
+                          className={`text-[0.625rem] sm:text-[1.275rem] font-black leading-none ${'accent' in kpi && kpi.accent ? 'text-[#96EA7A]' : 'text-[#0E0F0F]'}`}
+                        >
+                          {kpi.value}
+                        </p>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                )
+              })()}
             </div>
-          </div>
-
-          {/* ─── Strategy Tabs ─── */}
-          <div className="flex items-center gap-1.5 mb-5 overflow-x-auto pb-1 -mx-1 px-1">
-            <button
-              onClick={() => setSelectedStrategy(null)}
-              className={`px-4 py-2 text-sm font-semibold rounded-full transition-all whitespace-nowrap shrink-0 ${!selectedStrategy ? 'bg-[#0E0F0F] text-white' : 'bg-white text-[#9EB3A8] hover:text-[#0E0F0F] border border-[#9EB3A8]/20'}`}
-            >
-              Overview
-            </button>
-            {vault.strategies.map((s) => (
-              <button
-                key={s.type}
-                onClick={() => setSelectedStrategy(s.type)}
-                className={`px-4 py-2 text-sm font-semibold rounded-full transition-all flex items-center gap-2 whitespace-nowrap shrink-0 ${selectedStrategy === s.type ? 'text-[#0E0F0F] border-2 shadow-sm' : 'bg-white text-[#9EB3A8] hover:text-[#0E0F0F] border border-[#9EB3A8]/20'}`}
-                style={
-                  selectedStrategy === s.type
-                    ? { borderColor: s.color, backgroundColor: `${s.color}10` }
-                    : undefined
-                }
-              >
-                <Image
-                  src={STRATEGY_ICONS[s.type] ?? ''}
-                  alt={s.label}
-                  width={16}
-                  height={16}
-                  className="rounded-full"
-                />
-                {s.label}
-                <span className="text-xs font-bold opacity-50">{s.allocation}%</span>
-              </button>
-            ))}
           </div>
 
           <div className="space-y-4 mb-6">
@@ -612,7 +570,7 @@ export default function VaultDetail() {
                     <h3 className="card-title mb-5">Allocation</h3>
                     <div className="flex flex-col items-center flex-1 justify-center">
                       <div className="w-32 h-32 mb-5 relative">
-                        <ResponsiveContainer width="100%" height="100%">
+                        <ResponsiveContainer width="100%" height="100%" minWidth={0} debounce={1}>
                           <PieChart>
                             <Pie
                               data={allocationData}
@@ -632,8 +590,8 @@ export default function VaultDetail() {
                           <Image
                             src="/assets/tokens/hearst-logo.svg"
                             alt="Hearst logo"
-                            width={20}
-                            height={20}
+                            width={24}
+                            height={24}
                           />
                         </div>
                       </div>
@@ -941,8 +899,7 @@ export default function VaultDetail() {
                                 </div>
 
                                 {(() => {
-                                  const exitFee = (dep.amount * vault.fees.exit) / 100
-                                  const netReceive = dep.amount + dep.pendingYield - exitFee
+                                  const netReceive = dep.amount + dep.pendingYield
                                   return (
                                     <>
                                       <div className="space-y-0">
@@ -962,19 +919,11 @@ export default function VaultDetail() {
                                             </span>
                                           </div>
                                         )}
-                                        <div className="flex justify-between py-2 border-b border-[#9EB3A8]/8">
-                                          <span className="text-xs text-[#9EB3A8]">
-                                            Exit Fee ({vault.fees.exit}%)
-                                          </span>
-                                          <span className="text-sm font-bold text-[#0E0F0F]">
-                                            −{fmtUsd(exitFee)}
-                                          </span>
-                                        </div>
                                         <div className="flex justify-between items-center pt-3">
                                           <span className="text-sm font-semibold text-[#0E0F0F]">
                                             You Receive
                                           </span>
-                                          <span className="text-lg font-black text-[#0E0F0F]">
+                                          <span className="text-heading-sm font-black text-[#0E0F0F]">
                                             {fmtUsd(netReceive)}
                                           </span>
                                         </div>
@@ -1054,33 +1003,25 @@ export default function VaultDetail() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 p-6 gap-6">
                     <div className="space-y-0">
                       {[
-                        { label: 'Management', value: `${vault.fees.management}%`, sub: 'Annual' },
                         {
-                          label: 'Performance',
-                          value: `${vault.fees.performance}%`,
-                          sub: 'On yield',
+                          label: 'Management fee',
+                          value: `${vault.fees.management}% annually`,
                         },
-                        { label: 'Exit', value: `${vault.fees.exit}%`, sub: 'On principal' },
                         {
-                          label: 'Early Exit',
-                          value: `${vault.fees.earlyExit}%`,
-                          sub: 'Penalty',
-                          warn: true,
+                          label: 'Performance fee',
+                          value: `${vault.fees.performance}% above High-Water Mark`,
+                        },
+                        {
+                          label: 'Upfront fee',
+                          value: '0%',
                         },
                       ].map((fee, idx) => (
                         <div
                           key={fee.label}
                           className={`flex items-center justify-between py-3 border-b border-[#9EB3A8]/8 last:border-0 px-3 rounded-lg transition-colors ${idx % 2 === 1 ? 'bg-[#F2F2F2]/50 hover:bg-white' : 'hover:bg-[#F2F2F2]/50'}`}
                         >
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm text-[#0E0F0F]">{fee.label}</span>
-                            <span className="text-caption text-[#9EB3A8]">({fee.sub})</span>
-                          </div>
-                          <span
-                            className={`text-sm font-bold ${'warn' in fee && fee.warn ? 'text-[#E8A838]' : 'text-[#0E0F0F]'}`}
-                          >
-                            {fee.value}
-                          </span>
+                          <span className="text-sm text-[#0E0F0F]">{fee.label}</span>
+                          <span className="text-sm font-bold text-[#0E0F0F]">{fee.value}</span>
                         </div>
                       ))}
                     </div>
@@ -1093,7 +1034,6 @@ export default function VaultDetail() {
                         },
                         { label: 'Network', value: 'Base (8453)' },
                         { label: 'Deposit Token', value: vault.depositToken },
-                        { label: 'Total Shares', value: fmt(vault.totalShares), mono: true },
                       ].map((p, idx) => (
                         <div
                           key={p.label}
@@ -1146,17 +1086,17 @@ export default function VaultDetail() {
                   <div className="grid grid-cols-3 gap-px bg-[#9EB3A8]/10 rounded-xl overflow-hidden mb-4">
                     <div className="bg-white px-5 py-4">
                       <p className="kpi-label mb-1">Allocation</p>
-                      <p className="text-lg font-black text-[#0E0F0F]">{strategy.allocation}%</p>
+                      <p className="text-base font-black text-[#0E0F0F]">{strategy.allocation}%</p>
                     </div>
                     <div className="bg-white px-5 py-4">
                       <p className="kpi-label mb-1">APY Range</p>
-                      <p className="text-lg font-black" style={{ color: strategy.color }}>
+                      <p className="text-base font-black" style={{ color: strategy.color }}>
                         {strategy.apyRange[0]}–{strategy.apyRange[1]}%
                       </p>
                     </div>
                     <div className="bg-white px-5 py-4">
                       <p className="kpi-label mb-1">TVL Allocated</p>
-                      <p className="text-lg font-black text-[#0E0F0F]">
+                      <p className="text-base font-black text-[#0E0F0F]">
                         {fmtUsd(MOCK_PROTOCOL_STATS.tvlByStrategy[strategy.type])}
                       </p>
                     </div>
@@ -1179,7 +1119,7 @@ export default function VaultDetail() {
                     <h3 className="card-title mb-5">Protocol Breakdown</h3>
                     <div className="flex items-center gap-6">
                       <div className="w-24 h-24 shrink-0">
-                        <ResponsiveContainer width="100%" height="100%">
+                        <ResponsiveContainer width="100%" height="100%" minWidth={0} debounce={1}>
                           <PieChart>
                             <Pie
                               data={protocolBreakdown}
@@ -1223,13 +1163,30 @@ export default function VaultDetail() {
                 )}
 
                 <div className={`${CARD} overflow-hidden`}>
-                  <div className="px-6 py-4 border-b border-[#9EB3A8]/10">
-                    <h3 className="card-title">{strategy.label} Performance</h3>
-                    <p className="text-xs text-[#9EB3A8] mt-0.5">Monthly yield %</p>
+                  <div className="px-6 py-4 border-b border-[#9EB3A8]/10 flex items-center justify-between flex-wrap gap-3">
+                    <div>
+                      <h3 className="card-title">{strategy.label} Performance</h3>
+                      <p className="text-xs text-[#9EB3A8] mt-0.5">Monthly yield %</p>
+                    </div>
+                    <div className="flex items-center gap-1 bg-[#F2F2F2] rounded-full p-1">
+                      {['1M', '3M', '6M', '1Y', '2Y', '3Y', 'ALL'].map((r) => (
+                        <button
+                          key={r}
+                          onClick={() => setTimeRange(r)}
+                          className={`px-2.5 py-1 rounded-full text-caption font-bold transition-all ${
+                            timeRange === r
+                              ? 'bg-white text-[#0E0F0F] shadow-sm'
+                              : 'text-[#9EB3A8] hover:text-[#0E0F0F]'
+                          }`}
+                        >
+                          {r}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                   <div className="p-6 pb-3 bg-gradient-to-b from-white to-[#FAFBFA]">
                     <div className="h-56 lg:h-64">
-                      <ResponsiveContainer width="100%" height="100%">
+                      <ResponsiveContainer width="100%" height="100%" minWidth={0} debounce={1}>
                         <AreaChart
                           data={activeChartData}
                           margin={{ top: 5, right: 5, bottom: 0, left: -15 }}

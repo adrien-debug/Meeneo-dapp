@@ -17,7 +17,7 @@ export function ChartTooltip({
 
   return (
     <div className="bg-white/95 backdrop-blur-md border border-[#9EB3A8]/15 text-[#0E0F0F] px-4 py-3 rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.08)] text-xs min-w-[180px]">
-      <p className="font-semibold text-[#9EB3A8] mb-2.5 pb-1.5 border-b border-[#9EB3A8]/10 text-[10px] uppercase tracking-wider">
+      <p className="font-semibold text-[#9EB3A8] mb-2.5 pb-1.5 border-b border-[#9EB3A8]/10 text-caption uppercase tracking-wider">
         {label}
       </p>
       <div className="space-y-1.5">

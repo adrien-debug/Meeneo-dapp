@@ -9,11 +9,11 @@ import type {
 // ─── Vault Definitions ───────────────────────────────────────────
 
 export const HEARST_VAULT: VaultConfig = {
-  slug: 'hearst-hedge',
+  slug: 'hearst-prime-yield',
   refNumber: '#01',
-  name: 'Hearst Hedge',
+  name: 'Hearst Prime Yield',
   description:
-    'Multi-strategy balanced vault — RWA Mining, USDC Yield, BTC Hedged. ~8–15% annual yield distributed monthly. Withdraw at 36% target or 3 years.',
+    'Diversified income vault delivering steady monthly yield with built-in volatility protection across market cycles.',
   contractAddress: '0xd8d294714F5b1A1104CFE75C0Bb4ceF547a05124',
   strategies: [
     {
@@ -51,11 +51,11 @@ export const HEARST_VAULT: VaultConfig = {
     },
   ],
   lockPeriodMonths: 36,
-  yieldCliffMonths: 12,
-  fees: { management: 1.5, performance: 10, exit: 0.1, earlyExit: 5 },
-  tvlCap: 50_000_000,
-  currentTvl: 12_480_000,
-  totalShares: 12_150_000,
+  yieldCliffMonths: 0,
+  fees: { management: 1.5, performance: 15, exit: 0.1, earlyExit: 5 },
+  tvlCap: 0,
+  currentTvl: 0,
+  totalShares: 0,
   depositToken: 'USDC',
   chainId: 8453,
   status: 'active',
@@ -64,11 +64,11 @@ export const HEARST_VAULT: VaultConfig = {
 }
 
 export const HEARST_BTC_LEVERAGE: VaultConfig = {
-  slug: 'hearst-alpha',
+  slug: 'hearst-btc-growth',
   refNumber: '#02',
-  name: 'Hearst Alpha',
+  name: 'Hearst BTC Growth',
   description:
-    '100% BTC spot acquisition with 30% collateral borrowing deployed to mining infrastructure. ~15% annual yield. Higher risk, higher reward.',
+    'Bitcoin growth strategy enhanced by mining-backed yield targeting higher long-term returns with elevated exposure.',
   contractAddress: '0xa1b2c3d4e5f60718293a4b5c6d7e8f9001234567',
   strategies: [
     {
@@ -89,12 +89,12 @@ export const HEARST_BTC_LEVERAGE: VaultConfig = {
       protocols: ['Hearst Mining', 'Aave', 'Morpho'],
       apyRange: [18, 25],
       riskLevel: 'medium-high',
-      color: '#D4A017',
+      color: '#96EA7A',
       description:
         'BTC used as collateral to borrow stablecoins deployed into mining operations. Leveraged yield on top of spot exposure.',
     },
   ],
-  lockPeriodMonths: 24,
+  lockPeriodMonths: 36,
   yieldCliffMonths: 6,
   fees: { management: 2, performance: 15, exit: 0.15, earlyExit: 8 },
   tvlCap: 30_000_000,
@@ -122,16 +122,16 @@ const YEAR = 365 * DAY
 // Withdraw: when cumulative yield reaches 36% target OR 3 years elapsed (whichever first)
 // progressPercent = months elapsed / 36 months × 100 (capped at 100)
 export const MOCK_USER_DEPOSITS: UserDeposit[] = [
-  // Hearst Hedge — 18mo in, cliff passed (12mo), yield claimable since 6mo
-  // $1,100,000 × ~11.5% APY / 12 × 6mo claimable = ~$63,250 realistic
+  // Hearst Prime Yield — 18mo in, no cliff, yield claimable from month 1
+  // $1,100,000 × ~12% APY / 12 × 18mo = ~$198,000 realistic
   {
     id: 1,
-    vaultSlug: 'hearst-hedge',
+    vaultSlug: 'hearst-prime-yield',
     amount: 1_100_000,
     depositTimestamp: NOW - 18 * MONTH,
     maturityTimestamp: NOW - 18 * MONTH + 3 * YEAR,
-    yieldCliffTimestamp: NOW - 18 * MONTH + YEAR,
-    claimedYield: 56_000,
+    yieldCliffTimestamp: NOW - 18 * MONTH,
+    claimedYield: 180_000,
     pendingYield: 11_000,
     lockStatus: 'active',
     progressPercent: 50,
@@ -258,12 +258,12 @@ export const MOCK_MONTHLY_PERFORMANCE: MonthlyPerformance[] = [
 
 // ─── Protocol Stats ──────────────────────────────────────────────
 
-// TVL by strategy — Hearst Hedge only (12.48M TVL, 40/30/30 allocation)
+// TVL by strategy — no TVL tracking for Prime Yield
 export const MOCK_PROTOCOL_STATS: ProtocolStats = {
   tvlByStrategy: {
-    rwa_mining: 4_992_000,
-    usdc_yield: 3_744_000,
-    btc_hedged: 3_744_000,
+    rwa_mining: 0,
+    usdc_yield: 0,
+    btc_hedged: 0,
     btc_spot: 0,
     btc_collateral_mining: 0,
   },
@@ -310,35 +310,35 @@ export const MOCK_VAULT_ACTIVITY: VaultActivity[] = [
     type: 'rebalance',
     timestamp: NOW - 2 * DAY,
     description: 'RWA Mining 42% → 40%, USDC Yield 28% → 30%',
-    vaultSlug: 'hearst-hedge',
+    vaultSlug: 'hearst-prime-yield',
   },
   {
     id: 'a-2',
     type: 'distribute',
     timestamp: NOW - 8 * DAY,
     description: 'Yield distributed: $18,000',
-    vaultSlug: 'hearst-hedge',
+    vaultSlug: 'hearst-prime-yield',
   },
   {
     id: 'a-3',
     type: 'rebalance',
     timestamp: NOW - 15 * DAY,
     description: 'BTC Hedged 32% → 30%, USDC Yield 28% → 30%',
-    vaultSlug: 'hearst-hedge',
+    vaultSlug: 'hearst-prime-yield',
   },
   {
     id: 'a-4',
     type: 'rebalance',
     timestamp: NOW - 35 * DAY,
     description: 'RWA Mining 38% → 40%, BTC Hedged 32% → 30%',
-    vaultSlug: 'hearst-hedge',
+    vaultSlug: 'hearst-prime-yield',
   },
   {
     id: 'a-5',
     type: 'distribute',
     timestamp: NOW - 45 * DAY,
     description: 'Yield distributed: $16,500',
-    vaultSlug: 'hearst-hedge',
+    vaultSlug: 'hearst-prime-yield',
   },
 ]
 

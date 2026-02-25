@@ -50,13 +50,13 @@ export function PerformanceTable({ chartData, activeStrategies }: PerformanceTab
           </colgroup>
           <thead>
             <tr className="border-b border-[#9EB3A8]/10 bg-[#FAFBFA]">
-              <th className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted)] text-left px-4 py-3 sticky left-0 bg-[#FAFBFA] z-10">
+              <th className="text-caption font-bold uppercase tracking-widest text-[var(--muted)] text-left px-4 py-3 sticky left-0 bg-[#FAFBFA] z-10">
                 Month
               </th>
               {activeStrategies.map((s) => (
                 <th
                   key={s.type}
-                  className="text-[10px] font-bold uppercase tracking-widest text-[var(--muted)] text-center px-1 py-3"
+                  className="text-caption font-bold uppercase tracking-widest text-[var(--muted)] text-center px-1 py-3"
                 >
                   <div className="flex items-center justify-center gap-1">
                     <div
@@ -67,7 +67,7 @@ export function PerformanceTable({ chartData, activeStrategies }: PerformanceTab
                   </div>
                 </th>
               ))}
-              <th className="text-[10px] font-black uppercase tracking-widest text-[var(--foreground)] text-center px-1 py-3">
+              <th className="text-caption font-black uppercase tracking-widest text-[var(--foreground)] text-center px-1 py-3">
                 Comp.
               </th>
             </tr>

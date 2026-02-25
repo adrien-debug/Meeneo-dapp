@@ -56,7 +56,7 @@ export function MonthlyDistribution({ chartData, quantMetrics }: MonthlyDistribu
           <p className="text-xs text-[var(--muted)]">Composite monthly yield</p>
         </div>
         <div className="text-right">
-          <p className="text-lg font-black text-[#96EA7A] leading-none">
+          <p className="text-heading-sm font-black text-[#96EA7A] leading-none">
             {fmtPercent(quantMetrics.totalYield)}
           </p>
           <p className="text-xs text-[var(--muted)] mt-0.5">Last 6 months</p>

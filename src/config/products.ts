@@ -47,7 +47,7 @@ export const PRODUCTS: LegacyProduct[] = [
     chainId: 8453,
     features: [
       'Multi-strategy allocation (RWA, USDC, BTC)',
-      '3-year lock, yield after 1 year',
+      '3-year lock, yield from day 1, vault closes at 36% target',
       'Audited smart contracts on Base',
       'Institutional-grade custody',
     ],

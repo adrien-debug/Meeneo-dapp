@@ -158,8 +158,7 @@ export default function WithdrawPage() {
               {maturedDeposits.map((dep) => {
                 const vault = demo.getVaultBySlug(dep.vaultSlug)
                 if (!vault) return null
-                const exitFee = (dep.amount * vault.fees.exit) / 100
-                const netReceive = dep.amount + dep.pendingYield - exitFee
+                const netReceive = dep.amount + dep.pendingYield
                 const wasWithdrawn = withdrawnIds.has(dep.id)
 
                 return (
@@ -196,12 +195,6 @@ export default function WithdrawPage() {
                           </span>
                         </div>
                       )}
-                      <div className="flex justify-between py-2 border-b border-[#9EB3A8]/8">
-                        <span className="text-xs text-[#9EB3A8]">
-                          Exit Fee ({vault.fees.exit}%)
-                        </span>
-                        <span className="text-sm font-bold text-[#0E0F0F]">−{fmtUsd(exitFee)}</span>
-                      </div>
                       <div className="flex justify-between items-center pt-3">
                         <span className="text-sm font-semibold text-[#0E0F0F]">You Receive</span>
                         <span className="text-lg font-black text-[#0E0F0F]">

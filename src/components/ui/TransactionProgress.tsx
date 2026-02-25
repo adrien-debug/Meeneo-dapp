@@ -167,7 +167,7 @@ export function TransactionProgress({
                         )}
                       </div>
                       <span
-                        className={`text-[10px] font-semibold mt-1.5 text-center leading-tight ${
+                        className={`text-caption font-semibold mt-1.5 text-center leading-tight ${
                           isComplete || isCurrent ? 'text-[#0E0F0F]' : 'text-[#9EB3A8]'
                         }`}
                       >
@@ -196,10 +196,10 @@ export function TransactionProgress({
             <div className="w-4 h-4 rounded-full bg-[#96EA7A]/20 flex items-center justify-center shrink-0">
               <div className="w-1.5 h-1.5 rounded-full bg-[#96EA7A]" />
             </div>
-            <span className="text-[10px] font-mono text-[#0E0F0F]/60 truncate flex-1">
+            <span className="text-caption font-mono text-[#0E0F0F]/60 truncate flex-1">
               0x{Array.from({ length: 16 }, (_, i) => ((i * 7 + 3) % 16).toString(16)).join('')}...
             </span>
-            <span className="text-[10px] font-bold text-[#9EB3A8] bg-white px-1.5 py-0.5 rounded-md border border-[#9EB3A8]/15">
+            <span className="text-caption font-bold text-[#9EB3A8] bg-white px-1.5 py-0.5 rounded-md border border-[#9EB3A8]/15">
               Base
             </span>
           </div>

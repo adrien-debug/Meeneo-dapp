@@ -142,7 +142,7 @@ export default function ProductPage() {
                   sizes="100vw"
                 />
               </div>
-              <div className="absolute inset-0 bg-gradient-to-b from-white/40 via-white/80 to-white pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-r from-white via-white/60 to-transparent pointer-events-none" />
 
               <div className="relative">
                 <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6 lg:min-h-[74px] mb-8">
@@ -173,10 +173,12 @@ export default function ProductPage() {
                   ].map((kpi) => (
                     <div
                       key={kpi.label}
-                      className="bg-white px-5 py-4 hover:bg-[#F2F2F2]/60 transition-colors"
+                      className="bg-white py-6 sm:py-9 flex flex-col items-center justify-center hover:bg-[#F2F2F2]/60 transition-colors"
                     >
-                      <p className="kpi-label mb-1">{kpi.label}</p>
-                      <p className="text-base font-black text-[#0E0F0F] truncate">{kpi.value}</p>
+                      <p className="kpi-label mb-2">{kpi.label}</p>
+                      <p className="text-[0.625rem] sm:text-[1.275rem] font-black leading-none text-[#0E0F0F] truncate">
+                        {kpi.value}
+                      </p>
                     </div>
                   ))}
                 </div>
@@ -248,14 +250,14 @@ export default function ProductPage() {
                   <button
                     key={v.slug}
                     onClick={() => selectProduct(v)}
-                    className="text-left hover:-translate-y-1.5 transition-all duration-300 group relative overflow-hidden cursor-pointer flex flex-col rounded-3xl shadow-md hover:shadow-2xl border border-transparent hover:border-[#96EA7A]/30"
+                    className="text-left transition-all duration-300 group relative overflow-hidden cursor-pointer flex flex-col rounded-3xl shadow-md border border-[var(--card-border)]"
                   >
                     {/* Header */}
                     <div className="px-6 sm:px-8 pt-6 sm:pt-8 pb-6 rounded-t-3xl relative overflow-hidden">
                       <div className="absolute inset-0 pointer-events-none">
                         <Image
                           src={
-                            v.name === 'Hearst Hedge'
+                            v.name === 'Hearst Prime Yield'
                               ? '/assets/backgrounds/vault-card-1-bg.png'
                               : '/assets/backgrounds/vault-card-2-bg.png'
                           }
@@ -264,9 +266,10 @@ export default function ProductPage() {
                           unoptimized
                           className="object-cover"
                           sizes="50vw"
+                          priority={v.name === 'Hearst Prime Yield'}
                         />
                       </div>
-                      <div className="absolute inset-0 bg-gradient-to-b from-white/40 via-white/80 to-white pointer-events-none" />
+                      <div className="absolute inset-0 bg-gradient-to-r from-white via-white/60 to-transparent pointer-events-none" />
                       <div className="relative">
                         <div className="flex items-center justify-between mb-4">
                           <div className="flex items-center gap-2">
@@ -281,11 +284,11 @@ export default function ProductPage() {
                             {v.refNumber}
                           </span>
                         </div>
-                        <h3 className="text-heading-sm sm:text-heading font-black text-[#0E0F0F] mb-5">
+                        <h3 className="text-heading-sm sm:text-heading font-bold text-[#0E0F0F] mb-5">
                           {v.name}
                         </h3>
                         <div className="flex items-baseline gap-2">
-                          <span className="text-display sm:text-[3.5rem] font-black text-[#0E0F0F] tracking-tighter leading-none">
+                          <span className="text-display sm:text-[2.5rem] font-black text-[#0E0F0F] tracking-tight leading-none">
                             {v.compositeApy[0] === v.compositeApy[1]
                               ? v.compositeApy[0]
                               : `${v.compositeApy[0]}–${v.compositeApy[1]}`}
@@ -313,12 +316,15 @@ export default function ProductPage() {
                           {
                             icon: 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6',
                             title: 'Target Yield',
-                            desc: `${v.compositeApy[0]}–${v.compositeApy[1]}% APY, monthly`,
+                            desc: `${v.compositeApy[0] === v.compositeApy[1] ? v.compositeApy[0] : `${v.compositeApy[0]}–${v.compositeApy[1]}`}% APY, monthly`,
                           },
                           {
                             icon: 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z',
                             title: `${v.lockPeriodMonths / 12} Years Lock`,
-                            desc: 'Withdraw at 36% or maturity',
+                            desc:
+                              v.yieldCliffMonths > 0
+                                ? `Yield after ${v.yieldCliffMonths}mo, withdraw at 36% or maturity`
+                                : 'Withdraw at 36% target or maturity',
                           },
                           {
                             icon: 'M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z',
@@ -391,7 +397,7 @@ export default function ProductPage() {
                           { label: 'Min Deposit', value: fmtUsd(v.minDeposit) },
                           {
                             label: 'Fees',
-                            value: `${v.fees.management}% + ${v.fees.performance}%`,
+                            value: `${v.fees.management}% mgmt · ${v.fees.performance}% perf`,
                           },
                         ].map((m) => (
                           <div key={m.label} className="bg-white px-3 py-2.5 text-center">
@@ -406,10 +412,10 @@ export default function ProductPage() {
 
                     {/* CTA */}
                     <div className="bg-white px-6 sm:px-8 pb-5 sm:pb-6 pt-2 rounded-b-3xl flex justify-center">
-                      <div className="h-10 w-full max-w-[200px] rounded-full bg-[#96EA7A] text-[#0E0F0F] font-bold text-small flex items-center justify-center gap-1.5 group-hover:bg-[#7ED066] transition-all duration-200 group-hover:shadow-lg group-hover:shadow-[#96EA7A]/20">
+                      <div className="h-10 w-full max-w-[200px] rounded-full bg-[#96EA7A] text-[#0E0F0F] font-bold text-small flex items-center justify-center gap-1.5 transition-all duration-200">
                         Subscribe Now
                         <svg
-                          className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform"
+                          className="w-3.5 h-3.5"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -439,7 +445,7 @@ export default function ProductPage() {
                 <div className="absolute inset-0 pointer-events-none">
                   <Image
                     src={
-                      vault.name === 'Hearst Hedge'
+                      vault.name === 'Hearst Prime Yield'
                         ? '/assets/backgrounds/vault-card-1-bg.png'
                         : '/assets/backgrounds/vault-card-2-bg.png'
                     }
@@ -450,7 +456,7 @@ export default function ProductPage() {
                     sizes="100vw"
                   />
                 </div>
-                <div className="absolute inset-0 bg-gradient-to-b from-white/40 via-white/80 to-white pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-r from-white via-white/60 to-transparent pointer-events-none" />
 
                 <div className="relative">
                   <div className="mb-4 sm:mb-6">
@@ -476,9 +482,9 @@ export default function ProductPage() {
                       Back
                     </button>
                     <div className="flex items-center gap-2 sm:gap-3 mb-1 flex-wrap">
-                      <h1 className="text-2xl sm:text-[2.75rem] md:text-[3.25rem] font-black text-[#0E0F0F] tracking-tight leading-none">
+                      <h1 className="text-display sm:text-[2.5rem] font-black text-[#0E0F0F] tracking-tight leading-none">
                         {vault.name}{' '}
-                        <span className="text-base font-mono font-bold text-[#0E0F0F]">
+                        <span className="text-sm font-mono font-bold text-[#0E0F0F]">
                           {vault.refNumber}
                         </span>
                       </h1>
@@ -486,7 +492,7 @@ export default function ProductPage() {
                         Active
                       </span>
                     </div>
-                    <p className="text-xs sm:text-sm text-[#0E0F0F] mt-1 max-w-lg">
+                    <p className="text-xs sm:text-sm text-[#0E0F0F]/70 mt-1 max-w-lg leading-relaxed">
                       {vault.description}
                     </p>
                   </div>
@@ -502,10 +508,13 @@ export default function ProductPage() {
                       { label: 'Min Deposit', value: fmtUsd(vault.minDeposit) },
                       { label: 'Deposit Token', value: vault.depositToken },
                     ].map((kpi) => (
-                      <div key={kpi.label} className="bg-white px-3 sm:px-5 py-3 sm:py-4">
-                        <p className="kpi-label mb-0.5 sm:mb-1">{kpi.label}</p>
+                      <div
+                        key={kpi.label}
+                        className="bg-white py-6 sm:py-9 flex flex-col items-center justify-center"
+                      >
+                        <p className="kpi-label mb-2">{kpi.label}</p>
                         <p
-                          className={`text-base sm:text-lg font-black ${'accent' in kpi && kpi.accent ? 'text-[#96EA7A]' : 'text-[#0E0F0F]'}`}
+                          className={`text-[0.625rem] sm:text-[1.275rem] font-black leading-none ${'accent' in kpi && kpi.accent ? 'text-[#96EA7A]' : 'text-[#0E0F0F]'}`}
                         >
                           {kpi.value}
                         </p>
@@ -517,6 +526,13 @@ export default function ProductPage() {
 
               {/* Strategies + Allocation */}
               <h2 className="section-title mb-3 sm:mb-4">Strategy Breakdown</h2>
+              <div className={`${CARD} p-4 sm:p-6 mb-4`}>
+                <p className="text-sm sm:text-base text-[var(--foreground)]/80 leading-relaxed">
+                  {vault.strategies.length === 3
+                    ? `The ${vault.name} vault deploys capital across three complementary pockets engineered to deliver consistent monthly income while mitigating downside risk. RWA Mining captures real-economy yield from tokenized mining infrastructure, USDC Yield provides a stable income floor through institutional DeFi lending, and BTC Hedged generates asymmetric returns via delta-neutral positions. This tri-pillar architecture smooths volatility across market cycles, targeting a composite ${fmtApy(vault.compositeApy)} APY over ${vault.lockPeriodMonths / 12} years. Yield is distributed monthly from day one — if cumulative returns reach 36% before maturity, the vault closes and principal is returned.`
+                    : `The ${vault.name} vault is a conviction-driven allocation designed for investors seeking amplified Bitcoin exposure backed by real mining economics. 70% of capital is held in institutional-grade BTC spot custody to capture full price appreciation, while 30% is deployed as collateral into mining operations — generating leveraged yield on top of directional exposure. This dual-engine approach targets ${fmtApy(vault.compositeApy)} APY by combining BTC upside with mining-backed cash flow over a ${vault.lockPeriodMonths / 12}-year horizon.`}
+                </p>
+              </div>
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch mb-4">
                 <div className="lg:col-span-8">
                   <div className={`${CARD} overflow-hidden h-full`}>
@@ -587,7 +603,7 @@ export default function ProductPage() {
                     <h3 className="card-title mb-5">Allocation</h3>
                     <div className="flex-1 flex flex-col items-center justify-center">
                       <div className="w-36 h-36 mb-5 relative">
-                        <ResponsiveContainer width="100%" height="100%">
+                        <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                           <PieChart>
                             <Pie
                               data={allocationData}
@@ -738,9 +754,14 @@ export default function ProductPage() {
                         accent: true,
                       },
                       { label: 'Lock Period', value: `${vault.lockPeriodMonths} months` },
-                      { label: 'Yield Cliff', value: `${vault.yieldCliffMonths} months` },
-                      { label: 'Yield Distribution', value: 'Monthly' },
-                      { label: 'Withdraw Condition', value: '36% target or 3Y' },
+                      {
+                        label: 'Yield Distribution',
+                        value:
+                          vault.yieldCliffMonths > 0
+                            ? `Monthly (after ${vault.yieldCliffMonths}mo cliff)`
+                            : 'Monthly from day 1',
+                      },
+                      { label: 'Withdraw Condition', value: '36% target or 3Y (first reached)' },
                       { label: 'Network', value: 'Base' },
                     ].map((row, idx) => (
                       <div
@@ -781,7 +802,7 @@ export default function ProductPage() {
                     <div className="absolute inset-0 pointer-events-none">
                       <Image
                         src={
-                          vault.name === 'Hearst Hedge'
+                          vault.name === 'Hearst Prime Yield'
                             ? '/assets/backgrounds/vault-card-1-bg.png'
                             : '/assets/backgrounds/vault-card-2-bg.png'
                         }
@@ -792,7 +813,7 @@ export default function ProductPage() {
                         sizes="100vw"
                       />
                     </div>
-                    <div className="absolute inset-0 bg-gradient-to-b from-white/40 via-white/80 to-white pointer-events-none" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-white via-white/60 to-transparent pointer-events-none" />
                     <div className="relative">
                       <button
                         onClick={() => setStep('overview')}
@@ -817,7 +838,7 @@ export default function ProductPage() {
                       </button>
                       <h2 className="text-heading-sm font-bold text-[#0E0F0F]">
                         Deposit into {vault.name}{' '}
-                        <span className="text-sm font-mono font-bold text-[#9EB3A8]">
+                        <span className="text-xs font-mono font-bold text-[#9EB3A8]">
                           {vault.refNumber}
                         </span>
                       </h2>
@@ -874,7 +895,7 @@ export default function ProductPage() {
                           value={amount}
                           onChange={(e) => setAmount(e.target.value)}
                           placeholder={`Min ${fmtUsd(vault.minDeposit)}`}
-                          className="w-full h-14 sm:h-16 px-4 sm:px-5 pr-16 sm:pr-20 rounded-2xl border border-[#9EB3A8]/20 bg-[#F2F2F2] text-[#0E0F0F] font-black text-xl sm:text-2xl focus:outline-none focus:ring-2 focus:ring-[#96EA7A] focus:border-transparent transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                          className="w-full h-14 sm:h-16 px-4 sm:px-5 pr-16 sm:pr-20 rounded-2xl border border-[#9EB3A8]/20 bg-[#F2F2F2] text-[#0E0F0F] font-black text-heading-sm sm:text-heading focus:outline-none focus:ring-2 focus:ring-[#96EA7A] focus:border-transparent transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                         <div className="absolute right-4 sm:right-5 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
                           <Image
@@ -916,7 +937,7 @@ export default function ProductPage() {
                         },
                         {
                           label: 'Yield Claim',
-                          value: `Monthly after ${vault.yieldCliffMonths}-month cliff`,
+                          value: 'Monthly',
                           accent: true,
                         },
                         { label: 'Management Fee', value: `${vault.fees.management}%` },
@@ -934,27 +955,6 @@ export default function ProductPage() {
                           </span>
                         </div>
                       ))}
-                    </div>
-
-                    {/* Early exit warning */}
-                    <div className="p-3 sm:p-3.5 bg-[#E8A838]/8 rounded-xl mb-4 sm:mb-6 flex items-start gap-2">
-                      <svg
-                        className="w-4 h-4 text-[#E8A838] shrink-0 mt-0.5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 16.5c-.77.833.192 2.5 1.732 2.5z"
-                        />
-                      </svg>
-                      <p className="text-xs text-[#E8A838] font-medium leading-relaxed">
-                        Early withdrawal before maturity incurs a {vault.fees.earlyExit}% penalty on
-                        principal.
-                      </p>
                     </div>
 
                     {/* Actions */}
@@ -995,12 +995,15 @@ export default function ProductPage() {
                       {
                         n: '2',
                         title: 'Earn Monthly',
-                        desc: `~${fmtApy(vault.compositeApy)} annual yield, claimable after ${vault.yieldCliffMonths}-month cliff.`,
+                        desc:
+                          vault.yieldCliffMonths > 0
+                            ? `~${fmtApy(vault.compositeApy)} annual yield, distributed monthly after ${vault.yieldCliffMonths}mo cliff.`
+                            : `~${fmtApy(vault.compositeApy)} annual yield, distributed monthly from day 1.`,
                       },
                       {
                         n: '3',
                         title: 'Withdraw',
-                        desc: `At 36% cumulative yield or after ${vault.lockPeriodMonths / 12} years.`,
+                        desc: `When 36% target is reached or after ${vault.lockPeriodMonths / 12} years — whichever comes first.`,
                       },
                     ].map((s) => (
                       <div key={s.n} className="flex gap-3">
@@ -1013,55 +1016,6 @@ export default function ProductPage() {
                           </p>
                           <p className="text-xs text-[#9EB3A8] leading-relaxed">{s.desc}</p>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className={`${CARD} p-4 sm:p-6`}>
-                  <h3 className="card-title mb-4">Fees</h3>
-                  <div className="space-y-2">
-                    {[
-                      {
-                        label: 'Management',
-                        value: `${vault.fees.management}%`,
-                        sub: 'annual',
-                        icon: '◇',
-                      },
-                      {
-                        label: 'Performance',
-                        value: `${vault.fees.performance}%`,
-                        sub: 'on yield',
-                        icon: '△',
-                      },
-                      {
-                        label: 'Exit',
-                        value: `${vault.fees.exit}%`,
-                        sub: 'on principal',
-                        icon: '○',
-                      },
-                      {
-                        label: 'Early Exit',
-                        value: `${vault.fees.earlyExit}%`,
-                        sub: 'penalty',
-                        icon: '⚠',
-                        warn: true,
-                      },
-                    ].map((fee, idx) => (
-                      <div
-                        key={fee.label}
-                        className={`flex items-center justify-between py-2 border-b border-[#9EB3A8]/8 last:border-0 px-2 rounded-lg transition-colors ${idx % 2 === 1 ? 'bg-[#F2F2F2]/50 hover:bg-white' : 'hover:bg-[#F2F2F2]/50'}`}
-                      >
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm text-[#9EB3A8] w-4 text-center">{fee.icon}</span>
-                          <span className="text-sm text-[#0E0F0F] font-medium">{fee.label}</span>
-                          <span className="text-caption text-[#9EB3A8]">({fee.sub})</span>
-                        </div>
-                        <span
-                          className={`text-sm font-bold ${'warn' in fee && fee.warn ? 'text-[#E8A838]' : 'text-[#0E0F0F]'}`}
-                        >
-                          {fee.value}
-                        </span>
                       </div>
                     ))}
                   </div>
@@ -1081,7 +1035,7 @@ export default function ProductPage() {
                   <div className="absolute inset-0 pointer-events-none">
                     <Image
                       src={
-                        vault.name === 'Hearst Hedge'
+                        vault.name === 'Hearst Prime Yield'
                           ? '/assets/backgrounds/vault-card-1-bg.png'
                           : '/assets/backgrounds/vault-card-2-bg.png'
                       }
@@ -1092,7 +1046,7 @@ export default function ProductPage() {
                       sizes="100vw"
                     />
                   </div>
-                  <div className="absolute inset-0 bg-gradient-to-b from-white/40 via-white/80 to-white pointer-events-none" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-white via-white/60 to-transparent pointer-events-none" />
                   <div className="relative">
                     <div className="w-16 h-16 rounded-2xl bg-white/70 backdrop-blur-sm flex items-center justify-center mx-auto mb-4 shadow-lg">
                       <svg
@@ -1138,7 +1092,7 @@ export default function ProductPage() {
                         </p>
                         <p className="text-xs text-[#9EB3A8]">{fmtApy(vault.compositeApy)} APY</p>
                       </div>
-                      <p className="text-lg sm:text-xl font-black text-[#0E0F0F]">
+                      <p className="text-heading-sm font-black text-[#0E0F0F]">
                         {fmtUsd(parsedAmount)}
                       </p>
                     </div>
@@ -1150,10 +1104,8 @@ export default function ProductPage() {
                         </p>
                       </div>
                       <div>
-                        <p className="kpi-label mb-0.5">Cliff</p>
-                        <p className="text-sm font-bold text-[#0E0F0F]">
-                          {vault.yieldCliffMonths}mo
-                        </p>
+                        <p className="kpi-label mb-0.5">Yield</p>
+                        <p className="text-sm font-bold text-[#0E0F0F]">Monthly</p>
                       </div>
                       <div>
                         <p className="kpi-label mb-0.5">Status</p>

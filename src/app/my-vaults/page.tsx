@@ -40,7 +40,7 @@ function VaultPositionCard({
   const statusColor = '#96EA7A'
 
   const bgImage =
-    vault.name === 'Hearst Hedge'
+    vault.name === 'Hearst Prime Yield'
       ? '/assets/backgrounds/vault-card-1-bg.png'
       : '/assets/backgrounds/vault-card-2-bg.png'
 
@@ -61,7 +61,7 @@ function VaultPositionCard({
             sizes="(max-width: 768px) 100vw, 50vw"
           />
         </div>
-        <div className="absolute inset-0 bg-gradient-to-b from-white/40 via-white/80 to-white pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-r from-white via-white/60 to-transparent pointer-events-none" />
         <div className="relative">
           <div className="flex items-start justify-between mb-3">
             <div className="flex items-center gap-3">
@@ -264,7 +264,7 @@ export default function MyVaults() {
                 sizes="100vw"
               />
             </div>
-            <div className="absolute inset-0 bg-gradient-to-b from-white/40 via-white/80 to-white pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-r from-white via-white/60 to-transparent pointer-events-none" />
 
             <div className="relative">
               <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6 mb-8">
@@ -296,7 +296,9 @@ export default function MyVaults() {
                     </div>
                     <div className="text-left">
                       <p className="text-xs text-[var(--muted)] font-medium">Pending Yield</p>
-                      <p className="text-lg font-black text-[#96EA7A]">{fmtUsd(totalPending)}</p>
+                      <p className="text-heading-sm font-black text-[#96EA7A]">
+                        {fmtUsd(totalPending)}
+                      </p>
                     </div>
                     <svg
                       className="w-4 h-4 text-[#9EB3A8] group-hover:text-[#96EA7A] group-hover:translate-x-0.5 transition-all ml-1"
@@ -324,11 +326,11 @@ export default function MyVaults() {
                 ].map((kpi) => (
                   <div
                     key={kpi.label}
-                    className="bg-white px-5 py-4 hover:bg-[#F2F2F2]/60 transition-colors"
+                    className="bg-white py-6 sm:py-9 flex flex-col items-center justify-center hover:bg-[#F2F2F2]/60 transition-colors"
                   >
-                    <p className="kpi-label mb-1">{kpi.label}</p>
+                    <p className="kpi-label mb-2">{kpi.label}</p>
                     <p
-                      className={`text-base font-black truncate ${'accent' in kpi && kpi.accent ? 'text-[#96EA7A]' : 'text-[#0E0F0F]'}`}
+                      className={`text-[0.625rem] sm:text-[1.275rem] font-black leading-none truncate ${'accent' in kpi && kpi.accent ? 'text-[#96EA7A]' : 'text-[#0E0F0F]'}`}
                     >
                       {kpi.value}
                     </p>
@@ -342,7 +344,7 @@ export default function MyVaults() {
           {activeDeposits.length > 0 && (
             <div className="mb-8">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-bold text-[#0E0F0F]">Active</h2>
+                <h2 className="section-title">Active</h2>
                 <span className="text-xs font-semibold text-[#9EB3A8] bg-[#F2F2F2] px-3 py-1.5 rounded-full">
                   {activeDeposits.length} position{activeDeposits.length > 1 ? 's' : ''}
                 </span>
@@ -363,7 +365,7 @@ export default function MyVaults() {
           {maturedDeposits.length > 0 && (
             <div className="mb-8">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-bold text-[#0E0F0F]">Matured — Ready to Withdraw</h2>
+                <h2 className="section-title">Matured — Ready to Withdraw</h2>
                 <button
                   onClick={() => router.push('/withdraw')}
                   className="text-sm font-semibold text-[#0E0F0F] bg-white border border-[#9EB3A8]/20 hover:border-[#96EA7A] px-4 py-2 rounded-full transition-all flex items-center gap-1.5 hover:shadow-sm"
@@ -414,7 +416,7 @@ export default function MyVaults() {
                   />
                 </svg>
               </div>
-              <p className="text-lg font-bold text-[#0E0F0F] mb-2">No positions yet</p>
+              <p className="text-heading-sm font-bold text-[#0E0F0F] mb-2">No positions yet</p>
               <p className="text-sm text-[#9EB3A8] mb-6 max-w-xs mx-auto">
                 Subscribe to a vault to start earning yield on your assets
               </p>

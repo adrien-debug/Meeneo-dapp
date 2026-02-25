@@ -22,7 +22,7 @@ const STRATEGY_COLORS: Record<string, string> = {
   usdc_yield: '#9EB3A8',
   btc_hedged: '#5B7A6E',
   btc_spot: '#F7931A',
-  btc_collateral_mining: '#D4A017',
+  btc_collateral_mining: '#96EA7A',
 }
 
 interface PerformanceChartProps {
@@ -97,7 +97,7 @@ function PerfTooltip({
       </p>
       <div className="flex items-center gap-2.5">
         <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: color }} />
-        <span className="text-lg font-black tabular-nums text-[#0E0F0F] tracking-tight">
+        <span className="text-heading-sm font-black tabular-nums text-[#0E0F0F] tracking-tight">
           {val >= 0 ? '+' : ''}
           {fmtPercent(val)}
         </span>
@@ -138,6 +138,8 @@ export function PerformanceChart({
   }, [rawData])
 
   const lastPoint = rawData[rawData.length - 1]
+
+  const xTicks = useMemo(() => rawData.map((d) => d.month), [rawData])
 
   const yDomain = useMemo(() => {
     const vals = rawData.map((d) => d.value)
@@ -182,64 +184,19 @@ export function PerformanceChart({
                 {fmtPercent(quantMetrics.totalYield)}
               </span>
               <span
-                className={`text-[11px] font-bold px-2 py-0.5 rounded-md ${trendUp ? 'bg-[#96EA7A]/15 text-[#96EA7A]' : 'bg-[#FEF2F2] text-[#DC2626]'}`}
+                className={`text-caption font-bold px-2 py-0.5 rounded-md ${trendUp ? 'bg-[#96EA7A]/15 text-[#96EA7A]' : 'bg-[#FEF2F2] text-[#DC2626]'}`}
               >
                 {trendUp ? '▲' : '▼'} {fmtPercent(quantMetrics.annualizedReturn)} /yr
               </span>
             </div>
           </div>
-          <div className="flex flex-col items-end gap-2">
-            <ToggleGroup
-              items={[
-                { key: 'cumulative', label: 'Cumulative' },
-                { key: 'monthly', label: 'Monthly' },
-              ]}
-              value={chartMode}
-              onChange={(v) => onChartModeChange(v as ChartMode)}
-            />
-            <ToggleGroup
-              items={['3M', '6M', '1Y', 'ALL'].map((r) => ({ key: r, label: r }))}
-              value={timeRange}
-              onChange={onTimeRangeChange}
-            />
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            onClick={() => onChartStrategyChange('composite')}
-            className={`px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all ${
-              chartStrategy === 'composite'
-                ? 'bg-[#0E0F0F] text-white'
-                : 'text-[#9EB3A8] hover:text-[#0E0F0F] hover:bg-[#F2F2F2]'
-            }`}
-          >
-            All
-          </button>
-          {activeStrategies.map((s) => (
-            <button
-              key={s.type}
-              onClick={() => onChartStrategyChange(s.type)}
-              className={`px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all flex items-center gap-1.5 ${
-                chartStrategy === s.type
-                  ? 'bg-[#0E0F0F] text-white'
-                  : 'text-[#9EB3A8] hover:text-[#0E0F0F] hover:bg-[#F2F2F2]'
-              }`}
-            >
-              <span
-                className="w-1.5 h-1.5 rounded-full shrink-0"
-                style={{ backgroundColor: s.color }}
-              />
-              {s.label}
-            </button>
-          ))}
         </div>
       </div>
 
       {/* Chart */}
       <div className="px-6 pb-6 flex-1">
         <div className="h-[340px]">
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height="100%" debounce={1}>
             <AreaChart data={smoothData} margin={{ top: 20, right: 20, bottom: 8, left: 4 }}>
               <defs>
                 <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
@@ -272,8 +229,7 @@ export function PerformanceChart({
                 tickLine={false}
                 tick={{ fontSize: 11, fill: '#748C82', fontWeight: 500 }}
                 dy={10}
-                interval={0}
-                tickFormatter={(v: string) => v || ''}
+                ticks={xTicks}
               />
               <YAxis
                 axisLine={false}
