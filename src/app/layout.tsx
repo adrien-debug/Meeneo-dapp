@@ -1,10 +1,11 @@
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { Footer } from '@/components/Footer'
+import { LayoutContent } from '@/components/LayoutContent'
 import { NetworkValidator } from '@/components/NetworkValidator'
 import { DemoWrapper } from '@/components/demo/DemoWrapper'
 import ContextProvider from '@/context'
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import { Inter, Space_Grotesk } from 'next/font/google'
 import { headers } from 'next/headers'
 import './globals.css'
 
@@ -12,6 +13,13 @@ const inter = Inter({
   variable: '--font-inter',
   subsets: ['latin'],
   display: 'swap',
+})
+
+const spaceGrotesk = Space_Grotesk({
+  variable: '--font-display',
+  subsets: ['latin'],
+  display: 'swap',
+  weight: ['400', '500', '600', '700'],
 })
 
 export const metadata: Metadata = {
@@ -30,13 +38,11 @@ export default async function RootLayout({
 
   return (
     <html lang="en">
-      <body
-        className={`${inter.variable} font-[family-name:var(--font-inter)] antialiased bg-[var(--background)]`}
-      >
+      <body className={`${inter.variable} ${spaceGrotesk.variable} antialiased bg-background`}>
         <ErrorBoundary>
           <ContextProvider cookies={cookies}>
             <DemoWrapper>
-              <div className="pb-20">{children}</div>
+              <LayoutContent>{children}</LayoutContent>
               <Footer />
               <NetworkValidator />
             </DemoWrapper>

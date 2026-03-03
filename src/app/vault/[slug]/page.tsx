@@ -570,22 +570,22 @@ export default function VaultDetail() {
                     <h3 className="card-title mb-5">Allocation</h3>
                     <div className="flex flex-col items-center flex-1 justify-center">
                       <div className="w-32 h-32 mb-5 relative">
-                        <ResponsiveContainer width="100%" height="100%" minWidth={0} debounce={1}>
-                          <PieChart>
-                            <Pie
-                              data={allocationData}
-                              innerRadius={40}
-                              outerRadius={60}
-                              paddingAngle={3}
-                              dataKey="value"
-                              stroke="none"
-                            >
-                              {allocationData.map((entry, i) => (
-                                <Cell key={i} fill={entry.color} />
-                              ))}
-                            </Pie>
-                          </PieChart>
-                        </ResponsiveContainer>
+                        <PieChart width={128} height={128}>
+                          <Pie
+                            data={allocationData}
+                            innerRadius={40}
+                            outerRadius={60}
+                            paddingAngle={3}
+                            dataKey="value"
+                            stroke="none"
+                            cx={64}
+                            cy={64}
+                          >
+                            {allocationData.map((entry, i) => (
+                              <Cell key={i} fill={entry.color} />
+                            ))}
+                          </Pie>
+                        </PieChart>
                         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                           <Image
                             src="/assets/tokens/hearst-logo.svg"
@@ -1119,22 +1119,22 @@ export default function VaultDetail() {
                     <h3 className="card-title mb-5">Protocol Breakdown</h3>
                     <div className="flex items-center gap-6">
                       <div className="w-24 h-24 shrink-0">
-                        <ResponsiveContainer width="100%" height="100%" minWidth={0} debounce={1}>
-                          <PieChart>
-                            <Pie
-                              data={protocolBreakdown}
-                              innerRadius={28}
-                              outerRadius={42}
-                              paddingAngle={2}
-                              dataKey="pct"
-                              stroke="none"
-                            >
-                              {protocolBreakdown.map((entry, i) => (
-                                <Cell key={i} fill={entry.color} />
-                              ))}
-                            </Pie>
-                          </PieChart>
-                        </ResponsiveContainer>
+                        <PieChart width={96} height={96}>
+                          <Pie
+                            data={protocolBreakdown}
+                            innerRadius={28}
+                            outerRadius={42}
+                            paddingAngle={2}
+                            dataKey="pct"
+                            stroke="none"
+                            cx={48}
+                            cy={48}
+                          >
+                            {protocolBreakdown.map((entry, i) => (
+                              <Cell key={i} fill={entry.color} />
+                            ))}
+                          </Pie>
+                        </PieChart>
                       </div>
                       <div className="flex-1 space-y-3">
                         {protocolBreakdown.map((p) => (

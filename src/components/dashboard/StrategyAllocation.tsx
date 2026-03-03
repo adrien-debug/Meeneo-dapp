@@ -3,7 +3,7 @@
 import { CARD, STRATEGY_ICONS } from '@/components/ui/constants'
 import { fmtUsd } from '@/config/mock-data'
 import Image from 'next/image'
-import { Cell, Pie, PieChart, ResponsiveContainer } from 'recharts'
+import { Cell, Pie, PieChart } from 'recharts'
 import type { StrategyAllocationEntry } from './types'
 
 interface VaultFilterOption {
@@ -30,22 +30,22 @@ export function StrategyAllocation({
       <div className="flex items-start justify-between mb-4">
         <h2 className="card-title">Strategy Allocation</h2>
         <div className="w-[72px] h-[72px] shrink-0 relative -mt-1">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={data}
-                innerRadius={22}
-                outerRadius={34}
-                paddingAngle={3}
-                dataKey="value"
-                stroke="none"
-              >
-                {data.map((entry, i) => (
-                  <Cell key={i} fill={entry.color} />
-                ))}
-              </Pie>
-            </PieChart>
-          </ResponsiveContainer>
+          <PieChart width={72} height={72}>
+            <Pie
+              data={data}
+              innerRadius={22}
+              outerRadius={34}
+              paddingAngle={3}
+              dataKey="value"
+              stroke="none"
+              cx={36}
+              cy={36}
+            >
+              {data.map((entry, i) => (
+                <Cell key={i} fill={entry.color} />
+              ))}
+            </Pie>
+          </PieChart>
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <Image src="/assets/tokens/hearst-logo.svg" alt="Hearst logo" width={14} height={14} />
           </div>

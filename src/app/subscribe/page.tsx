@@ -7,7 +7,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
-import { Cell, Pie, PieChart, ResponsiveContainer } from 'recharts'
+import { Cell, Pie, PieChart } from 'recharts'
 import { useAccount } from 'wagmi'
 
 import { CARD, STRATEGY_ICONS } from '@/components/ui/constants'
@@ -603,22 +603,22 @@ export default function ProductPage() {
                     <h3 className="card-title mb-5">Allocation</h3>
                     <div className="flex-1 flex flex-col items-center justify-center">
                       <div className="w-36 h-36 mb-5 relative">
-                        <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-                          <PieChart>
-                            <Pie
-                              data={allocationData}
-                              innerRadius={44}
-                              outerRadius={66}
-                              paddingAngle={3}
-                              dataKey="value"
-                              stroke="none"
-                            >
-                              {allocationData.map((entry, i) => (
-                                <Cell key={i} fill={entry.color} />
-                              ))}
-                            </Pie>
-                          </PieChart>
-                        </ResponsiveContainer>
+                        <PieChart width={144} height={144}>
+                          <Pie
+                            data={allocationData}
+                            innerRadius={44}
+                            outerRadius={66}
+                            paddingAngle={3}
+                            dataKey="value"
+                            stroke="none"
+                            cx={72}
+                            cy={72}
+                          >
+                            {allocationData.map((entry, i) => (
+                              <Cell key={i} fill={entry.color} />
+                            ))}
+                          </Pie>
+                        </PieChart>
                         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                           <Image
                             src="/assets/tokens/hearst-logo.svg"

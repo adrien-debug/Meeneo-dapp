@@ -5,6 +5,7 @@ import {
   addVault,
   advanceTime,
   claimYield,
+  demoMockState,
   demoNow,
   isDemoModeActive,
   loadDemo,
@@ -50,19 +51,22 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     setDemoMode(isDemoModeActive())
   }, [])
 
+  const persist = useCallback((next: DemoState) => {
+    setState(next)
+    saveDemo(next)
+  }, [])
+
   const enterDemoMode = useCallback(() => {
     setDemoModeActive(true)
     setDemoMode(true)
-  }, [])
+    // Inject mock positions so dashboard is populated from the start
+    const mockState = demoMockState()
+    persist(mockState)
+  }, [persist])
 
   const exitDemoMode = useCallback(() => {
     setDemoModeActive(false)
     setDemoMode(false)
-  }, [])
-
-  const persist = useCallback((next: DemoState) => {
-    setState(next)
-    saveDemo(next)
   }, [])
 
   const createVaultFn = useCallback(

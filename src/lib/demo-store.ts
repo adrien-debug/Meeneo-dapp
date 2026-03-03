@@ -1,3 +1,4 @@
+import { ALL_VAULTS, MOCK_USER_DEPOSITS } from '@/config/mock-data'
 import type { UserDeposit, VaultConfig } from '@/types/product'
 
 const STORAGE_KEY = 'meeneo-demo'
@@ -29,6 +30,28 @@ function defaultState(): DemoState {
     timeOffsetSeconds: 0,
     nextDepositId: 10_000,
     nextVaultIndex: 1,
+  }
+}
+
+/** State pre-populated with mock positions for Demo mode */
+export function demoMockState(): DemoState {
+  // Map mock deposits to the real vault slugs
+  const vaultsWithTvl = ALL_VAULTS.map((v) => {
+    const totalDeposited = MOCK_USER_DEPOSITS.filter((d) => d.vaultSlug === v.slug).reduce(
+      (s, d) => s + d.amount,
+      0,
+    )
+    return { ...v, currentTvl: totalDeposited, totalShares: totalDeposited }
+  })
+
+  const maxId = MOCK_USER_DEPOSITS.reduce((m, d) => Math.max(m, d.id), 0)
+
+  return {
+    vaults: vaultsWithTvl,
+    deposits: [...MOCK_USER_DEPOSITS],
+    timeOffsetSeconds: 0,
+    nextDepositId: maxId + 1,
+    nextVaultIndex: vaultsWithTvl.length + 1,
   }
 }
 

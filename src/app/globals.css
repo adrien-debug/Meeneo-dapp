@@ -1,81 +1,98 @@
 @import 'tailwindcss';
 
+@font-face {
+  font-family: 'FKGrotesk';
+  src: url('/fonts/FKGroteskTrial-Light.otf') format('opentype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'FKGrotesk';
+  src: url('/fonts/FKGroteskTrial-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'FKGrotesk';
+  src: url('/fonts/FKGroteskTrial-Medium.otf') format('opentype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'FKGrotesk';
+  src: url('/fonts/FKGroteskTrial-Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 @theme {
-  /* Custom Breakpoints */
   --breakpoint-xs: 480px;
 
-  /* Hearst Green Colors */
-  --color-hearst-green: oklch(88% 0.2 142);
-  --color-hearst-green-dark: oklch(80% 0.2 142);
-  --color-hearst-green-light: oklch(92% 0.15 142);
+  /* Core Palette — Hearst Corp White */
+  --color-foreground: #0e0f0f;
+  --color-background: #ffffff;
+  --color-surface: #ffffff;
+  --color-surface-alt: #f7f7f8;
+  --color-muted: #9eb3a8;
 
-  /* Mining Colors */
-  --color-mining-orange: oklch(75% 0.18 60);
-  --color-mining-blue: oklch(60% 0.2 255);
-  --color-mining-purple: oklch(55% 0.25 290);
-  --color-mining-red: oklch(60% 0.25 25);
+  /* Hearst Green */
+  --color-hearst-green: #96ea7a;
+  --color-hearst-green-dark: #7ed066;
+  --color-hearst-green-light: #e6f1e7;
+
+  /* Chart & Dashboard Accent Colors */
+  --color-mining-orange: #f59e0b;
+  --color-mining-blue: #3b82f6;
+  --color-mining-purple: #8b5cf6;
+  --color-mining-red: #ef4444;
 }
 
 :root {
   --hearst-green: #96ea7a;
   --hearst-green-dark: #7ed066;
   --hearst-green-light: #e6f1e7;
-  --background: #f2f2f2;
+  --background: #ffffff;
   --foreground: #0e0f0f;
   --card: #ffffff;
-  --card-border: rgba(158, 179, 168, 0.2);
-  --card-hover: #e6f1e7;
-  --muted: #748c82;
+  --card-border: rgba(14, 15, 15, 0.06);
+  --card-hover: rgba(150, 234, 122, 0.04);
+  --muted: #9eb3a8;
 
-  /* ── Typography Scale (8px base, major-third ratio) ── */
   --text-caption: 0.625rem;
-  /* 10px — KPI labels, micro-badges */
   --text-small: 0.75rem;
-  /* 12px — table cells, secondary info */
   --text-body: 0.875rem;
-  /* 14px — body text, nav items */
   --text-base: 1rem;
-  /* 16px — card values, data points */
   --text-heading-sm: 1.125rem;
-  /* 18px — section sub-headings */
   --text-heading: 1.5rem;
-  /* 24px — page titles */
   --text-display: 2rem;
-  /* 32px — hero numbers */
 
-  /* ── Spacing Scale (8px system) ── */
   --space-1: 0.25rem;
-  /* 4px */
   --space-2: 0.5rem;
-  /* 8px */
   --space-3: 0.75rem;
-  /* 12px */
   --space-4: 1rem;
-  /* 16px */
   --space-5: 1.25rem;
-  /* 20px */
   --space-6: 1.5rem;
-  /* 24px */
   --space-8: 2rem;
-  /* 32px */
   --space-10: 2.5rem;
-  /* 40px */
   --space-12: 3rem;
-  /* 48px */
 
-  /* ── Layout ── */
   --content-max: 1440px;
   --radius-sm: 0.5rem;
-  /* 8px */
   --radius-md: 0.75rem;
-  /* 12px */
   --radius-lg: 1rem;
-  /* 16px */
   --radius-full: 9999px;
 }
 
 html {
   scroll-behavior: smooth;
+  scroll-padding-top: 88px;
 }
 
 html,
@@ -90,7 +107,36 @@ body {
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: var(--font-inter, 'Inter', system-ui, sans-serif);
+  font-family: 'FKGrotesk', var(--font-display, 'Space Grotesk'), system-ui, sans-serif;
+  font-size: 1.2rem;
+  line-height: 1.5;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: 'FKGrotesk', var(--font-display, 'Space Grotesk'), system-ui, sans-serif;
+}
+
+h1 {
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+h2 {
+  font-weight: 400;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+h3 {
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
 }
 
 *,
@@ -105,20 +151,58 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #f2f2f2;
+  background: var(--background);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #9eb3a8;
+  background: var(--muted);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #96ea7a;
+  background: var(--hearst-green);
 }
 
-/* Transaction shimmer */
+/* Hide Next.js dev tools overlay in dev */
+[data-nextjs-dialog-overlay],
+[data-nextjs-toast],
+button[data-nextjs-toast] {
+  display: none !important;
+}
+
+nextjs-portal {
+  display: none !important;
+}
+
+/* ── Animations ── */
+@keyframes ping {
+  75%,
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+.animate-ping {
+  animation: ping 1.2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+@keyframes gradientShift {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.animate-gradient {
+  animation: gradientShift 8s ease infinite;
+  background-size: 200% 200%;
+}
+
 @keyframes shimmer {
   0% {
     transform: translateX(-100%);
@@ -133,7 +217,6 @@ body {
   animation: shimmer 1.5s ease-in-out infinite;
 }
 
-/* Transaction modal animations */
 @keyframes txModalIn {
   0% {
     opacity: 0;
@@ -173,7 +256,6 @@ body {
   }
 }
 
-/* Mining animations */
 @keyframes hash {
   0%,
   100% {
@@ -189,101 +271,91 @@ body {
   animation: hash 1s ease-in-out infinite;
 }
 
-/* Grid background */
-.bg-grid {
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' width='32' height='32' fill='none' stroke='rgb(148 163 184 / 0.1)'%3e%3cpath d='M0 .5H31.5V32'/%3e%3c/svg%3e");
+/* 6 items (dernier = clone du 1er) — slide propre, reset invisible pendant item 6 */
+@keyframes textRotate {
+  0% {
+    transform: translateY(0%);
+  }
+  14% {
+    transform: translateY(0%);
+  }
+  16.67% {
+    transform: translateY(-16.6667%);
+  }
+  30% {
+    transform: translateY(-16.6667%);
+  }
+  33.33% {
+    transform: translateY(-33.3333%);
+  }
+  47% {
+    transform: translateY(-33.3333%);
+  }
+  50% {
+    transform: translateY(-50%);
+  }
+  64% {
+    transform: translateY(-50%);
+  }
+  66.67% {
+    transform: translateY(-66.6667%);
+  }
+  80% {
+    transform: translateY(-66.6667%);
+  }
+  83.33% {
+    transform: translateY(-83.3333%);
+  }
+  99% {
+    transform: translateY(-83.3333%);
+  }
+  /* snap instantané — invisible car item 6 = item 1 */
+  99.01%,
+  100% {
+    transform: translateY(0%);
+  }
 }
 
-/* Card hover effect */
+.animate-text-rotate {
+  animation: textRotate 18s linear infinite;
+  will-change: transform;
+}
+
+/* ── Grid Background ── */
+.bg-grid {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' width='32' height='32' fill='none' stroke='rgb(148 163 184 / 0.06)'%3e%3cpath d='M0 .5H31.5V32'/%3e%3c/svg%3e");
+}
+
+/* ── Card Effects ── */
 .card-hover {
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .card-hover:hover {
-  box-shadow:
-    0 20px 25px -5px rgba(0, 0, 0, 0.1),
-    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.06);
   transform: translateY(-4px);
 }
 
-/* Glassmorphism */
+/* ── Glass ── */
 .glass {
   background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(14, 15, 15, 0.05);
 }
 
-/* Custom Hearst Green utilities using CSS variables */
-.bg-hearst-green {
-  background-color: #96ea7a !important;
+.glass-card {
+  background: #ffffff;
+  border: 1px solid rgba(14, 15, 15, 0.06);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
-.bg-hearst-green-dark {
-  background-color: #7ed066 !important;
+.glass-card:hover {
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
 }
 
-.hover\:bg-hearst-green-dark:hover {
-  background-color: #7ed066 !important;
-}
-
-.text-hearst-green {
-  color: #96ea7a !important;
-}
-
-.border-hearst-green {
-  border-color: #96ea7a !important;
-}
-
-.focus\:ring-hearst-green:focus {
-  --tw-ring-color: #96ea7a;
-}
-
-/* Mining Colors utilities */
-.text-mining-orange {
-  color: #f59e0b !important;
-}
-
-.text-mining-blue {
-  color: #3b82f6 !important;
-}
-
-.text-mining-purple {
-  color: #8b5cf6 !important;
-}
-
-.text-mining-red {
-  color: #ef4444 !important;
-}
-
-.bg-mining-orange\/20 {
-  background-color: rgba(245, 158, 11, 0.2) !important;
-}
-
-.bg-mining-blue\/20 {
-  background-color: rgba(59, 130, 246, 0.2) !important;
-}
-
-.bg-mining-purple\/20 {
-  background-color: rgba(139, 92, 246, 0.2) !important;
-}
-
-.bg-hearst-green\/10 {
-  background-color: rgba(150, 234, 122, 0.1) !important;
-}
-
-.bg-hearst-green\/20 {
-  background-color: rgba(150, 234, 122, 0.2) !important;
-}
-
-.bg-hearst-green\/30 {
-  background-color: rgba(150, 234, 122, 0.3) !important;
-}
-
-.border-hearst-green\/30 {
-  border-color: rgba(150, 234, 122, 0.3) !important;
-}
-
-/* ── Design System: Typography ── */
+/* ── Typography ── */
 .text-caption {
   font-size: var(--text-caption);
   line-height: 1.4;
@@ -314,7 +386,6 @@ body {
   line-height: 1.1;
 }
 
-/* ── Design System: KPI label (reusable) ── */
 .kpi-label {
   font-size: var(--text-caption);
   color: var(--muted);
@@ -323,7 +394,6 @@ body {
   font-weight: 600;
 }
 
-/* ── Design System: Section title ── */
 .section-title {
   font-size: var(--text-heading);
   font-weight: 700;
@@ -331,14 +401,13 @@ body {
   letter-spacing: -0.01em;
 }
 
-/* ── Design System: Card section header ── */
 .card-title {
   font-size: var(--text-body);
   font-weight: 700;
   color: var(--foreground);
 }
 
-/* ── Design System: Page container ── */
+/* ── Page Container ── */
 .page-container {
   width: 100%;
   max-width: var(--content-max);
@@ -369,7 +438,6 @@ body {
   }
 }
 
-/* ── Design System: Page section spacing ── */
 .section-gap {
   margin-bottom: var(--space-6);
 }
@@ -379,14 +447,13 @@ body {
   padding-top: var(--space-4);
 }
 
-/* ── Design System: Clickable arrow (grey → green on hover) ── */
 .clickable-arrow {
-  color: #9eb3a8;
+  color: var(--muted);
   transition: all 0.2s ease;
 }
 
 .group:hover .clickable-arrow,
 .clickable-arrow:hover {
-  color: #96ea7a;
+  color: var(--hearst-green);
   transform: translateX(2px);
 }
