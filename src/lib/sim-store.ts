@@ -35,7 +35,6 @@ interface SimStore {
 }
 
 declare global {
-   
   var __simStore: SimStore | undefined
 }
 
