@@ -75,24 +75,31 @@ function OrbitRing({
   speed?: number
   opacity?: number
 }) {
-  const ref = useRef<THREE.Mesh>(null)
+  const groupRef = useRef<THREE.Group>(null)
 
-  const geo = useMemo(() => {
+  const lineObj = useMemo(() => {
     const curve = new THREE.EllipseCurve(0, 0, radius, radius, 0, Math.PI * 2, false, 0)
     const pts = curve.getPoints(96).map((p) => new THREE.Vector3(p.x, 0, p.y))
-    return new THREE.BufferGeometry().setFromPoints(pts)
-  }, [radius])
+    const geo = new THREE.BufferGeometry().setFromPoints(pts)
+    const mat = new THREE.LineBasicMaterial({
+      color: GREEN,
+      transparent: true,
+      opacity,
+      depthWrite: false,
+    })
+    return new THREE.Line(geo, mat)
+  }, [radius, opacity])
 
   useFrame(({ clock }) => {
-    if (!ref.current) return
-    ref.current.rotation.y = clock.elapsedTime * speed
+    if (!groupRef.current) return
+    groupRef.current.rotation.y = clock.elapsedTime * speed
   })
 
   return (
     <group position={position} rotation={[tilt, 0, 0]}>
-      <line ref={ref as React.Ref<THREE.Line>} geometry={geo}>
-        <lineBasicMaterial color={GREEN} transparent opacity={opacity} depthWrite={false} />
-      </line>
+      <group ref={groupRef}>
+        <primitive object={lineObj} />
+      </group>
     </group>
   )
 }
